@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 from src.modules.ticket.enums.enums import PriorityEnum, StatusEnum
 
@@ -11,3 +11,15 @@ class CreateTicketSchema(BaseModel):
     issued_by: int
     sla_id: int
     contact_id: int
+
+    model_config = {"extra": "forbid"}
+
+
+class CreateContactSchema(BaseModel):
+
+    email: EmailStr
+    first_name: str
+    last_name: str
+    phone: str
+
+    model_config = {"extra": "forbid"}

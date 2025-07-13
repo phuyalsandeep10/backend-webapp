@@ -15,7 +15,7 @@ class Ticket(BaseModel, table=True):
     description: str
     priority: PriorityEnum = Field(default=PriorityEnum.MEDIUM)
     status: StatusEnum = Field(default=StatusEnum.OPEN)
-    assignees: List[User] = Relationship(back_populates="User")
+    # assignees: List[User] = Relationship(back_populates="User")
     issued_by: int = Field(nullable=False)
     sla_id: int = Field(sa_column=Column(ForeignKey("sla.id", ondelete="SET NULL")))
     contact_id: int = Field(

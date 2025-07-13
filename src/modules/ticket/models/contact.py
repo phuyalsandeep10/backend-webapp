@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship
 
@@ -11,9 +13,9 @@ class Contact(BaseModel, table=True):
     email: EmailStr = Field(nullable=False, unique=True)
     first_name: str = Field(nullable=False)
     last_name: str = Field(nullable=False)
-    phone: int = Field(nullable=False, max_digits=10)
+    phone: str = Field(nullable=False, max_digits=10)
 
-    tickets: Ticket = Relationship(back_populates="contacts")
+    tickets: List[Ticket] = Relationship(back_populates="contacts")
 
     def __str__(self):
         return f"{self.email}"
