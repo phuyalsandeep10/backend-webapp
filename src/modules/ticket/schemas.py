@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr
 
 from src.modules.ticket.enums.enums import PriorityEnum, StatusEnum
@@ -21,5 +23,14 @@ class CreateContactSchema(BaseModel):
     first_name: str
     last_name: str
     phone: str
+
+    model_config = {"extra": "forbid"}
+
+
+class CreateSLASchema(BaseModel):
+
+    name: str
+    response_time: int
+    resolution_time: int
 
     model_config = {"extra": "forbid"}
