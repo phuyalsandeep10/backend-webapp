@@ -21,8 +21,8 @@ class ContactServices:
                     message="Contact already exists",
                 )
 
-            ticket = await cc.create(db, data)
-            if ticket is None:
+            contact = await cc.create(db, data)
+            if contact is None:
                 return cr.error(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     message="Error while creating a contact",
@@ -31,6 +31,7 @@ class ContactServices:
             return cr.success(
                 status_code=status.HTTP_201_CREATED,
                 message="Successfully created a contact",
+                data=dict(contact),
             )
         except Exception as e:
             print(e)
@@ -42,6 +43,11 @@ class ContactServices:
     async def list_contacts(self, db: AsyncSession):
         try:
             contacts: List[Contact] = await cc.get_all(db)
+            if not contacts:
+                return cr.error(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    message="Error while listing contacts",
+                )
             contacts_data = [contact.dict() for contact in contacts]
 
             return cr.success(
