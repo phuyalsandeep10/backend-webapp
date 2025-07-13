@@ -8,7 +8,7 @@ from src.modules.ticket.services.ticket import TicketServices
 router = APIRouter()
 
 
-@router.post("/")
+@router.post("/", summary="Creates new ticket")
 async def register_ticket(
     payload: CreateTicketSchema, db: AsyncSession = Depends(get_db)
 ):
