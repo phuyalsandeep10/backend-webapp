@@ -17,10 +17,12 @@ class Ticket(BaseModel, table=True):
     status: StatusEnum = Field(default=StatusEnum.OPEN)
     assignees: List[User] = Relationship(back_populates="User")
     issued_by: int = Field(nullable=False)
-    sla_id: int = Field(
-        sa_column=Column(ForeignKey("sla.id", ondelete="CASCADE"), nullable=False)
+    sla_id: int = Field(sa_column=Column(ForeignKey("sla.id", ondelete="SET NULL")))
+    contact_id: int = Field(
+        sa_column=Column(ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
     )
     sla: "SLA" = Relationship(back_populates="tickets")
+    contacts: "Contact" = Relationship(back_populates="tickets")
 
     def __str__(self):
         return self.title
