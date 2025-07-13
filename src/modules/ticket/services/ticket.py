@@ -27,3 +27,6 @@ class TicketServices:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while creating a ticket",
             )
+
+
+ticket_services = TicketServices()
