@@ -9,7 +9,5 @@ router = APIRouter()
 
 
 @router.post("/", summary="Creates new ticket")
-async def register_ticket(
-    payload: CreateTicketSchema, db: AsyncSession = Depends(get_db)
-):
-    return await ticket_services.create_ticket(db, payload)
+async def register_ticket(payload: CreateTicketSchema):
+    return await ticket_services.create_ticket(payload)

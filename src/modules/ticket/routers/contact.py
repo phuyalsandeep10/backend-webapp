@@ -9,12 +9,10 @@ router = APIRouter()
 
 
 @router.post("/contacts", summary="Creates new contact")
-async def register_contact(
-    payload: CreateContactSchema, db: AsyncSession = Depends(get_db)
-):
-    return await contact_service.create_contact(db, payload)
+async def register_contact(payload: CreateContactSchema):
+    return await contact_service.create_contact(payload)
 
 
 @router.get("/contacts", summary="Get all contacts")
-async def list_contacts(db: AsyncSession = Depends(get_db)):
-    return await contact_service.list_contacts(db)
+async def list_contacts():
+    return await contact_service.list_contacts()
