@@ -5,6 +5,7 @@ from typing import Type, TypeVar, List, Optional, Any
 from src.config.database import async_session
 from sqlalchemy import or_, and_
 
+T = TypeVar("T")
 
 T = TypeVar("T")
 
