@@ -22,7 +22,7 @@ class ConversationMember(CommonModel, table=True):
     user_id: int = Field(foreign_key="sys_users.id", nullable=False)
     conversation_id: int = Field(foreign_key="org_conversations.id", nullable=False)
     conversation: Optional["Conversation"] = Relationship(back_populates="members")
-    user: Optional["User"] = Relationship(
-        back_populates="conversations",
-        sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},
-    )
+    # user: Optional["User"] = Relationship(
+    #     back_populates="conversations"
+    #     # sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},
+    # )

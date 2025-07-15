@@ -1,17 +1,18 @@
 from src.common.models import CommonModel
 from sqlmodel import Field, Relationship, SQLModel, Session, select
-from typing import Optional
+from typing import Optional, List
 
 from src.db.config import async_session
 import sqlalchemy as sa
 # from src.modules.auth.models import User
 from src.enums import InvitationStatus
-from typing import TYPE_CHECKING
 
 
-if TYPE_CHECKING:
-    from src.modules.auth.models import User
+
+
+    
 class Organization(CommonModel, table=True):
+    __tablename__ = 'sys_organizations'
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     slug: str = Field(default=None, max_length=255, nullable=False, index=True)
@@ -20,21 +21,22 @@ class Organization(CommonModel, table=True):
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
-    user: "User" = Relationship(back_populates="members")
 
     @classmethod
     async def get_orgs_by_user_id(cls, user_id: int):
+        from src.modules.auth.models import User
         async with async_session() as session:
             statement = (
                 select(cls)
                 .join(OrganizationMember)
                 .where(OrganizationMember.user_id == user_id)
             )
-            return session.exec(statement).all()
+            result = await session.execute(statement)
+            return result.scalars().all()
 
 
 class OrganizationRole(CommonModel, table=True):
-    __tablename__ = "sys_organization_roles"
+    __tablename__ ="sys_organization_roles"
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     identifier: str = Field(default=None, max_length=500, nullable=False, index=True)
@@ -44,8 +46,9 @@ class OrganizationRole(CommonModel, table=True):
     member_roles: list["OrganizationMemberRole"] = Relationship(back_populates="role")
 
 
+
 class OrganizationMember(CommonModel, table=True):
-    __tablename__ = "sys_organization_members"
+    __tablename__ = 'sys_organization_members'
     user_id: int = Field(foreign_key="sys_users.id", nullable=False)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
 
@@ -56,19 +59,24 @@ class OrganizationMember(CommonModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[OrganizationMember.user_id]"},
     )
 
-    member_roles: list["OrganizationMemberRole"] = Relationship(back_populates="member")
+    member_roles: List["OrganizationMemberRole"] = Relationship(back_populates="member")
+
+
 
 
 class OrganizationMemberRole(CommonModel, table=True):
-    __tablename__ = "sys_organization_member_roles"
+    __tablename__ ='sys_organization_member_roles'
     member_id: int = Field(foreign_key="sys_organization_members.id", nullable=False)
     role_id: int = Field(foreign_key="sys_organization_roles.id", nullable=False)
     member: Optional[OrganizationMember] = Relationship(back_populates="member_roles")
     role: Optional[OrganizationRole] = Relationship(back_populates="member_roles")
 
+    class Config:
+        table_name = "sys_organization_member_roles"
+
 
 class OrganizationInvitation(CommonModel, table=True):
-    __tablename__ = "sys_organization_invitations"
+    __tablename__ = 'sys_organization_invitations'
     email: str = Field(max_length=255, index=True)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
 
@@ -82,3 +90,4 @@ class OrganizationInvitation(CommonModel, table=True):
             "foreign_keys": "[OrganizationInvitation.invited_by_id]"
         }
     )
+

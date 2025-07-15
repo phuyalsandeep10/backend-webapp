@@ -12,7 +12,7 @@ print(f"db user {DATABASE_URL}")
 engine = create_async_engine(url=DATABASE_URL)
 
 async_session = async_sessionmaker(
-    engine=engine, class_=AsyncSession, expire_on_commit=False
+    bind=engine, class_=AsyncSession, expire_on_commit=False
 )
 
 # Create sync engine for Alembic migrations

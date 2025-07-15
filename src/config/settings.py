@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     API_PREFIX: str
     ALLOWED_HOSTS: List[str] = ["*"]
     SECRET_KEY: str
-    ALGORITHM: str = "H256"
+    ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     KAFKA_BOOTSTRAP_SERVERS: str
     KAFKA_TOPIC: str
