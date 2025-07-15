@@ -1,14 +1,13 @@
 from fastapi import Request, WebSocket
-from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse
 
 from src.app import app
 from src.config.broadcast import broadcast
 from src.routers import add_routers
-from src.utils.exceptions import validation_exception_handler
+from src.utils.exceptions import add_exceptions_handler
 
 # custom exceptions
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
+add_exceptions_handler(app)
 
 
 # adding routers
