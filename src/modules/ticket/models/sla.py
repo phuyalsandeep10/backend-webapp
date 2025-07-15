@@ -9,7 +9,7 @@ from .ticket import Ticket
 
 
 class SLA(BaseModel, table=True):
-    __tablename__ = "sla"
+    __tablename__: str = "sla"  # type: ignore
 
     name: str = Field(nullable=True)
     response_time: int = Field(nullable=False)
