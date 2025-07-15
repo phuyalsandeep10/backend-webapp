@@ -1,14 +1,8 @@
-<<<<<<< HEAD
 from logging.config import fileConfig
 from sqlmodel import SQLModel
 from alembic import context
 import sys
 import os
-=======
-import os
-import sys
-from logging.config import fileConfig
->>>>>>> ce98f7b (refactor : loaded all tickets model)
 
 from alembic import context
 from dotenv import load_dotenv
@@ -19,13 +13,8 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "config"))
 )
 
-<<<<<<< HEAD
 from src.config.database import sync_engine
 
-=======
-from src.config.database import DATABASE_URL
-from src.modules.ticket import models
->>>>>>> ce98f7b (refactor : loaded all tickets model)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -59,14 +48,9 @@ def run_migrations_offline() -> None:
     Calls to context.execute() here emit the given string to the
     script output.
     """
-<<<<<<< HEAD
     
     # Use the sync engine for offline migrations
     connectable = sync_engine
-=======
-
-    connectable = create_engine(DATABASE_URL)
->>>>>>> ce98f7b (refactor : loaded all tickets model)
 
     # Acquire a connection from the Engine
     with connectable.connect() as connection:
