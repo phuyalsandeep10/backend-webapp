@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, Field, select
 import sqlalchemy as sa
 from datetime import datetime
 from typing import Type, TypeVar, List, Optional, Any
-from src.config.database import async_session
+from src.db.config import async_session
 from sqlalchemy import or_, and_
 
 T = TypeVar("T")
@@ -14,18 +14,17 @@ def case_insensitive(attributes):
     def decorator(func):
         async def wrapper(self, *args, **kwargs):
             async with async_session() as session:
-                query = session.query(self)
+                statement = select(type(self))
                 for key, value in kwargs.items():
                     if key in attributes:
-                        query = query.filter(
-                            func.lower(getattr(self, key)) == value.lower()
+                        statement = statement.where(
+                            func.lower(getattr(type(self), key)) == value.lower()
                         )
                     else:
-                        query = query.filter(getattr(self, key) == value)
-                return await query.all()
-
+                        statement = statement.where(getattr(type(self), key) == value)
+                result = await session.execute(statement)
+                return result.scalars().all()
         return wrapper
-
     return decorator
 
 
@@ -42,7 +41,7 @@ class BaseModel(SQLModel):
         async with async_session() as session:
             statement = select(cls)
             result = await session.execute(statement)
-            return result.scalars().all()
+            return list( result.scalars().all())
 
     @classmethod
     async def create(cls: Type[T], **kwargs) -> T:
@@ -89,7 +88,7 @@ class BaseModel(SQLModel):
             statement = statement.limit(limit)
         async with async_session() as session:
             result = await session.execute(statement)
-            return result.scalars().all() if result else []
+            return list(result.scalars().all()) if result else []
 
     @classmethod
     async def find_one(
@@ -143,13 +142,15 @@ def parse_where(cls, where_dict):
     for key, value in where_dict.items():
         if key == "OR" and isinstance(value, list):
             # Handle OR conditions
-            or_conditions = [parse_where(cls, cond) for cond in value]
-            expressions.append(or_(*or_conditions))
+            or_conditions = [c for c in (parse_where(cls, cond) for cond in value) if c is not None]
+            if or_conditions:
+                expressions.append(or_(*or_conditions))
 
         elif key == "AND" and isinstance(value, list):
             # Handle AND conditions
-            and_conditions = [parse_where(cls, cond) for cond in value]
-            expressions.append(and_(*and_conditions))
+            and_conditions = [c for c in (parse_where(cls, cond) for cond in value) if c is not None]
+            if and_conditions:
+                expressions.append(and_(*and_conditions))
 
         elif isinstance(value, dict):
 
@@ -203,8 +204,11 @@ def parse_where(cls, where_dict):
 
 
 class Permission(BaseModel, table=True):
-    __tablename__ = "sys_permissions"
+
     name: str = Field(max_length=255, nullable=False, index=True)
     identifier: str = Field(max_length=255, nullable=False, unique=True, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
+    class Config:
+        table_name = 'sys_permissions'

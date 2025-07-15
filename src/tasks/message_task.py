@@ -7,7 +7,7 @@ from confluent_kafka import Consumer, Producer
 from sqlmodel import Session
 
 from src.config.celery import celery_app
-from src.config.database import async_session
+from src.db.config import async_session
 from src.config.settings import settings
 
 # Import models from centralized location to avoid circular imports

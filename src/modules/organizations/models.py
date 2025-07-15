@@ -2,14 +2,16 @@ from src.common.models import CommonModel
 from sqlmodel import Field, Relationship, SQLModel, Session, select
 from typing import Optional
 
-from src.config.database import async_session
+from src.db.config import async_session
 import sqlalchemy as sa
-from src.modules.auth.models import User
+# from src.modules.auth.models import User
 from src.enums import InvitationStatus
+from typing import TYPE_CHECKING
 
 
+if TYPE_CHECKING:
+    from src.modules.auth.models import User
 class Organization(CommonModel, table=True):
-    __tablename__ = "sys_organizations"
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     slug: str = Field(default=None, max_length=255, nullable=False, index=True)
@@ -18,6 +20,7 @@ class Organization(CommonModel, table=True):
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
+    user: "User" = Relationship(back_populates="members")
 
     @classmethod
     async def get_orgs_by_user_id(cls, user_id: int):

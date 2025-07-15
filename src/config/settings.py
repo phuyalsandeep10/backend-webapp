@@ -5,6 +5,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
 
+    # def __init__(self):
+    #     super()
     PROJECT_NAME: str
     PROJECT_VERSION: str
     PROJECT_DESCRIPTION: str
@@ -23,7 +25,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int
     SMTP_USERNAME: str
     SMTP_PASSWORD: str
-    GOOGLE_CLIENT_ID: int
+    GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
     FRONTEND_URL: str
     CELEREY_BROKER_URL: str

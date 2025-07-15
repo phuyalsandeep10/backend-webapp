@@ -16,6 +16,7 @@ from .dto import (
     ResetPasswordDto,
     RefreshTokenDto,
 )
+
 from .models import User, EmailVerification, RefreshToken
 
 
@@ -43,6 +44,7 @@ from .dto import (
 )
 from .models import EmailVerification, RefreshToken, User
 from .social_auth import oauth
+from jose.exceptions import JWTError
 
 router = APIRouter()
 
@@ -63,13 +65,17 @@ async def create_token(user):
 
 
 @router.post("/login")
-async def login(request: LoginDto):
+async def user_login(request: LoginDto):
 
     user = await User.find_one(where={"email": request.email})
+    
 
     # Check if user exists
     if not user:
         raise HTTPException(status_code=401, detail="Email not found")
+    
+    if not user.password:
+        raise HTTPException(status_code=401,detail="Invalid Password")
 
     if not compare_password(user.password, request.password):
         raise HTTPException(status_code=401, detail="Invalid password")
@@ -116,7 +122,7 @@ async def refresh_token(body: RefreshTokenDto):
             raise HTTPException(status_code=404, detail="User not found")
         access_token = create_access_token(data={"sub": user.email})
         return {"access_token": access_token}
-    except jwt.JWTError:
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
@@ -155,9 +161,11 @@ async def register(request: RegisterDto):
 async def get_auth_user(user=Depends(get_current_user)):
     try:
         user = await User.get(user.id)
+        if not user:
+            raise HTTPException(status_code=404, detail="Not found")
         del user.password  # Remove password from the response
         return user
-    except jwt.JWTError:
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
@@ -194,7 +202,7 @@ async def verify_email_token(body: VerifyEmailTokenDto):
 
 @router.post("/reset-password")
 async def reset_password(
-    body: ResetPasswordDto, user: User = Depends(get_current_user)
+    body: ResetPasswordDto, user = Depends(get_current_user)
 ):
 
     user = await User.find_one({"email": user.email})

@@ -93,6 +93,7 @@ def invalidate_user_cache(token: str):
     user_cache.pop(token, None)
 
 
+
 def create_access_token(
     data: dict, expires_duration: int = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 ):
