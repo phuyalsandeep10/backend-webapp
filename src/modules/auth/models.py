@@ -5,11 +5,13 @@ import sqlalchemy as sa
 from src.common.models import BaseModel
 from src.modules.organizations.models import OrganizationMember
 from src.modules.team.models import TeamMember
+from src.modules.chat.models.conversation import ConversationMember
+from src.modules.chat.models.message import Message
 
 
 
 class User(BaseModel, table=True):
-    __tablename__ = 'sys_users'
+    __tablename__ = 'sys_users' #type:ignore
     email: str = Field(unique=True, index=True)
     name: Optional[str] = None
     image: Optional[str] = None
@@ -40,10 +42,10 @@ class User(BaseModel, table=True):
         back_populates="user",
         sa_relationship_kwargs={"foreign_keys": "[Message.user_id]"},
     )
-    # conversations: List["ConversationMember"] = Relationship(
-    #     back_populates="user",
-    #     sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},
-    # )
+    conversation_members: List["ConversationMember"] = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},
+    )
 
     # class Config:
     #     table_name = "sys_users"

@@ -7,12 +7,18 @@ import sqlalchemy as sa
 # from src.modules.auth.models import User
 from src.enums import InvitationStatus
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.modules.auth.models import User
+    from src.modules.chat.models.conversation import Conversation
+    from src.modules.chat.models.customer import Customer
 
 
 
     
 class Organization(CommonModel, table=True):
-    __tablename__ = 'sys_organizations'
+    __tablename__ = 'sys_organizations' #type:ignore
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     slug: str = Field(default=None, max_length=255, nullable=False, index=True)
@@ -24,7 +30,6 @@ class Organization(CommonModel, table=True):
 
     @classmethod
     async def get_orgs_by_user_id(cls, user_id: int):
-        from src.modules.auth.models import User
         async with async_session() as session:
             statement = (
                 select(cls)

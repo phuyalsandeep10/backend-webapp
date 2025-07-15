@@ -289,6 +289,8 @@ async def get_invitations(user=Depends(get_current_user)):
 async def login(request: Request):
     redirect_uri = request.url_for("auth")
 
+    oauth.google.
+
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
