@@ -6,20 +6,20 @@ from src.common.models import CommonModel
 
 # Import auth models first (they have no dependencies on other modules)
 from src.modules.auth.models import User
+from src.modules.chat.models.conversation import Conversation, ConversationMember
+
+# Import chat models
+from src.modules.chat.models.customer import Customer
+from src.modules.chat.models.message import Message, MessageAttachment
 
 # Import organization models
 from src.modules.organizations.models import (
     Organization,
-    OrganizationRole,
+    OrganizationInvitation,
     OrganizationMember,
     OrganizationMemberRole,
-    OrganizationInvitation,
+    OrganizationRole,
 )
-
-# Import chat models
-from src.modules.chat.models.customer import Customer
-from src.modules.chat.models.conversation import Conversation, ConversationMember
-from src.modules.chat.models.message import Message, MessageAttachment
 
 # Import team models
 from src.modules.team.models import Team, TeamMember
