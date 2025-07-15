@@ -1,22 +1,28 @@
 from typing import Union
 
-from fastapi import FastAPI
-from src.config.settings import settings
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Query,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
-from src.modules.auth.router import router as auth_router
-from src.modules.organizations.router import router as organization_router
-from src.modules.admin.router import router as admin_router
-from src.modules.team.router import router as team_router
-from src.modules.chat.routers.customer import router as customer_router
-from src.modules.chat.routers.conversation import router as conversation_router
-from src.app import app
 from fastapi.responses import HTMLResponse
-from fastapi import Request
-from src.modules.chat.websocket import route
+
+from src.app import app
 from src.config.broadcast import broadcast
-
-from fastapi import WebSocket, WebSocketDisconnect, Query, HTTPException, status
-
+from src.config.settings import settings
+from src.modules.admin.router import router as admin_router
+from src.modules.auth.router import router as auth_router
+from src.modules.chat.routers.conversation import router as conversation_router
+from src.modules.chat.routers.customer import router as customer_router
+from src.modules.chat.websocket import route
+from src.modules.organizations.router import router as organization_router
+from src.modules.team.router import router as team_router
+from src.modules.ticket.routers import router as ticket_router
 
 # ...existing code...
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
@@ -25,6 +31,7 @@ app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(team_router, prefix="/teams", tags=["teams"])
 app.include_router(customer_router, prefix="/customers", tags=["customers"])
 app.include_router(conversation_router, prefix="/conversations", tags=["conversations"])
+app.include_router(ticket_router, tags=["ticket"])
 
 # ...existing code...
 
