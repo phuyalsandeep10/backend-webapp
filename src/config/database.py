@@ -10,8 +10,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database URL - supports both sync and async
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/chatboq_db")
-ASYNC_DATABASE_URL = os.getenv("ASYNC_DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/chatboq_db")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/chatboq_db"
+)
+ASYNC_DATABASE_URL = os.getenv(
+    "ASYNC_DATABASE_URL",
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/chatboq_db",
+)
 
 
 print(f"Database URL: {DATABASE_URL}")
@@ -35,25 +40,26 @@ async_engine = create_async_engine(
 
 # Create async session factory
 async_session = async_sessionmaker(
-    async_engine,
-    class_=AsyncSession,
-    expire_on_commit=False
+    async_engine, class_=AsyncSession, expire_on_commit=False
 )
+
 
 async def init_db():
     """Initialize database tables."""
     # Import all models to ensure they are registered with SQLAlchemy
     import src.models
-    
+
     async with async_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
+
 
 def init_db_sync():
     """Initialize database tables synchronously (for Alembic)."""
     # Import all models to ensure they are registered with SQLAlchemy
     import src.models
-    
+
     SQLModel.metadata.create_all(sync_engine)
+
 
 async def get_session():
     """Get a new async SQLModel session."""
@@ -62,6 +68,7 @@ async def get_session():
             yield session
         finally:
             await session.close()
+
 
 # Dependency for FastAPI
 SessionDep = Annotated[AsyncSession, Depends(get_session)]

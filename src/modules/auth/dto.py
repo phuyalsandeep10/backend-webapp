@@ -1,29 +1,30 @@
 from pydantic import BaseModel, EmailStr
 
+
 class LoginDto(BaseModel):
     email: EmailStr
     password: str
 
+
 class RegisterDto(LoginDto):
-    name:str
+    name: str
+
 
 class VerifyEmailTokenDto(BaseModel):
     token: str
     email: EmailStr
 
+
 class VerifyEmailDto(BaseModel):
     email: EmailStr
+
 
 class ForgotPasswordVerifyDto(VerifyEmailTokenDto):
     new_password: str
 
 
 class RefreshTokenDto(BaseModel):
-    token: str # this is the refresh token to be validated
-    
-
-
-
+    token: str  # this is the refresh token to be validated
 
 
 class ResetPasswordDto(BaseModel):

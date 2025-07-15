@@ -10,8 +10,9 @@ from fastapi.concurrency import run_until_first_complete
 from typing import Optional
 
 
-def get_room(conversationId:int):
+def get_room(conversationId: int):
     return f"conversation-{conversationId}"
+
 
 async def ws_send(ws: WebSocket, conversation_id: int, user_id: Optional[int] = None):
     try:
@@ -19,16 +20,17 @@ async def ws_send(ws: WebSocket, conversation_id: int, user_id: Optional[int] = 
         async with broadcast.subscribe(channel=room) as subscriber:
             async for event in subscriber:
                 data = json.loads(event.message)
-                if data.get('type') == 'message':
+                if data.get("type") == "message":
                     print("save messages in redis subscriber")
                     save_messages.delay(
                         conversation_id=conversation_id,
-                        data={"message": data.get('message')},
-                        user_id=user_id
+                        data={"message": data.get("message")},
+                        user_id=user_id,
                     )
                 await ws.send_text(event.message)
     except Exception as e:
         print(f"Exception in ws_send: {e}")
+
 
 async def ws_recv(ws: WebSocket, conversation_id: int, user_id: Optional[int] = None):
     try:
@@ -38,16 +40,15 @@ async def ws_recv(ws: WebSocket, conversation_id: int, user_id: Optional[int] = 
     except Exception as e:
         print(f"Exception in ws_recv: {e}")
 
+
 @app.websocket("/ws/{conversation_id}")
-async def ws_room(websocket: WebSocket, conversation_id: int,token:str = Query(None)):
+async def ws_room(websocket: WebSocket, conversation_id: int, token: str = Query(None)):
     # Get or create the room for this conversation
-    role = 'agent'
+    role = "agent"
 
     room = rooms.setdefault(conversation_id, Room())
 
     await room.connect(websocket, role)
-
-    
 
     user_id = None
 
@@ -56,21 +57,32 @@ async def ws_room(websocket: WebSocket, conversation_id: int,token:str = Query(N
         if not user:
             await websocket.close(code=4401)
             return
-        role = 'user'
+        role = "user"
         user_id = user.id
-
-    
 
     try:
         await run_until_first_complete(
-            (ws_recv, {"ws": websocket, "conversation_id": conversation_id, "user_id": user_id}),
-            (ws_send, {"ws": websocket, "conversation_id": conversation_id, "user_id": user_id}),
+            (
+                ws_recv,
+                {
+                    "ws": websocket,
+                    "conversation_id": conversation_id,
+                    "user_id": user_id,
+                },
+            ),
+            (
+                ws_send,
+                {
+                    "ws": websocket,
+                    "conversation_id": conversation_id,
+                    "user_id": user_id,
+                },
+            ),
         )
         # while True:
         #     data = await websocket.receive_text()
         #     data = json.loads(data)
 
-           
         #     if data.get('type') =='message':
         #         print("save messages in websocket")
         #         save_messages.delay(
@@ -86,4 +98,3 @@ async def ws_room(websocket: WebSocket, conversation_id: int,token:str = Query(N
     except Exception as e:
         print(f"WebSocket error: {e}")
         room.disconnect(websocket)
-

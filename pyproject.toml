@@ -24,4 +24,5 @@ dependencies = [
     "websockets>=15.0.1",
     "confluent-kafka>=2.3.0",
     "asyncpg>=0.30.0",
+    "black>=25.1.0",
 ]

@@ -1,4 +1,3 @@
-
 from sqlmodel import SQLModel, Field, select
 import sqlalchemy as sa
 from datetime import datetime
@@ -7,8 +6,8 @@ from src.config.database import async_session
 from sqlalchemy import or_, and_
 
 
+T = TypeVar("T")
 
-T = TypeVar('T')
 
 def case_insensitive(attributes):
     def decorator(func):
@@ -17,12 +16,17 @@ def case_insensitive(attributes):
                 query = session.query(self)
                 for key, value in kwargs.items():
                     if key in attributes:
-                        query = query.filter(func.lower(getattr(self, key)) == value.lower())
+                        query = query.filter(
+                            func.lower(getattr(self, key)) == value.lower()
+                        )
                     else:
                         query = query.filter(getattr(self, key) == value)
                 return await query.all()
+
         return wrapper
+
     return decorator
+
 
 class BaseModel(SQLModel):
     id: int = Field(default=None, primary_key=True)
@@ -98,6 +102,7 @@ class BaseModel(SQLModel):
             result = await session.execute(statement)
             return result.scalars().first() if result else None
 
+
 class CommonModel(BaseModel):
     active: bool = Field(default=True, nullable=False)
     created_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
@@ -105,12 +110,15 @@ class CommonModel(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
-        # arbitrary_types_allowed = True
+    # arbitrary_types_allowed = True
 
-def query_statement(cls: Type[T],
+
+def query_statement(
+    cls: Type[T],
     where: Optional[dict] = None,
     joins: Optional[list[Any]] = None,
-    options: Optional[list[Any]] = None):
+    options: Optional[list[Any]] = None,
+):
     """Builds a SQLAlchemy select statement for the given model."""
     statement = select(cls)
     if joins:
@@ -120,74 +128,70 @@ def query_statement(cls: Type[T],
         for opt in options:
             statement = statement.options(opt)
     if where:
-        where_expr = parse_where(cls,where)
+        where_expr = parse_where(cls, where)
         if where_expr is not None:
             statement = statement.where(where_expr)
     return statement
 
 
-
-def parse_where(cls,where_dict):
+def parse_where(cls, where_dict):
     if not where_dict:
         return None
     expressions = []
 
     for key, value in where_dict.items():
-        if key == 'OR' and isinstance(value, list):
+        if key == "OR" and isinstance(value, list):
             # Handle OR conditions
-            or_conditions = [parse_where(cls,cond) for cond in value]
+            or_conditions = [parse_where(cls, cond) for cond in value]
             expressions.append(or_(*or_conditions))
 
-        elif key == 'AND' and isinstance(value, list):
+        elif key == "AND" and isinstance(value, list):
             # Handle AND conditions
-            and_conditions = [parse_where(cls,cond) for cond in value]
+            and_conditions = [parse_where(cls, cond) for cond in value]
             expressions.append(and_(*and_conditions))
 
         elif isinstance(value, dict):
-            
-            if 'mode' in value:
-                if value['mode'] == 'insensitive':
+
+            if "mode" in value:
+                if value["mode"] == "insensitive":
                     # Handle case-insensitive conditions
                     col = getattr(cls, key)
-                    expressions.append(sa.func.lower(col) == value['value'].lower())
+                    expressions.append(sa.func.lower(col) == value["value"].lower())
                     continue
-                    
-            #Support for contains, gt, lt, etc.
 
+            # Support for contains, gt, lt, etc.
 
             for op, v in value.items():
 
-                
                 col = getattr(cls, key)
-                
-                if op == 'contains':
+
+                if op == "contains":
                     expressions.append(getattr(cls, key).ilike(f"%{v}%"))
 
-
-                elif op == 'icontains':
+                elif op == "icontains":
                     expressions.append(sa.func.lower(col).contains(v.lower()))
-                
-                elif op =='startswith':
+
+                elif op == "startswith":
                     expressions.append(col.startswith(v))
-                
-                elif op == 'istartswith':
+
+                elif op == "istartswith":
                     expressions.append(sa.func.lower(col).startswith(v.lower()))
-                
-                elif op == 'endswith':
+
+                elif op == "endswith":
                     expressions.append(col.endswith(v))
-                
-                elif op == 'iendswith':
+
+                elif op == "iendswith":
                     expressions.append(sa.func.lower(col).endswith(v.lower()))
 
-                elif op == 'gt':
+                elif op == "gt":
                     expressions.append(getattr(cls, key) > v)
-                elif op == 'lt':
+                elif op == "lt":
                     expressions.append(getattr(cls, key) < v)
-                elif op == 'gte':
+                elif op == "gte":
                     expressions.append(getattr(cls, key) >= v)
-                elif op == 'lte':
+                elif op == "lte":
                     expressions.append(getattr(cls, key) <= v)
-                elif op == 'ne':
+                elif op == "ne":
                     expressions.append(getattr(cls, key) != v)
                 else:
                     raise ValueError(f"Unsupported operator: {op}")
@@ -197,10 +201,9 @@ def parse_where(cls,where_dict):
     return and_(*expressions) if expressions else None
 
 
-class Permission(BaseModel,table=True):
+class Permission(BaseModel, table=True):
     __tablename__ = "sys_permissions"
     name: str = Field(max_length=255, nullable=False, index=True)
     identifier: str = Field(max_length=255, nullable=False, unique=True, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-

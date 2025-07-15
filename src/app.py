@@ -15,7 +15,7 @@ from src.config.broadcast import broadcast
 # Replace with your friend's IP or use "*" for all origins (less secure)
 
 app = FastAPI(
-    on_startup=[broadcast.connect], 
+    on_startup=[broadcast.connect],
     on_shutdown=[broadcast.disconnect],
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
@@ -25,16 +25,12 @@ app = FastAPI(
 
 # CORS middleware
 app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.ALLOWED_HOSTS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        
-    )
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_HOSTS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Session middleware for OAuth
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=settings.SECRET_KEY
-)
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)

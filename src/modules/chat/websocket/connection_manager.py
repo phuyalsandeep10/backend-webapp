@@ -3,6 +3,7 @@ from typing import Dict, Set
 
 app = FastAPI()
 
+
 class Room:
     def __init__(self):
         self.customers: Set[WebSocket] = set()
@@ -12,7 +13,7 @@ class Room:
         await websocket.accept()
         if role == "agent":
             self.customers.add(websocket)
-            
+
         else:
             self.staff.add(websocket)
 
@@ -21,7 +22,7 @@ class Room:
         self.staff.discard(websocket)
 
     async def broadcast(self, sender_role: str, message: str):
- 
+
         targets = self.staff if sender_role == "agent" else self.customers
 
         for conn in set(targets):
@@ -29,5 +30,6 @@ class Room:
                 await conn.send_text(message)
             except:
                 targets.discard(conn)
+
 
 rooms: Dict[str, Room] = {}

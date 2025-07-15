@@ -5,12 +5,14 @@ from email.mime.text import MIMEText
 from typing import Optional, List
 from dotenv import load_dotenv
 import os
+
 load_dotenv()
 
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
 
 class EmailSender:
     def __init__(
@@ -68,9 +70,10 @@ class EmailSender:
                 server.login(self.username, self.password)
             server.sendmail(self.sender, all_recipients, msg.as_string())
 
+
 mail_sender = EmailSender(
     smtp_server=SMTP_SERVER,
-    sender='sirjantmg99@gmail.com',
+    sender="sirjantmg99@gmail.com",
     smtp_port=SMTP_PORT,
     username=SMTP_USERNAME,
     password=SMTP_PASSWORD,

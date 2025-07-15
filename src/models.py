@@ -13,7 +13,7 @@ from src.modules.organizations.models import (
     OrganizationRole,
     OrganizationMember,
     OrganizationMemberRole,
-    OrganizationInvitation
+    OrganizationInvitation,
 )
 
 # Import chat models
@@ -32,7 +32,7 @@ __all__ = [
     "CommonModel",
     "User",
     "Organization",
-    "OrganizationRole", 
+    "OrganizationRole",
     "OrganizationMember",
     "OrganizationMemberRole",
     "OrganizationInvitation",
@@ -44,4 +44,4 @@ __all__ = [
     "Team",
     "TeamMember",
     # "Admin"
-] 
+]

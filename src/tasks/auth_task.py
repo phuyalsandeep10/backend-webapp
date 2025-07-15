@@ -9,9 +9,8 @@ def send_verification_email(email: str, token: str):
         subject="Email Verification",
         recipients=[email],
         body_html=f"<p>Email Verification Token: {token}</p>",
-        body_text="This is a test email."
+        body_text="This is a test email.",
     )
-
 
 
 @celery_app.task
@@ -21,6 +20,5 @@ def send_forgot_password_email(email: str, token: str):
         subject="Forgot Password",
         recipients=[email],
         body_html=f"<p>Forgot Password Token: {token}</p>",
-        body_text="This is a test email."
+        body_text="This is a test email.",
     )
-
