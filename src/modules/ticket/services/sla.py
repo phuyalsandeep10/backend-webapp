@@ -1,6 +1,4 @@
-from fastapi import HTTPException, Request, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import Index
+from fastapi import HTTPException, status
 
 from src.common.dependencies import get_user_by_token
 from src.modules.ticket.models import SLA
@@ -44,6 +42,10 @@ class SLAServices:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 message="Token required in standard format",
             )
+
+        except HTTPException:
+
+            raise
 
         except Exception as e:
             print(e)

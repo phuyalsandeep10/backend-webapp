@@ -8,7 +8,7 @@ from src.modules.ticket.models.ticket import Ticket
 
 
 class Contact(BaseModel, table=True):
-    __tablename__ = "contacts"
+    __tablename__ = "contacts"  # type:ignore
 
     email: EmailStr = Field(nullable=False, unique=True)
     first_name: str = Field(nullable=False)
