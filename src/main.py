@@ -1,39 +1,18 @@
-from typing import Union
-
-from fastapi import (
-    FastAPI,
-    HTTPException,
-    Query,
-    Request,
-    WebSocket,
-    WebSocketDisconnect,
-    status,
-)
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request, WebSocket
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse
 
 from src.app import app
 from src.config.broadcast import broadcast
-from src.config.settings import settings
-from src.modules.admin.router import router as admin_router
-from src.modules.auth.router import router as auth_router
-from src.modules.chat.routers.conversation import router as conversation_router
-from src.modules.chat.routers.customer import router as customer_router
-from src.modules.chat.websocket import route
-from src.modules.organizations.router import router as organization_router
-from src.modules.team.router import router as team_router
-from src.modules.ticket.routers import router as ticket_router
+from src.routers import add_routers
+from src.utils.exceptions import validation_exception_handler
 
-# ...existing code...
-app.include_router(auth_router, prefix="/auth", tags=["auth"])
-app.include_router(organization_router, prefix="/organizations", tags=["organizations"])
-app.include_router(admin_router, prefix="/admin", tags=["Admin"])
-app.include_router(team_router, prefix="/teams", tags=["teams"])
-app.include_router(customer_router, prefix="/customers", tags=["customers"])
-app.include_router(conversation_router, prefix="/conversations", tags=["conversations"])
-app.include_router(ticket_router, tags=["ticket"])
+# custom exceptions
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
-# ...existing code...
+
+# adding routers
+add_routers(app)
 
 
 async def sender(websocket: WebSocket, room: str):
