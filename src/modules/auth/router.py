@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, Request
+from datetime import datetime, timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from jose import jwt
 from datetime import datetime, timedelta
@@ -27,7 +29,20 @@ from src.models import OrganizationInvitation
 from src.tasks import send_verification_email, send_forgot_password_email
 from .social_auth import oauth
 from src.config.settings import settings
+from src.modules.organizations.models import OrganizationInvitation
+from src.tasks import send_forgot_password_email, send_verification_email
 
+from .dto import (
+    ForgotPasswordVerifyDto,
+    LoginDto,
+    RefreshTokenDto,
+    RegisterDto,
+    ResetPasswordDto,
+    VerifyEmailDto,
+    VerifyEmailTokenDto,
+)
+from .models import EmailVerification, RefreshToken, User
+from .social_auth import oauth
 
 router = APIRouter()
 

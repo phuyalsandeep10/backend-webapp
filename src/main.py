@@ -1,32 +1,17 @@
-from typing import Union
-
-from fastapi import FastAPI
-from src.config.settings import settings
-from fastapi.middleware.cors import CORSMiddleware
-from src.modules.auth.router import router as auth_router
-from src.modules.organizations.router import router as organization_router
-from src.modules.admin.router import router as admin_router
-from src.modules.team.router import router as team_router
-from src.modules.chat.routers.customer import router as customer_router
-from src.modules.chat.routers.conversation import router as conversation_router
-from src.app import app
+from fastapi import Request, WebSocket
 from fastapi.responses import HTMLResponse
-from fastapi import Request
-from src.modules.chat.websocket import route
+
+from src.app import app
 from src.config.broadcast import broadcast
+from src.routers import add_routers
+from src.utils.exceptions import add_exceptions_handler
 
-from fastapi import WebSocket, WebSocketDisconnect, Query, HTTPException, status
+# custom exceptions
+add_exceptions_handler(app)
 
 
-# ...existing code...
-app.include_router(auth_router, prefix="/auth", tags=["auth"])
-app.include_router(organization_router, prefix="/organizations", tags=["organizations"])
-app.include_router(admin_router, prefix="/admin", tags=["Admin"])
-app.include_router(team_router, prefix="/teams", tags=["teams"])
-app.include_router(customer_router, prefix="/customers", tags=["customers"])
-app.include_router(conversation_router, prefix="/conversations", tags=["conversations"])
-
-# ...existing code...
+# adding routers
+add_routers(app)
 
 
 async def sender(websocket: WebSocket, room: str):

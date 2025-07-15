@@ -4,7 +4,14 @@ from alembic import context
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'config')))
+from alembic import context
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlmodel import SQLModel
+
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "config"))
+)
 
 from src.config.database import sync_engine
 
