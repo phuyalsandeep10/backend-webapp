@@ -1,16 +1,17 @@
-from src.config.celery import celery_app
-from typing import Optional
-from confluent_kafka import Producer
 import json
-from src.config.settings import settings
-from confluent_kafka import Consumer
 import time
-from src.config.database import async_session
-from sqlmodel import Session
+from typing import Optional
+
 from celery.schedules import crontab
+from confluent_kafka import Consumer, Producer
+from sqlmodel import Session
+
+from src.config.celery import celery_app
+from src.config.database import async_session
+from src.config.settings import settings
 
 # Import models from centralized location to avoid circular imports
-from src.models import Message, Conversation
+from src.models import Conversation, Message
 
 
 @celery_app.task
