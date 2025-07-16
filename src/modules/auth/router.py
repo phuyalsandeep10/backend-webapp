@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from src.common.dependencies import get_current_user
 from fastapi import Depends
 from src.common.dependencies import create_access_token
+from src.enums import ProviderEnum
 from .dto import (
     LoginDto,
     RegisterDto,
@@ -292,12 +293,18 @@ async def oauth_login(request: Request, provider: str):
     redirect_uri = request.url_for("oauth_callback", provider=provider)
     return await getattr(oauth, provider).authorize_redirect(request, redirect_uri)
 
+
+
+
+
 @router.get("/oauth/{provider}/callback")
-async def oauth_callback(request: Request, provider: str):
+async def oauth_callback(request: Request, provider:ProviderEnum):
     if provider not in ["google", "apple"]:
         raise HTTPException(status_code=400, detail="Unsupported provider")
     client = getattr(oauth, provider)
+    
     token = await client.authorize_access_token(request)
+
     userinfo = await client.parse_id_token(request, token) if provider == "apple" else token.get("userinfo")
     # Fallback for Apple: userinfo may be in token['id_token'] (decode if needed)
     # Fallback for Google: userinfo may be in token['userinfo'] or fetch from userinfo_endpoint
@@ -319,4 +326,6 @@ async def oauth_callback(request: Request, provider: str):
         )
     tokens = await create_token(user)
     redirect_url = f"{settings.FRONTEND_URL}/login?access_token={tokens.get('access_token')}&refresh_token={tokens.get('refresh_token')}"
+
+
     return RedirectResponse(redirect_url)
