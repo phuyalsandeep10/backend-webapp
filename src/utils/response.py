@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import status
 from fastapi.responses import JSONResponse
@@ -17,9 +17,9 @@ class CustomResponse:
 
     @staticmethod
     def error(
-        data: Any = None,
-        message: str = "Unsuccessful",
-        status_code: int = status.HTTP_400_BAD_REQUEST,
+        data: Optional[Any] = None,
+        message: Optional[str] = "Unsuccessful",
+        status_code: Optional[int] = status.HTTP_400_BAD_REQUEST,
     ):
         content = {"success": False, "message": message, "data": data}
         return JSONResponse(status_code=status_code, content=content)

@@ -15,9 +15,10 @@ async_session = async_sessionmaker(
     bind=engine, class_=AsyncSession, expire_on_commit=False
 )
 
+SYNC_DATABASE_URL = f"postgresql://postgres:postgres@localhost:5432/chatboq_db"
 # Create sync engine for Alembic migrations
 sync_engine = create_engine(
-    DATABASE_URL,
+    SYNC_DATABASE_URL,
     echo=False,
     pool_pre_ping=True,
     pool_recycle=300,
