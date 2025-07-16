@@ -18,13 +18,13 @@ bearer_scheme = HTTPBearer()
 async def get_user_by_token(token: str):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=settings.ALGORITHM)
-        print("payload", payload)
+
         if token in user_cache:
             return user_cache[token]
 
         user_email: str = payload.get("sub")
-        user = await User.find_one(where={"email": user_email})
 
+        user = await User.find_one(where={"email": user_email})
         return user
     except Exception as e:
         print("expired", e)
@@ -91,7 +91,6 @@ def update_user_cache(token: str, user: User):
 
 def invalidate_user_cache(token: str):
     user_cache.pop(token, None)
-
 
 
 def create_access_token(
