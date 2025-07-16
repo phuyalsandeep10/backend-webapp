@@ -1,8 +1,7 @@
-from fastapi import APIRouter
-from fastapi import FastAPI, Request, Header, Depends, Query
-import httpx
+from fastapi import APIRouter,status,Depends, HTTPException
 from src.common.dependencies import get_current_user
 from src.models import Conversation, Customer, Message
+
 
 
 router = APIRouter()
@@ -17,7 +16,7 @@ async def get_conversations(user=Depends(get_current_user)):
 @router.get("{conversation_id}")
 async def conversation_detail(conversation_id: int, user=Depends(get_current_user)):
     organizationId = user.attributes.get("organization_id")
-    record = Conversation.get(conversation_id)
+    record = await Conversation.get(conversation_id)
 
     if not record or record.organization_id != organizationId:
         raise HTTPException(
@@ -25,7 +24,7 @@ async def conversation_detail(conversation_id: int, user=Depends(get_current_use
         )
 
     customer = await Customer.get(record.customer_id)
-    # record = record.dict()
+
     return {"conversation": record, "customer": customer}
 
 

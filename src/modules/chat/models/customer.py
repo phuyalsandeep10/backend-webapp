@@ -1,10 +1,15 @@
 from src.common.models import CommonModel
 from sqlmodel import Field, Relationship
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.modules.organizations.models import Organization
+    from src.modules.chat.models.conversation import Conversation
+    from src.modules.chat.models.message import Message
 
 
 class Customer(CommonModel, table=True):
-    __tablename__ = "org_customers"
+    __tablename__ = "org_customers" #type:ignore
     name: str = Field(max_length=255, index=True, nullable=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)

@@ -47,8 +47,6 @@ class User(BaseModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},
     )
 
-    # class Config:
-    #     table_name = "sys_users"
 
 
     
@@ -56,7 +54,7 @@ class User(BaseModel, table=True):
 
 
 class RefreshToken(BaseModel, table=True):
-    __tablename__ = 'refresh_tokens'
+    __tablename__ = 'refresh_tokens' #type:ignore
     user_id: int = Field(foreign_key="sys_users.id")
     token: str = Field(unique=True, index=True)
     active: bool = Field(default=False)
@@ -67,7 +65,7 @@ class RefreshToken(BaseModel, table=True):
 
 
 class EmailVerification(BaseModel, table=True):
-    __tablename__ = 'email_verifications'
+    __tablename__ = 'email_verifications' #type:ignore
     user_id: int = Field(foreign_key="sys_users.id")
     token: str = Field(unique=True, index=True)
     is_used: bool = Field(default=False)

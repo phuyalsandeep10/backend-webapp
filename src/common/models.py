@@ -7,8 +7,6 @@ from sqlalchemy import or_, and_
 
 T = TypeVar("T")
 
-T = TypeVar("T")
-
 
 def case_insensitive(attributes):
     def decorator(func):
@@ -204,7 +202,7 @@ def parse_where(cls, where_dict):
 
 
 class Permission(BaseModel, table=True):
-
+    __tablename__ = "sys_permissions" #type:ignore
     name: str = Field(max_length=255, nullable=False, index=True)
     identifier: str = Field(max_length=255, nullable=False, unique=True, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)

@@ -4,7 +4,7 @@ from src.config.mail import mail_sender
 
 @celery_app.task
 def send_invitation_email(email: str):
-    print(f"Sending invitation email to {email} with token {token}")
+    print(f"Sending invitation email to {email}")
     mail_sender.send(
         subject="Invitation",
         recipients=[email],

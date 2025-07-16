@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
+
+    APPLE_CLIENT_ID: str
+    APPLE_CLIENT_SECRET: str
+    
     FRONTEND_URL: str
     CELEREY_BROKER_URL: str
 

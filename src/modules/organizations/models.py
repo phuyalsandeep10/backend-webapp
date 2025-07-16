@@ -41,7 +41,7 @@ class Organization(CommonModel, table=True):
 
 
 class OrganizationRole(CommonModel, table=True):
-    __tablename__ ="sys_organization_roles"
+    __tablename__ ="sys_organization_roles" # type:ignore
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     identifier: str = Field(default=None, max_length=500, nullable=False, index=True)
@@ -53,7 +53,7 @@ class OrganizationRole(CommonModel, table=True):
 
 
 class OrganizationMember(CommonModel, table=True):
-    __tablename__ = 'sys_organization_members'
+    __tablename__ = 'sys_organization_members' #type:ignore
     user_id: int = Field(foreign_key="sys_users.id", nullable=False)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
 
@@ -70,7 +70,7 @@ class OrganizationMember(CommonModel, table=True):
 
 
 class OrganizationMemberRole(CommonModel, table=True):
-    __tablename__ ='sys_organization_member_roles'
+    __tablename__ ='sys_organization_member_roles' #type:ignore
     member_id: int = Field(foreign_key="sys_organization_members.id", nullable=False)
     role_id: int = Field(foreign_key="sys_organization_roles.id", nullable=False)
     member: Optional[OrganizationMember] = Relationship(back_populates="member_roles")
@@ -81,7 +81,7 @@ class OrganizationMemberRole(CommonModel, table=True):
 
 
 class OrganizationInvitation(CommonModel, table=True):
-    __tablename__ = 'sys_organization_invitations'
+    __tablename__ = 'sys_organization_invitations' #type:ignore
     email: str = Field(max_length=255, index=True)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
 

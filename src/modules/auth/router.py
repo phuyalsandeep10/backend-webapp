@@ -285,28 +285,30 @@ async def get_invitations(user=Depends(get_current_user)):
     return await OrganizationInvitation.filter(where={"email": user.email})
 
 
-@router.get("/oauth/google")
-async def login(request: Request):
-    redirect_uri = request.url_for("auth")
+@router.get("/oauth/{provider}")
+async def oauth_login(request: Request, provider: str):
+    if provider not in ["google", "apple"]:
+        raise HTTPException(status_code=400, detail="Unsupported provider")
+    redirect_uri = request.url_for("oauth_callback", provider=provider)
+    return await getattr(oauth, provider).authorize_redirect(request, redirect_uri)
 
-    oauth.google.
+@router.get("/oauth/{provider}/callback")
+async def oauth_callback(request: Request, provider: str):
+    if provider not in ["google", "apple"]:
+        raise HTTPException(status_code=400, detail="Unsupported provider")
+    client = getattr(oauth, provider)
+    token = await client.authorize_access_token(request)
+    userinfo = await client.parse_id_token(request, token) if provider == "apple" else token.get("userinfo")
+    # Fallback for Apple: userinfo may be in token['id_token'] (decode if needed)
+    # Fallback for Google: userinfo may be in token['userinfo'] or fetch from userinfo_endpoint
 
-    return await oauth.google.authorize_redirect(request, redirect_uri)
-
-
-@router.get("/oauth/google/callback")
-async def auth(request: Request):
-
-    response = await oauth.google.authorize_access_token(request)
-
-    userinfo = response.get("userinfo")
-
-    name = userinfo.get("email")
+    # Extract user info (adjust as needed)
     email = userinfo.get("email")
-    image = userinfo.get("picture")
+    name = userinfo.get("name") or userinfo.get("email")
+    image = userinfo.get("picture", "")
 
+    # Your user creation/login logic here
     user = await User.find_one(where={"email": email})
-
     if not user:
         user = await User.create(
             email=email,
@@ -315,9 +317,6 @@ async def auth(request: Request):
             email_verified_at=datetime.utcnow(),
             password="",
         )
-
     tokens = await create_token(user)
-
     redirect_url = f"{settings.FRONTEND_URL}/login?access_token={tokens.get('access_token')}&refresh_token={tokens.get('refresh_token')}"
-
     return RedirectResponse(redirect_url)

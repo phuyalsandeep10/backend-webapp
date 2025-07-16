@@ -15,17 +15,17 @@ from src.models import Conversation, Message
 
 
 @celery_app.task
-def save_messages(conversation_id: int, data: dict, user_id: Optional[int] = None):
+async def save_messages(conversation_id: int, data: dict, user_id: Optional[int] = None):
     try:
         print(f"saving message in queue for conversation_id: {conversation_id}")
 
         # Debug: Check if there are any conversations in the database
-        all_conversations = Conversation.get_all()
+        all_conversations = await Conversation.get_all()
         print(f"Total conversations in database: {len(all_conversations)}")
         if all_conversations:
             print(f"Available conversation IDs: {[c.id for c in all_conversations]}")
 
-        conversation = Conversation.get(conversation_id)
+        conversation = await Conversation.get(conversation_id)
 
         if not conversation:
             print(f"Conversation with ID {conversation_id} not found")
@@ -165,18 +165,18 @@ def run_kafka_consumer_batch(
         if batch:
             print(f"[KAFKA CONSUMER] Flushing final batch of {len(batch)} messages...")
             try:
-                with Session(engine) as session:
-                    objs = [
-                        Message(
-                            conversation_id=m["conversation_id"],
-                            content=m["message"],
-                            customer_id=None,
-                            user_id=m.get("user_id"),
-                        )
-                        for m in batch
-                    ]
-                    session.add_all(objs)
-                    session.commit()
+                # with Session(engine) as session:
+                #     objs = [
+                #         Message(
+                #             conversation_id=m["conversation_id"],
+                #             content=m["message"],
+                #             customer_id=None,
+                #             user_id=m.get("user_id"),
+                #         )
+                #         for m in batch
+                #     ]
+                #     session.add_all(objs)
+                #     session.commit()
                 print(
                     f"[KAFKA CONSUMER] Successfully inserted final batch of {len(batch)} messages."
                 )
@@ -225,15 +225,15 @@ def check_kafka_messages():
 
                 # Save message to database immediately
                 try:
-                    with Session(engine) as session:
-                        message = Message(
-                            conversation_id=data["conversation_id"],
-                            content=data["message"],
-                            customer_id=None,
-                            user_id=data.get("user_id"),
-                        )
-                        session.add(message)
-                        session.commit()
+                    # with Session(engine) as session:
+                    #     message = Message(
+                    #         conversation_id=data["conversation_id"],
+                    #         content=data["message"],
+                    #         customer_id=None,
+                    #         user_id=data.get("user_id"),
+                    #     )
+                    #     session.add(message)
+                    #     session.commit()
                     print(f"[CHECK KAFKA] Saved message to database")
                     messages_found += 1
                 except Exception as e:
@@ -318,21 +318,22 @@ def consume_kafka_messages_batch(
         if batch:
             print(f"[PERIODIC TASK] Inserting {len(batch)} messages into database...")
             try:
-                with Session(engine) as session:
-                    objs = [
-                        Message(
-                            conversation_id=m["conversation_id"],
-                            content=m["message"],
-                            customer_id=None,  # Set if available in payload
-                            user_id=m.get("user_id"),
-                        )
-                        for m in batch
-                    ]
-                    session.add_all(objs)
-                    session.commit()
-                print(
-                    f"[PERIODIC TASK] Successfully inserted batch of {len(batch)} messages from Kafka."
-                )
+                pass
+                # with Session(engine) as session:
+                #     objs = [
+                #         Message(
+                #             conversation_id=m["conversation_id"],
+                #             content=m["message"],
+                #             customer_id=None,  # Set if available in payload
+                #             user_id=m.get("user_id"),
+                #         )
+                #         for m in batch
+                #     ]
+                #     session.add_all(objs)
+                #     session.commit()
+                # print(
+                #     f"[PERIODIC TASK] Successfully inserted batch of {len(batch)} messages from Kafka."
+                # )
             except Exception as e:
                 print(f"[PERIODIC TASK] Error inserting messages into database: {e}")
                 import traceback

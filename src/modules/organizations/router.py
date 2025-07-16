@@ -73,6 +73,9 @@ async def create_organization(
             user.id, attributes={"organization_id": organization.id}
         )
 
+        if not user:
+            raise HTTPException(404,"Not found User")
+
         update_user_cache(token, user)
 
     return organization
@@ -161,6 +164,9 @@ async def set_organization(
     organization = await Organization.get(organization_id)
 
     user = await User.update(user.id, attributes={"organization_id": organization_id})
+
+    if not user:
+        raise HTTPException(404,"Not found User")
 
     if not organization:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -320,7 +326,9 @@ async def reject_invitation(invitation_id: int, user=Depends(get_current_user)):
 @router.post("/invitation/{invitation_id}/accept")
 async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
 
-    invitation = OrganizationInvitation.get(invitation_id)
+    invitation = await OrganizationInvitation.get(invitation_id)
+    if not invitation:
+        raise HTTPException(404,"Not Found")
 
     if user.email != invitation.email:
         raise HTTPException(403, "Don't have authorization")
@@ -328,19 +336,19 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
     if not invitation:
         raise HTTPException(404, "Not found")
 
-    OrganizationInvitation.update(invitation.id, status=InvitationStatus.ACCEPTED)
+    await OrganizationInvitation.update(invitation.id, status=InvitationStatus.ACCEPTED)
 
-    member = OrganizationMember.find_one(
+    member = await OrganizationMember.find_one(
         {"organization_id": invitation.organization_id, "user_id": user.id}
     )
 
     if not member:
-        member = OrganizationMember.create(
+        member = await OrganizationMember.create(
             organization_id=invitation.organization_id, user_id=user.id
         )
 
     for role_id in invitation.role_ids:
-        OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
+       await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
 
     return {"message": "Successfully approved"}
 

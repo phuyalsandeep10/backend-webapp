@@ -102,8 +102,11 @@ async def assign_team_member(
         member = await TeamMember.find_one(
             where={"team_id": team_id, "user_id": user_id}
         )
+
+        if not member:
+            raise HTTPException(404,"Not found")
         if member:
-            member.delete()
+           await TeamMember.delete(team_id)
 
     return {"message": "Team members updated successfully"}
 
@@ -112,7 +115,7 @@ async def assign_team_member(
 async def get_team_members(team_id: int):
 
     members = await TeamMember.filter(
-        where={"team_id": team_id}, options=[selectinload(TeamMember.user)]
+        where={"team_id": team_id}, options=[selectinload(TeamMember.user)] #type:ignore
     )
 
     return [
