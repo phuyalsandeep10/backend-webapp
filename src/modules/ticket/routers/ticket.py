@@ -12,6 +12,7 @@ router = APIRouter()
 async def register_ticket(
     payload: CreateTicketSchema, authorization: Annotated[str, Header()]
 ):
+    print("Triggered")
     return await ticket_services.create_ticket(payload, authorization)
 
 

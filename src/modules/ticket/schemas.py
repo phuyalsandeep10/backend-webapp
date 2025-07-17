@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import status
 from fastapi.exceptions import HTTPException
@@ -14,6 +14,7 @@ class CreateTicketSchema(BaseModel):
     status: StatusEnum = StatusEnum.OPEN
     sla_id: int
     contact_id: int
+    assignees: Optional[List[int]] = None
 
     model_config = {"extra": "forbid"}
 

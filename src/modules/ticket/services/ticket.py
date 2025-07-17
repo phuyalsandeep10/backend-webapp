@@ -1,8 +1,11 @@
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql import select
 
 from src.common.dependencies import get_user_by_token
+from src.db.deps import get_db
+from src.modules.auth.models import User
 from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import SLA
 from src.modules.ticket.models.ticket import Ticket
@@ -14,6 +17,7 @@ class TicketServices:
 
     async def create_ticket(self, payload: CreateTicketSchema, authorization: str):
         try:
+
             token = authorization.split(" ")[1]
             if authorization.split(" ")[0] != "Bearer":
                 raise IndexError()
@@ -25,13 +29,13 @@ class TicketServices:
             user_id = user.id
             data = dict(payload)
             data["issued_by"] = user_id
+            users = []
+            for assigne_id in data["assignees"]:
+                usr = await User.find_one(where={"id": assigne_id})
+                users.append(usr)
 
-            ticket = await Ticket.create(**dict(data))
-            if ticket is None:
-                return cr.error(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    message="Error while creating a ticket",
-                )
+            data["assignees"] = users
+            await Ticket.create(**dict(data))
 
             return cr.success(
                 status_code=status.HTTP_201_CREATED,
@@ -47,7 +51,11 @@ class TicketServices:
     async def list_tickets(self):
         try:
             all_tickets = await Ticket.get_all(
-                [selectinload(Ticket.sla), selectinload(Ticket.contacts)]
+                [
+                    selectinload(Ticket.sla),
+                    selectinload(Ticket.contacts),
+                    selectinload(Ticket.assignees),
+                ]
             )
             tickets = [ticket.to_dict() for ticket in all_tickets]
             return cr.success(
