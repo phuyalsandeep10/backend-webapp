@@ -23,7 +23,7 @@ class SLAServices:
             data = dict(payload)
             data["issued_by"] = user_id
 
-            sla = await SLA.create(**dict(payload))
+            sla = await SLA.create(**data)
 
             if not sla:
                 return cr.error(
@@ -34,7 +34,7 @@ class SLAServices:
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully registered the Service Level Agreement",
-                data=dict(sla),
+                data=sla.to_dict(),
             )
         except IndexError as e:
             print(e)
@@ -52,6 +52,24 @@ class SLAServices:
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while registering Service Level Agreement",
+            )
+
+    async def get_all_sla(self):
+        try:
+            sla_list = await SLA.get_all()
+            slas = [s.to_dict() for s in sla_list]
+
+            return cr.success(
+                status_code=status.HTTP_200_OK,
+                message="Successfully fetched all the sla",
+                data=slas,
+            )
+
+        except Exception as e:
+            print(e)
+            return cr.error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                message="Error while fetching Service Level Agreement",
             )
 
 
