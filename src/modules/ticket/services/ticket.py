@@ -1,10 +1,7 @@
-from fastapi import Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload
-from sqlalchemy.sql import select
 
 from src.common.dependencies import get_user_by_token
-from src.db.deps import get_db
 from src.modules.auth.models import User
 from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import SLA
@@ -98,6 +95,15 @@ class TicketServices:
                 contact = await Contact.create(**dict(data["contact"]))
                 data["contact_id"] = contact.id
 
+            # assignes
+
+            users = []
+            for assigne_id in data["assignees"]:
+                usr = await User.find_one(where={"id": assigne_id})
+                users.append(usr)
+
+            data["assignees"] = users
+
             ticket_data = {
                 "title": data["title"],
                 "description": data["description"],
@@ -106,6 +112,7 @@ class TicketServices:
                 "sla_id": data["sla_id"],
                 "contact_id": data["contact_id"],
                 "issued_by": data["issued_by"],
+                "assignees": data["assignees"],
             }
 
             ticket = await Ticket.create(**ticket_data)

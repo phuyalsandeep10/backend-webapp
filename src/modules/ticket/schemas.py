@@ -47,6 +47,7 @@ class FullCreateTicketSchema(BaseModel):
     contact_id: Optional[int] = None
     sla: Optional[CreateSLASchema] = None
     contact: Optional[CreateContactSchema] = None
+    assignees: Optional[List[int]] = None
 
     @model_validator(mode="after")
     def check_sla_fields(self):
