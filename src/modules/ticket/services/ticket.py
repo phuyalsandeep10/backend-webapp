@@ -100,7 +100,6 @@ class TicketServices:
                 "issued_by": data["issued_by"],
             }
 
-            print("The ticket", ticket_data)
             ticket = await Ticket.create(**ticket_data)
             if ticket is None:
                 return cr.error(
