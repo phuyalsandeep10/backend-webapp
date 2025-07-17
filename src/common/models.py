@@ -1,9 +1,13 @@
-from sqlmodel import SQLModel, Field, select
-import sqlalchemy as sa
 from datetime import datetime
-from typing import Type, TypeVar, List, Optional, Any
+from typing import Any, List, Optional, Type, TypeVar, Union
+
+import sqlalchemy as sa
+from sqlalchemy import and_, or_
+from sqlalchemy.orm import Load, selectinload
+from sqlalchemy.orm.strategy_options import _AbstractLoad
+from sqlmodel import Field, SQLModel, select
+
 from src.db.config import async_session
-from sqlalchemy import or_, and_
 
 T = TypeVar("T")
 
@@ -22,7 +26,9 @@ def case_insensitive(attributes):
                         statement = statement.where(getattr(type(self), key) == value)
                 result = await session.execute(statement)
                 return result.scalars().all()
+
         return wrapper
+
     return decorator
 
 
@@ -35,11 +41,21 @@ class BaseModel(SQLModel):
             return await session.get(cls, id)
 
     @classmethod
-    async def get_all(cls: Type[T]) -> List[T]:
+    async def get_all(
+        cls: Type[T],
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
+    ) -> List[T]:
         async with async_session() as session:
             statement = select(cls)
+            if related_items:
+                # related_items can be a single selectinload() or a list of them
+                if isinstance(related_items, list):
+                    for item in related_items:
+                        statement = statement.options(item)
+                else:
+                    statement = statement.options(related_items)
             result = await session.execute(statement)
-            return list( result.scalars().all())
+            return list(result.scalars().all())
 
     @classmethod
     async def create(cls: Type[T], **kwargs) -> T:
@@ -140,13 +156,17 @@ def parse_where(cls, where_dict):
     for key, value in where_dict.items():
         if key == "OR" and isinstance(value, list):
             # Handle OR conditions
-            or_conditions = [c for c in (parse_where(cls, cond) for cond in value) if c is not None]
+            or_conditions = [
+                c for c in (parse_where(cls, cond) for cond in value) if c is not None
+            ]
             if or_conditions:
                 expressions.append(or_(*or_conditions))
 
         elif key == "AND" and isinstance(value, list):
             # Handle AND conditions
-            and_conditions = [c for c in (parse_where(cls, cond) for cond in value) if c is not None]
+            and_conditions = [
+                c for c in (parse_where(cls, cond) for cond in value) if c is not None
+            ]
             if and_conditions:
                 expressions.append(and_(*and_conditions))
 
@@ -202,11 +222,11 @@ def parse_where(cls, where_dict):
 
 
 class Permission(BaseModel, table=True):
-    __tablename__ = "sys_permissions" #type:ignore
+    __tablename__ = "sys_permissions"  # type:ignore
     name: str = Field(max_length=255, nullable=False, index=True)
     identifier: str = Field(max_length=255, nullable=False, unique=True, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
     class Config:
-        table_name = 'sys_permissions'
+        table_name = "sys_permissions"
