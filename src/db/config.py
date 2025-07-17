@@ -5,6 +5,7 @@ from sqlmodel import create_engine
 from src.config.settings import settings
 
 DATABASE_URL = f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@localhost:5432/{settings.DB_NAME}"
+SYNC_DATABASE_URL = f"postgresql://{settings.DB_USER}:{settings.DB_PASSWORD}@localhost:5432/{settings.DB_NAME}"
 
 engine = create_async_engine(url=DATABASE_URL)
 
@@ -14,7 +15,7 @@ async_session = async_sessionmaker(
 
 # Create sync engine for Alembic migrations
 sync_engine = create_engine(
-    DATABASE_URL,
+    SYNC_DATABASE_URL,
     echo=False,
     pool_pre_ping=True,
     pool_recycle=300,
