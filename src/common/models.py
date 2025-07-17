@@ -22,7 +22,9 @@ def case_insensitive(attributes):
                         statement = statement.where(getattr(type(self), key) == value)
                 result = await session.execute(statement)
                 return result.scalars().all()
+
         return wrapper
+
     return decorator
 
 
@@ -39,7 +41,7 @@ class BaseModel(SQLModel):
         async with async_session() as session:
             statement = select(cls)
             result = await session.execute(statement)
-            return list( result.scalars().all())
+            return list(result.scalars().all())
 
     @classmethod
     async def create(cls: Type[T], **kwargs) -> T:
@@ -140,13 +142,17 @@ def parse_where(cls, where_dict):
     for key, value in where_dict.items():
         if key == "OR" and isinstance(value, list):
             # Handle OR conditions
-            or_conditions = [c for c in (parse_where(cls, cond) for cond in value) if c is not None]
+            or_conditions = [
+                c for c in (parse_where(cls, cond) for cond in value) if c is not None
+            ]
             if or_conditions:
                 expressions.append(or_(*or_conditions))
 
         elif key == "AND" and isinstance(value, list):
             # Handle AND conditions
-            and_conditions = [c for c in (parse_where(cls, cond) for cond in value) if c is not None]
+            and_conditions = [
+                c for c in (parse_where(cls, cond) for cond in value) if c is not None
+            ]
             if and_conditions:
                 expressions.append(and_(*and_conditions))
 
@@ -202,11 +208,11 @@ def parse_where(cls, where_dict):
 
 
 class Permission(BaseModel, table=True):
-    __tablename__ = "sys_permissions" #type:ignore
+    __tablename__ = "sys_permissions"  # type:ignore
     name: str = Field(max_length=255, nullable=False, index=True)
     identifier: str = Field(max_length=255, nullable=False, unique=True, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
     class Config:
-        table_name = 'sys_permissions'
+        table_name = "sys_permissions"

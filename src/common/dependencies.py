@@ -25,6 +25,7 @@ async def get_user_by_token(token: str):
         user_email: str = payload.get("sub")
 
         user = await User.find_one(where={"email": user_email})
+
         return user
     except Exception as e:
         print("expired", e)

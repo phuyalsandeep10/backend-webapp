@@ -11,6 +11,11 @@ from src.modules.chat.models.message import Message
 
 class User(BaseModel, table=True):
     __tablename__ = "sys_users"  # type:ignore
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._is_2fa_verified = False
+
     email: str = Field(unique=True, index=True)
     name: Optional[str] = None
     image: Optional[str] = None
@@ -18,13 +23,14 @@ class User(BaseModel, table=True):
     password: str = Field(default="", min_length=8, max_length=128)
     is_active: bool = Field(default=True)
     two_fa_enabled: bool = Field(default=False)
-    two_fa_secret: Optional[str] = Field(default=None, max_length=255)
-    two_fa_auth_url: Optional[str] = Field(default=None, max_length=512)
+    two_fa_secret: str = Field(default=None)
+    two_fa_auth_url: str = Field(default=None)
 
     email_verified_at: datetime = Field(
         default=None,
         nullable=True,
     )
+
     is_superuser: bool = Field(default=False)
     is_staff: bool = Field(default=False)
     attributes: Optional[dict] = Field(default=None, sa_column=sa.Column(sa.JSON))
@@ -51,6 +57,14 @@ class User(BaseModel, table=True):
         back_populates="user",
         sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},
     )
+
+    @property
+    def is_2fa_verified(self):
+        return getattr(self, "_is_2fa_verified", False)
+
+    @is_2fa_verified.setter
+    def is_2fa_verified(self, value):
+        self._is_2fa_verified = value
 
 
 class RefreshToken(BaseModel, table=True):

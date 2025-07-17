@@ -4,7 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from jose import jwt
 from datetime import datetime, timedelta
-from src.common.dependencies import get_current_user
+from src.common.dependencies import (
+    get_current_user,
+    update_user_cache,
+    get_bearer_token,
+)
+
 from fastapi import Depends
 from src.common.dependencies import create_access_token
 from src.enums import ProviderEnum
@@ -18,6 +23,7 @@ from .dto import (
     ResetPasswordDto,
     RefreshTokenDto,
     VerifyTwoFAOtpDto,
+    UserSchema,
 )
 from src.utils.response import CustomResponse as cr
 
@@ -49,6 +55,7 @@ from .dto import (
 from .models import EmailVerification, RefreshToken, User
 from .social_auth import oauth
 from jose.exceptions import JWTError
+from fastapi.encoders import jsonable_encoder
 
 router = APIRouter()
 
@@ -83,7 +90,15 @@ async def user_login(request: LoginDto):
     if not compare_password(user.password, request.password):
         raise HTTPException(status_code=401, detail="Invalid password")
 
-    return await create_token(user)
+    data = await create_token(user)
+    # return data
+
+    # remove password
+    del user.password
+    user_schema = UserSchema.model_validate(user, from_attributes=True)
+    return cr.success(
+        data=jsonable_encoder({"user": user_schema, "is_2fa_verified": False, **data})
+    )
 
 
 @router.post("/logout")
@@ -124,6 +139,7 @@ async def refresh_token(body: RefreshTokenDto):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         access_token = create_access_token(data={"sub": user.email})
+
         return {"access_token": access_token}
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -163,11 +179,20 @@ async def register(request: RegisterDto):
 @router.get("/me")
 async def get_auth_user(user=Depends(get_current_user)):
     try:
-        user = await User.get(user.id)
-        if not user:
+        userDb = await User.get(user.id)
+
+        if not userDb:
             raise HTTPException(status_code=404, detail="Not found")
-        del user.password  # Remove password from the response
-        return user
+        # Remove password from the response
+        user_schema = UserSchema.model_validate(userDb, from_attributes=True)
+        return cr.success(
+            data=jsonable_encoder(
+                {
+                    "user": user_schema,
+                    "is_2fa_verified": user.is_2fa_verified,
+                }
+            )
+        )
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
@@ -317,6 +342,7 @@ async def oauth_callback(request: Request, provider: ProviderEnum):
 
     # Your user creation/login logic here
     user = await User.find_one(where={"email": email})
+
     if not user:
         user = await User.create(
             email=email,
@@ -325,6 +351,7 @@ async def oauth_callback(request: Request, provider: ProviderEnum):
             email_verified_at=datetime.utcnow(),
             password="",
         )
+
     tokens = await create_token(user)
     redirect_url = f"{settings.FRONTEND_URL}/login?access_token={tokens.get('access_token')}&refresh_token={tokens.get('refresh_token')}"
 
@@ -334,14 +361,15 @@ async def oauth_callback(request: Request, provider: ProviderEnum):
 @router.post("/2fa-otp/generate")
 async def geerate_two_fa_otp(user=Depends(get_current_user)):
     otp_secrete = pyotp.random_base32()
+    print(f"user {user.email}")
 
     otp_auth_url = pyotp.totp.TOTP(otp_secrete).provisioning_uri(
-        name=user.get("email"), issuer_name=settings.PROJECT_NAME
+        name=user.email, issuer_name=settings.PROJECT_NAME
     )
 
     await User.update(
-        user.get("id"),
-        two_fa_secrete=otp_secrete,
+        user.id,
+        two_fa_secret=otp_secrete,
         two_fa_auth_url=otp_auth_url,
         two_fa_enabled=True,
     )
@@ -350,12 +378,24 @@ async def geerate_two_fa_otp(user=Depends(get_current_user)):
 
 
 @router.post("/2fa-verfiy")
-async def verify_two_fa(body: VerifyTwoFAOtpDto, user=Depends(get_current_user)):
-    two_fa_secrete = user.get("two_fa_secrete")
+async def verify_two_fa(
+    body: VerifyTwoFAOtpDto,
+    user=Depends(get_current_user),
+    token: str = Depends(get_bearer_token),
+):
+    userDb = await User.get(user.id)
+    if not userDb:
+        return {}
+
+    two_fa_secrete = userDb.two_fa_secret
     totp = pyotp.TOTP(two_fa_secrete)
+
     message = "Token is invalid or user doesn't exist"
+
     if not totp.verify(body.token):
         return cr.error(message=message)
+    user.is_2fa_verified = True
+    update_user_cache(token, user)
 
     return cr.success()
 
@@ -363,6 +403,6 @@ async def verify_two_fa(body: VerifyTwoFAOtpDto, user=Depends(get_current_user))
 @router.post("/2fa-disabled")
 async def disable_two_fa(user=Depends(get_current_user)):
 
-    await User.update(user.get("id"), two_fa_enabled=False)
+    await User.update(user.id, two_fa_enabled=False)
 
     return cr.success()
