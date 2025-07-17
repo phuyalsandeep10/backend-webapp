@@ -17,4 +17,4 @@ async def register_sla(
 
 @router.get("/sla", summary="List all Service Level agreements")
 async def get_all():
-    return await sla_service.get_all_sla()
+    return await sla_service.list_slas()

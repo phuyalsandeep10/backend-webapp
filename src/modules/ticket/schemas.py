@@ -8,7 +8,6 @@ class CreateTicketSchema(BaseModel):
     description: str
     priority: PriorityEnum = PriorityEnum.MEDIUM
     status: StatusEnum = StatusEnum.OPEN
-    issued_by: int
     sla_id: int
     contact_id: int
 

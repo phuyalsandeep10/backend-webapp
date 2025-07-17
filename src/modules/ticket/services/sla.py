@@ -54,7 +54,7 @@ class SLAServices:
                 message="Error while registering Service Level Agreement",
             )
 
-    async def get_all_sla(self):
+    async def list_slas(self):
         try:
             sla_list = await SLA.get_all()
             slas = [s.to_dict() for s in sla_list]

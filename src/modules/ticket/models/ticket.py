@@ -26,5 +26,15 @@ class Ticket(BaseModel, table=True):
     sla: "SLA" = Relationship(back_populates="tickets")
     contacts: "Contact" = Relationship(back_populates="tickets")
 
+    def to_dict(self):
+        return {
+            "title": self.title,
+            "description": self.description,
+            "priority": self.priority,
+            "status": self.status,
+            "sla": self.sla.to_dict(),
+            "contact": self.contacts.to_dict(),
+        }
+
     def __str__(self):
         return self.title
