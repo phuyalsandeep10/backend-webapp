@@ -1,7 +1,7 @@
 """ticket contact sla model added
 
 Revision ID: 6aeb44fec6af
-Revises: d1a4b37f9381
+revises: d1a4b37f9381
 Create Date: 2025-07-13 14:00:12.067921
 
 """
