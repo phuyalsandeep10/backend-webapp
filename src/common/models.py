@@ -1,9 +1,13 @@
-from sqlmodel import SQLModel, Field, select
-import sqlalchemy as sa
 from datetime import datetime
-from typing import Type, TypeVar, List, Optional, Any
+from typing import Any, List, Optional, Type, TypeVar, Union
+
+import sqlalchemy as sa
+from sqlalchemy import and_, or_
+from sqlalchemy.orm import Load, selectinload
+from sqlalchemy.orm.strategy_options import _AbstractLoad
+from sqlmodel import Field, SQLModel, select
+
 from src.db.config import async_session
-from sqlalchemy import or_, and_
 
 T = TypeVar("T")
 
@@ -37,9 +41,19 @@ class BaseModel(SQLModel):
             return await session.get(cls, id)
 
     @classmethod
-    async def get_all(cls: Type[T]) -> List[T]:
+    async def get_all(
+        cls: Type[T],
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
+    ) -> List[T]:
         async with async_session() as session:
             statement = select(cls)
+            if related_items:
+                # related_items can be a single selectinload() or a list of them
+                if isinstance(related_items, list):
+                    for item in related_items:
+                        statement = statement.options(item)
+                else:
+                    statement = statement.options(related_items)
             result = await session.execute(statement)
             return list(result.scalars().all())
 

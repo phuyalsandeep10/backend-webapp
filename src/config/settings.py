@@ -4,9 +4,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """
+    Contains all the environment variables
+    """
 
-    # def __init__(self):
-    #     super()
     PROJECT_NAME: str
     PROJECT_VERSION: str
     PROJECT_DESCRIPTION: str
@@ -30,11 +31,11 @@ class Settings(BaseSettings):
 
     APPLE_CLIENT_ID: str
     APPLE_CLIENT_SECRET: str
-    
+
     FRONTEND_URL: str
     CELEREY_BROKER_URL: str
 
     model_config = SettingsConfigDict(env_file=".env")
 
 
-settings = Settings()
+settings = Settings()  # type:ignore

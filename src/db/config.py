@@ -1,14 +1,11 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
 from sqlmodel import create_engine
-
 
 from src.config.settings import settings
 
-DATABASE_URL = f"postgresql+asyncpg://postgres:postgres@localhost:5432/chatboq_db"
+DATABASE_URL = f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@localhost:5432/{settings.DB_NAME}"
 
-print(f"db user {DATABASE_URL}")
 engine = create_async_engine(url=DATABASE_URL)
 
 async_session = async_sessionmaker(

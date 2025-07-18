@@ -47,7 +47,7 @@ class ContactServices:
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     message="Error while listing contacts",
                 )
-            contacts_data = [contact.dict() for contact in contacts]
+            contacts_data = [contact.to_dict() for contact in contacts]
 
             return cr.success(
                 status_code=status.HTTP_200_OK,

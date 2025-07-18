@@ -1,11 +1,8 @@
-from logging.config import fileConfig
-from sqlmodel import SQLModel
-from alembic import context
-import sys
 import os
+import sys
+from logging.config import fileConfig
 
 from alembic import context
-
 from sqlmodel import SQLModel
 
 sys.path.append(
@@ -13,7 +10,6 @@ sys.path.append(
 )
 
 from src.db.config import sync_engine
-
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -47,7 +43,7 @@ def run_migrations_offline() -> None:
     Calls to context.execute() here emit the given string to the
     script output.
     """
-    
+
     # Use the sync engine for offline migrations
     connectable = sync_engine
 
@@ -63,7 +59,7 @@ def run_migrations_offline() -> None:
 def run_migrations_online():
     # Use the sync engine for online migrations
     connectable = sync_engine
-    
+
     with connectable.connect() as connection:
         context.configure(
             connection=connection,

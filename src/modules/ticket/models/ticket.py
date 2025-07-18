@@ -1,15 +1,17 @@
-from typing import List
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, ForeignKey
 from sqlmodel import Field, Relationship
 
 from src.common.models import BaseModel
-from src.modules.auth.models import User
 from src.modules.ticket.enums import PriorityEnum, StatusEnum
+
+if TYPE_CHECKING:
+    from src.modules.ticket.models import SLA, Contact
 
 
 class Ticket(BaseModel, table=True):
-    __tablename__ = "tickets"
+    __tablename__ = "tickets"  # type:ignore
 
     title: str
     description: str
@@ -23,6 +25,16 @@ class Ticket(BaseModel, table=True):
     )
     sla: "SLA" = Relationship(back_populates="tickets")
     contacts: "Contact" = Relationship(back_populates="tickets")
+
+    def to_dict(self):
+        return {
+            "title": self.title,
+            "description": self.description,
+            "priority": self.priority,
+            "status": self.status,
+            "sla": self.sla.to_dict(),
+            "contact": self.contacts.to_dict(),
+        }
 
     def __str__(self):
         return self.title
