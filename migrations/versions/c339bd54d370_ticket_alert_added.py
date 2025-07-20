@@ -23,6 +23,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.create_table(
         "ticket_alerts",
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column(
             "ticket_id",
             sa.Integer,
