@@ -21,12 +21,12 @@ async def list_tickets():
     return await ticket_services.list_tickets()
 
 
-@router.get("/{ticket_id}", summary="Get a ticket")
+@router.get("/{ticket_id:int}", summary="Get a ticket")
 async def get_ticket(ticket_id: int):
     return await ticket_services.get_ticket(ticket_id)
 
 
-@router.delete("/{ticket_id}", summary="Delete a ticket")
+@router.delete("/{ticket_id:int}", summary="Delete a ticket")
 async def delete_ticket(ticket_id: int):
     return await ticket_services.delete_ticket(ticket_id)
 

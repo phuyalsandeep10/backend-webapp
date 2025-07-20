@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter
 
-from src.db.deps import get_db
 from src.modules.ticket.schemas import CreateContactSchema
 from src.modules.ticket.services.contact import contact_service
 
@@ -15,7 +13,13 @@ async def register_contact(payload: CreateContactSchema):
 
 @router.get("/contacts", summary="Get all contacts")
 async def list_contacts():
+    print("Triggered")
     return await contact_service.list_contacts()
+
+
+@router.get("/contacts/{contact_id}", summary="Get a contact")
+async def get_contact(contact_id: int):
+    return await contact_service.get_contact(contact_id)
 
 
 @router.delete("/contacts/{contact_id}", summary="Delete a contact")

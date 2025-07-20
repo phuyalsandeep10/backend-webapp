@@ -61,6 +61,23 @@ class ContactServices:
                 message="Error while fetching all contacts",
             )
 
+    async def get_contact(self, contact_id: int):
+        try:
+            contact = await Contact.find_one(where={"id": contact_id})
+
+            return cr.success(
+                status_code=status.HTTP_200_OK,
+                message="Successfully fetched the contact",
+                data=contact.to_dict(),
+            )
+
+        except Exception as e:
+            print(e)
+            return cr.error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                message="Error while fetching the contact",
+            )
+
     async def delete_contact(self, contact_id: int):
         try:
             await Contact.delete(id=contact_id)
