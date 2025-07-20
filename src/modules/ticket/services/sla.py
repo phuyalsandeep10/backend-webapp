@@ -1,7 +1,11 @@
+from datetime import datetime
+
 from fastapi import HTTPException, status
+from sqlmodel import BigInteger
 
 from src.common.dependencies import get_user_by_token
 from src.modules.ticket.models import SLA
+from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import CreateSLASchema
 from src.utils.response import CustomResponse as cr
 
@@ -71,6 +75,32 @@ class SLAServices:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while fetching Service Level Agreement",
             )
+
+    def calculate_sla_response_time_percentage(
+        self, response_time: int, created_at: datetime
+    ) -> int:
+        percentage = ((response_time - created_at.timestamp()) * 100) / response_time
+
+        return int(percentage)
+
+    def calculate_sla_resolution_time_percentage(
+        self, resolution_time: int, created_at: datetime
+    ) -> int:
+        percentage = (
+            resolution_time - (created_at.timestamp()) * 100
+        ) / resolution_time
+
+        return int(percentage)
+
+    def check_ticket_sla_status(self, ticket: Ticket):
+        response_time = self.calculate_sla_response_time_percentage(
+            ticket.sla.response_time, ticket.created_at
+        )
+        resolution_time = self.calculate_sla_resolution_time_percentage(
+            ticket.sla.resolution_time, ticket.created_at
+        )
+
+        return response_time, resolution_time
 
 
 sla_service = SLAServices()
