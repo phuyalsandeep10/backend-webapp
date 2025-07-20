@@ -8,6 +8,29 @@ from src.common.dependencies import get_user_by_token
 from src.config.broadcast import broadcast
 from fastapi.concurrency import run_until_first_complete
 from typing import Optional
+from src.socket_config import sio
+
+chat_namespace = "/chat"
+
+
+@sio.event(namespace=chat_namespace)
+async def connect(sid, environ, auth):
+    print(f"Chat route client connected: {sid}")
+    print("auth ", auth)
+
+
+# Similarly, define events for each namespace
+@sio.event(namespace=chat_namespace)
+async def message(sid, data):
+    print(f"Chat message: {data}")
+    await sio.emit(
+        "response", {"data": "Chat received"}, room=sid, namespace=chat_namespace
+    )
+
+
+@sio.event(namespace=chat_namespace)
+async def disconnect(sid):
+    print(f"Client disconnected: {sid}")
 
 
 def get_room(conversationId: int):
