@@ -52,7 +52,7 @@ class Ticket(BaseModel, table=True):
     sla_id: int = Field(sa_column=Column(ForeignKey("sla.id", ondelete="SET NULL")))
     created_at: datetime = Field(default_factory=datetime.utcnow)
     contact_id: int = Field(
-        sa_column=Column(ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
+        sa_column=Column(ForeignKey("contacts.id", ondelete="CASCADE"))
     )
     sla: "SLA" = Relationship(back_populates="tickets")
     contacts: "Contact" = Relationship(back_populates="tickets")

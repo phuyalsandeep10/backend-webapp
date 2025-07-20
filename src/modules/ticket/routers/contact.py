@@ -16,3 +16,8 @@ async def register_contact(payload: CreateContactSchema):
 @router.get("/contacts", summary="Get all contacts")
 async def list_contacts():
     return await contact_service.list_contacts()
+
+
+@router.delete("/contacts/{contact_id}", summary="Delete a contact")
+async def delete_contact(contact_id: int):
+    return await contact_service.delete_contact(contact_id)

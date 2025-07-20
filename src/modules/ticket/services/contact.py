@@ -43,9 +43,8 @@ class ContactServices:
         try:
             contacts = await Contact.get_all()
             if not contacts:
-                return cr.error(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    message="Error while listing contacts",
+                return cr.success(
+                    status_code=status.HTTP_200_OK, message="No contacts", data=[]
                 )
             contacts_data = [contact.to_dict() for contact in contacts]
 
@@ -60,6 +59,20 @@ class ContactServices:
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while fetching all contacts",
+            )
+
+    async def delete_contact(self, contact_id: int):
+        try:
+            await Contact.delete(id=contact_id)
+            return cr.success(
+                status_code=status.HTTP_200_OK,
+                message="Successfully deleted the contact",
+            )
+        except Exception as e:
+            print(e)
+            return cr.error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                message="Error while deleting the contact",
             )
 
 

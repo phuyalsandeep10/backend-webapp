@@ -17,7 +17,7 @@ class SLA(BaseModel, table=True):
     resolution_time: int = Field(sa_column=Column(BigInteger, nullable=False))
     issued_by: int = Field(nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-    tickets: List[Ticket] = Relationship(back_populates="sla")
+    tickets: List[Ticket] = Relationship(back_populates="sla", passive_deletes=True)
 
     def to_dict(self):
         return {
