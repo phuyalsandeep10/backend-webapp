@@ -60,11 +60,12 @@ class Ticket(BaseModel, table=True):
         back_populates="assigned_tickets", link_model=TicketAssigneesLink
     )
     alerts: List["TicketAlert"] = Relationship(
-        back_populates="ticket", link_model=TicketAlert
+        back_populates="ticket",
     )
 
     def to_dict(self):
         return {
+            "id": self.id,
             "title": self.title,
             "description": self.description,
             "priority": self.priority,

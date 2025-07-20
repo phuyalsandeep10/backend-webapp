@@ -67,6 +67,20 @@ class TicketServices:
                 message="Error while listing  tickets",
             )
 
+    async def delete_ticket(self, ticket_id: int):
+        try:
+            await Ticket.delete(id=ticket_id)
+            return cr.success(
+                status_code=status.HTTP_200_OK,
+                message="Successfully deleted the ticket",
+            )
+        except Exception as e:
+            print(e)
+            return cr.error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                message="Error while deleting the tickets",
+            )
+
     async def create_full_ticket(
         self, payload: FullCreateTicketSchema, authorization: str
     ):
