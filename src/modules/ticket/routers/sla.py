@@ -20,6 +20,11 @@ async def get_all():
     return await sla_service.list_slas()
 
 
+@router.get("/sla/{sla_id}", summary="Get a SLA")
+async def get_sla(sla_id: int):
+    return await sla_service.get_sla(sla_id)
+
+
 @router.delete("/sla/{sla_id}", summary="Delete a SLA")
 async def delete_sla(sla_id: int):
     return await sla_service.delete_sla(sla_id)

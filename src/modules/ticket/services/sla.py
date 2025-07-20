@@ -76,6 +76,23 @@ class SLAServices:
                 message="Error while fetching Service Level Agreement",
             )
 
+    async def get_sla(self, sla_id: int):
+        try:
+            sla = await SLA.find_one(where={"id": sla_id})
+
+            return cr.success(
+                status_code=status.HTTP_200_OK,
+                message="Successfully fetched the sla",
+                data=sla.to_dict(),
+            )
+
+        except Exception as e:
+            print(e)
+            return cr.error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                message="Error while fetching Service Level Agreement",
+            )
+
     async def delete_sla(self, sla_id: int):
         try:
             await SLA.delete(id=sla_id)
