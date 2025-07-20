@@ -30,3 +30,7 @@ class RefreshTokenDto(BaseModel):
 class ResetPasswordDto(BaseModel):
     new_password: str
     old_password: str
+
+
+class VerifyTwoFAOtpDto(BaseModel):
+    token: str

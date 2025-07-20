@@ -11,7 +11,6 @@ from src.modules.organizations.models import OrganizationMember
 from src.modules.team.models import TeamMember
 from src.modules.ticket.models.ticket import Ticket, TicketAssigneesLink
 
-
 class User(BaseModel, table=True):
     __tablename__ = "sys_users"  # type:ignore
     email: str = Field(unique=True, index=True)
@@ -20,6 +19,10 @@ class User(BaseModel, table=True):
     mobile: Optional[str] = Field(default=None, unique=True)
     password: str = Field(default="", min_length=8, max_length=128)
     is_active: bool = Field(default=True)
+    two_fa_enabled: bool = Field(default=False)
+    two_fa_secret: Optional[str] = Field(default=None, max_length=255)
+    two_fa_auth_url: Optional[str] = Field(default=None, max_length=512)
+
     email_verified_at: datetime = Field(
         default=None,
         nullable=True,
@@ -40,10 +43,12 @@ class User(BaseModel, table=True):
         back_populates="user",
         sa_relationship_kwargs={"foreign_keys": "[TeamMember.user_id]"},
     )
+
     messages: List["Message"] = Relationship(
         back_populates="user",
         sa_relationship_kwargs={"foreign_keys": "[Message.user_id]"},
     )
+
     conversation_members: List["ConversationMember"] = Relationship(
         back_populates="user",
         sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},

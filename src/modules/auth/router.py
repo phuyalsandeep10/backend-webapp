@@ -8,6 +8,7 @@ from src.common.dependencies import get_current_user
 from fastapi import Depends
 from src.common.dependencies import create_access_token
 from src.enums import ProviderEnum
+import pyotp
 from .dto import (
     LoginDto,
     RegisterDto,
@@ -16,7 +17,9 @@ from .dto import (
     VerifyEmailDto,
     ResetPasswordDto,
     RefreshTokenDto,
+    VerifyTwoFAOtpDto,
 )
+from src.utils.response import CustomResponse as cr
 
 from .models import User, EmailVerification, RefreshToken
 
@@ -69,14 +72,13 @@ async def create_token(user):
 async def user_login(request: LoginDto):
 
     user = await User.find_one(where={"email": request.email})
-    
 
     # Check if user exists
     if not user:
         raise HTTPException(status_code=401, detail="Email not found")
-    
+
     if not user.password:
-        raise HTTPException(status_code=401,detail="Invalid Password")
+        raise HTTPException(status_code=401, detail="Invalid Password")
 
     if not compare_password(user.password, request.password):
         raise HTTPException(status_code=401, detail="Invalid password")
@@ -202,9 +204,7 @@ async def verify_email_token(body: VerifyEmailTokenDto):
 
 
 @router.post("/reset-password")
-async def reset_password(
-    body: ResetPasswordDto, user = Depends(get_current_user)
-):
+async def reset_password(body: ResetPasswordDto, user=Depends(get_current_user)):
 
     user = await User.find_one({"email": user.email})
 
@@ -294,18 +294,19 @@ async def oauth_login(request: Request, provider: str):
     return await getattr(oauth, provider).authorize_redirect(request, redirect_uri)
 
 
-
-
-
 @router.get("/oauth/{provider}/callback")
-async def oauth_callback(request: Request, provider:ProviderEnum):
+async def oauth_callback(request: Request, provider: ProviderEnum):
     if provider not in ["google", "apple"]:
         raise HTTPException(status_code=400, detail="Unsupported provider")
     client = getattr(oauth, provider)
-    
+
     token = await client.authorize_access_token(request)
 
-    userinfo = await client.parse_id_token(request, token) if provider == "apple" else token.get("userinfo")
+    userinfo = (
+        await client.parse_id_token(request, token)
+        if provider == "apple"
+        else token.get("userinfo")
+    )
     # Fallback for Apple: userinfo may be in token['id_token'] (decode if needed)
     # Fallback for Google: userinfo may be in token['userinfo'] or fetch from userinfo_endpoint
 
@@ -327,5 +328,41 @@ async def oauth_callback(request: Request, provider:ProviderEnum):
     tokens = await create_token(user)
     redirect_url = f"{settings.FRONTEND_URL}/login?access_token={tokens.get('access_token')}&refresh_token={tokens.get('refresh_token')}"
 
-
     return RedirectResponse(redirect_url)
+
+
+@router.post("/2fa-otp/generate")
+async def geerate_two_fa_otp(user=Depends(get_current_user)):
+    otp_secrete = pyotp.random_base32()
+
+    otp_auth_url = pyotp.totp.TOTP(otp_secrete).provisioning_uri(
+        name=user.get("email"), issuer_name=settings.PROJECT_NAME
+    )
+
+    await User.update(
+        user.get("id"),
+        two_fa_secrete=otp_secrete,
+        two_fa_auth_url=otp_auth_url,
+        two_fa_enabled=True,
+    )
+
+    return {"2fa_secrete": otp_secrete, "2fa_otp_auth_url": otp_auth_url}
+
+
+@router.post("/2fa-verfiy")
+async def verify_two_fa(body: VerifyTwoFAOtpDto, user=Depends(get_current_user)):
+    two_fa_secrete = user.get("two_fa_secrete")
+    totp = pyotp.TOTP(two_fa_secrete)
+    message = "Token is invalid or user doesn't exist"
+    if not totp.verify(body.token):
+        return cr.error(message=message)
+
+    return cr.success()
+
+
+@router.post("/2fa-disabled")
+async def disable_two_fa(user=Depends(get_current_user)):
+
+    await User.update(user.get("id"), two_fa_enabled=False)
+
+    return cr.success()

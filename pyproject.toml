@@ -26,7 +26,11 @@ dependencies = [
     "asyncpg>=0.30.0",
     "pydantic-settings>=2.10.1",
     "psycopg2>=2.9.10",
+<<<<<<< HEAD
     "pytest>=8.4.1",
     "pytest-asyncio>=1.1.0",
     "httpx>=0.28.1",
+=======
+    "pyotp>=2.9.0",
+>>>>>>> 8d3b142 (feat: add two fa)
 ]
