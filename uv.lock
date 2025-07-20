@@ -309,17 +309,11 @@ dependencies = [
     { name = "psycopg2" },
     { name = "psycopg2-binary" },
     { name = "pydantic-settings" },
-<<<<<<< HEAD
     { name = "pytest" },
     { name = "pytest-asyncio" },
-=======
-<<<<<<< HEAD
->>>>>>> 8e64c0a (chore : merge conflict fixed)
     { name = "pyotp" },
-=======
     { name = "pytest" },
     { name = "pytest-asyncio" },
->>>>>>> 5cdf5cb (feat : pytest httpx pytest-asyncio added)
     { name = "python-dotenv" },
     { name = "python-jose", extra = ["cryptography"] },
     { name = "sqlmodel" },
