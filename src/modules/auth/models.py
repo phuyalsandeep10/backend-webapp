@@ -11,13 +11,9 @@ from src.modules.organizations.models import OrganizationMember
 from src.modules.team.models import TeamMember
 from src.modules.ticket.models.ticket import Ticket, TicketAssigneesLink
 
-class User(BaseModel, table=True):
-    __tablename__ = "sys_users"  # type:ignore
-
 
 class User(BaseModel, table=True):
     __tablename__ = "sys_users"  # type:ignore
-
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -65,13 +61,13 @@ class User(BaseModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},
     )
 
-
     assigned_tickets: List[Ticket] = Relationship(
         back_populates="assignees", link_model=TicketAssigneesLink
     )
 
     def to_dict(self):
         return {"email": self.email, "name": self.name}
+
     @property
     def is_2fa_verified(self):
         return getattr(self, "_is_2fa_verified", False)
@@ -79,14 +75,7 @@ class User(BaseModel, table=True):
     @is_2fa_verified.setter
     def is_2fa_verified(self, value):
         self._is_2fa_verified = value
-    assigned_tickets: List[Ticket] = Relationship(
-        back_populates="assignees", link_model=TicketAssigneesLink
-    )
 
-    def to_dict(self):
-        return {"email": self.email, "name": self.name}
-
- 
 
 class RefreshToken(BaseModel, table=True):
     __tablename__ = "refresh_tokens"  # type:ignore
