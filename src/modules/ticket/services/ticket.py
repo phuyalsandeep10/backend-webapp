@@ -67,6 +67,28 @@ class TicketServices:
                 message="Error while listing  tickets",
             )
 
+    async def get_ticket(self, ticket_id: int):
+        try:
+            ticket = await Ticket.find_one(
+                where={"id": ticket_id},
+                options=[
+                    selectinload(Ticket.sla),
+                    selectinload(Ticket.contacts),
+                    selectinload(Ticket.assignees),
+                ],
+            )
+            return cr.success(
+                status_code=status.HTTP_200_OK,
+                message="Successfully listed the ticket",
+                data=ticket.to_dict(),
+            )
+        except Exception as e:
+            print(e)
+            return cr.error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                message="Error while listing ticket",
+            )
+
     async def delete_ticket(self, ticket_id: int):
         try:
             await Ticket.delete(id=ticket_id)

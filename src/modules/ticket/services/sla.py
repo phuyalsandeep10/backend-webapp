@@ -76,6 +76,20 @@ class SLAServices:
                 message="Error while fetching Service Level Agreement",
             )
 
+    async def delete_sla(self, sla_id: int):
+        try:
+            await SLA.delete(id=sla_id)
+            return cr.success(
+                status_code=status.HTTP_200_OK,
+                message="Successfully deleted the SLA",
+            )
+        except Exception as e:
+            print(e)
+            return cr.error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                message="Error while deleting the SLA",
+            )
+
     def calculate_sla_response_time_percentage(
         self, response_time: int, created_at: datetime
     ) -> int:

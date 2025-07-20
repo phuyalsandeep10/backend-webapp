@@ -18,3 +18,8 @@ async def register_sla(
 @router.get("/sla", summary="List all Service Level agreements")
 async def get_all():
     return await sla_service.list_slas()
+
+
+@router.delete("/sla/{sla_id}", summary="Delete a SLA")
+async def delete_sla(sla_id: int):
+    return await sla_service.delete_sla(sla_id)
