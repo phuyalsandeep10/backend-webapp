@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import List
 
-from sqlmodel import Field, Relationship
+from sqlalchemy import Column
+from sqlmodel import BigInteger, Field, Relationship
 
 from src.common.models import BaseModel
 
@@ -12,8 +13,8 @@ class SLA(BaseModel, table=True):
     __tablename__: str = "sla"  # type: ignore
 
     name: str = Field(nullable=True, unique=True)
-    response_time: int = Field(nullable=False)
-    resolution_time: int = Field(nullable=False)
+    response_time: int = Field(sa_column=Column(BigInteger, nullable=False))
+    resolution_time: int = Field(sa_column=Column(BigInteger, nullable=False))
     issued_by: int = Field(nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     tickets: List[Ticket] = Relationship(back_populates="sla")
