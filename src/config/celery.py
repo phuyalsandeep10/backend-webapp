@@ -1,5 +1,6 @@
-from celery.app import Celery
 import os
+
+from celery.app import Celery
 from celery.schedules import crontab
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
@@ -21,6 +22,12 @@ celery_app.conf.update(
         "consume-kafka-messages-every-10s": {
             "task": "src.tasks.message_task.consume_kafka_messages_batch",
             "schedule": 60.0,
+            "args": (),
+            "kwargs": {"batch_size": 20, "poll_timeout": 1.0, "max_polls": 10},
+        },
+        "check-sla-every-1m": {
+            "task": "src.tasks.sla_tast.check_sla_percentage",
+            "schedule": crontab(minute="*"),
             "args": (),
             "kwargs": {"batch_size": 20, "poll_timeout": 1.0, "max_polls": 10},
         },
