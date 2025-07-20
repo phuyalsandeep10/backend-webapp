@@ -41,6 +41,7 @@ def upgrade() -> None:
         sa.Column("issued_by", sa.Integer(), nullable=False),
         sa.Column("sla_id", sa.Integer(), nullable=True),
         sa.Column("contact_id", sa.Integer(), nullable=False),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(["contact_id"], ["contacts.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["sla_id"], ["sla.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
