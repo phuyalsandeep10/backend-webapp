@@ -73,6 +73,12 @@ class User(BaseModel, table=True):
     @is_2fa_verified.setter
     def is_2fa_verified(self, value):
         self._is_2fa_verified = value
+    assigned_tickets: List[Ticket] = Relationship(
+        back_populates="assignees", link_model=TicketAssigneesLink
+    )
+
+    def to_dict(self):
+        return {"email": self.email, "name": self.name}
 
 
 class RefreshToken(BaseModel, table=True):
