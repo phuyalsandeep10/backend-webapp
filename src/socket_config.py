@@ -11,13 +11,16 @@ socket_app = socketio.ASGIApp(socketio_server=sio, other_asgi_app=app,socketio_p
 class ChatNamespace(socketio.AsyncNamespace):
     def __init__(self):
         super().__init__("/chat")
+        self.room = 'conversation-1'
 
     async def on_connect(self, sid, environ, auth):
+        print("auth")
         print("✅ Connected to /chat:", sid)
+        self.emit("recieve-message",room=self.room)
 
     async def on_message(self, sid, data):
         print("💬 Message:", data)
-        await self.emit("recieve-message", data, room=sid)
+        await self.emit("recieve-message", data, room=self.room,namespace="/chat")
 
     def on_disconnect(self, sid):
         print("❌ Disconnected:", sid)
