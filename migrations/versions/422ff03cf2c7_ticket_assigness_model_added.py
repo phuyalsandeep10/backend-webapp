@@ -21,6 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade():
     op.create_table(
         "ticket_assignees",
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column(
             "ticket_id",
             sa.Integer,
