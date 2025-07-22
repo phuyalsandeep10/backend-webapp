@@ -8,7 +8,7 @@ T = TypeVar("T")
 
 
 class CustomResponseSchema(GenericModel, Generic[T]):
-    success: str
+    success: bool
     data: Optional[Union[T, List[T]]]
     message: str
 

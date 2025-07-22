@@ -30,17 +30,27 @@ async def list_tickets():
     return await ticket_services.list_tickets()
 
 
-@router.get("/{ticket_id:int}", summary="Get a ticket")
+@router.get(
+    "/{ticket_id:int}",
+    summary="Get a ticket",
+    response_model=CustomResponseSchema[TicketOut],
+)
 async def get_ticket(ticket_id: int):
     return await ticket_services.get_ticket(ticket_id)
 
 
-@router.delete("/{ticket_id:int}", summary="Delete a ticket")
+@router.delete(
+    "/{ticket_id:int}", summary="Delete a ticket", response_model=CustomResponseSchema
+)
 async def delete_ticket(ticket_id: int):
     return await ticket_services.delete_ticket(ticket_id)
 
 
-@router.post("/full-create", summary="Creates new ticket with full credentials")
+@router.post(
+    "/full-create",
+    summary="Creates new ticket with full credentials",
+    response_model=CustomResponseSchema,
+)
 async def register_full_ticket(
     payload: FullCreateTicketSchema, authorization: Annotated[str, Header()]
 ):
