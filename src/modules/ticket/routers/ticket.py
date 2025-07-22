@@ -1,14 +1,19 @@
-from typing import Annotated
+from typing import Annotated, List
 
 from fastapi import APIRouter, Header
 
-from src.modules.ticket.schemas import CreateTicketSchema, FullCreateTicketSchema
+from src.modules.ticket.schemas import (
+    CreateTicketSchema,
+    FullCreateTicketSchema,
+    TicketOut,
+)
 from src.modules.ticket.services.ticket import ticket_services
+from src.utils.response import CustomResponseSchema
 
 router = APIRouter()
 
 
-@router.post("/", summary="Creates new ticket")
+@router.post("/", summary="Creates new ticket", response_model=CustomResponseSchema)
 async def register_ticket(
     payload: CreateTicketSchema, authorization: Annotated[str, Header()]
 ):
@@ -16,7 +21,11 @@ async def register_ticket(
     return await ticket_services.create_ticket(payload, authorization)
 
 
-@router.get("/", summary="List all tickets")
+@router.get(
+    "/",
+    summary="List all tickets",
+    response_model=CustomResponseSchema[List[TicketOut]],
+)
 async def list_tickets():
     return await ticket_services.list_tickets()
 

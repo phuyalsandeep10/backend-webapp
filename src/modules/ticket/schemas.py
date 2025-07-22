@@ -2,9 +2,14 @@ from typing import List, Optional
 
 from fastapi import status
 from fastapi.exceptions import HTTPException
-from pydantic import BaseModel, EmailStr, model_validator
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 from src.modules.ticket.enums import PriorityEnum, StatusEnum
+
+
+class AssigneeOut(BaseModel):
+    email: EmailStr
+    name: str
 
 
 class CreateTicketSchema(BaseModel):
@@ -76,3 +81,25 @@ class FullCreateTicketSchema(BaseModel):
                 detail="Atleast provide contact_id or contact details",
             )
         return self
+
+
+class ContactOut(CreateContactSchema):
+    id: int
+
+
+class SLAOut(CreateSLASchema):
+    id: int
+    issued_by: int
+    created_at: str
+
+
+class TicketOut(BaseModel):
+    id: int
+    title: str
+    description: str
+    priority: PriorityEnum = PriorityEnum.MEDIUM
+    status: StatusEnum = StatusEnum.OPEN
+
+    sla: SLAOut
+    contact: ContactOut
+    assignees: AssigneeOut
