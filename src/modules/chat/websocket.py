@@ -8,7 +8,8 @@ from src.common.dependencies import get_user_by_token
 from src.config.broadcast import broadcast
 from fastapi.concurrency import run_until_first_complete
 from typing import Optional
-from src.socket_config import sio
+# from src.socket_config import sio
+import socketio
 
 
 chat_namespace = "/chat"
@@ -22,6 +23,7 @@ async def ws_send(conversation_id: int, user_id: Optional[int] = None):
         room = get_room(conversation_id)
         async with broadcast.subscribe(channel=room) as subscriber:
             async for event in subscriber:
+                pass
                 # data = json.loads(event.message)
                 # if data.get("type") == "message":
                 #     print("save messages in redis subscriber")
@@ -31,9 +33,9 @@ async def ws_send(conversation_id: int, user_id: Optional[int] = None):
                 #         user_id=user_id,
                 #     )
 
-                await sio.emit(
-                    "response", {"data": "Chat received"}, room=room, namespace=chat_namespace
-                )
+                # await sio.emit(
+                #     "response", {"data": "Chat received"}, room=room, namespace=chat_namespace
+                # )
     except Exception as e:
         print(f"Exception in ws_send: {e}")
 
@@ -46,100 +48,154 @@ async def ws_recv(ws: WebSocket, conversation_id: int, user_id: Optional[int] = 
     except Exception as e:
         print(f"Exception in ws_recv: {e}")
 
-# class ChatNamespace(socketio.AsyncNamespace):
-#     def __init__(self):
-#         super().__init__("/chat")
-#     async def on_connect(self, sid, environ, auth):
-#         print("Chat connected:", sid)
-#     async def on_message(self, sid, data):
-#         print("Chat message:", data)
-#         await self.emit("response", {"data":"OK"}, room=sid)
-#     def on_disconnect(self, sid):
-#         print("Chat disconnect:", sid)
-    
-# sio.register_namespace(ChatNamespace())
 
-# @sio.event(namespace=chat_namespace)
-# async def connect(sid, environ, auth):
- 
-#     print(f"Chat route client connected: {sid}")
-#     print("auth ", auth)
-    
+rooms = {}
 
 
-# # Similarly, define events for each namespace
-# @sio.event(namespace=chat_namespace)
-# async def message(sid, data):
-#     print(f"Chat message: {data}")
-#     await sio.emit(
-#         "response", {"data": "Chat received"}, room=sid, namespace=chat_namespace
-#     )
+conversations = {}
 
 
-# @sio.event(namespace=chat_namespace)
-# async def disconnect(sid):
-#     print(f"Client disconnected: {sid}")
+def get_conversation(conversation_id):
+    return conversations.get(conversation_id)
+
+
+def create_conversation(conversation_id, customer_id):
+    conversation = {"customer_id": customer_id, "online": False, "sids": []}
+    conversations[conversation_id] = conversation
+    return conversation
+
+
+def update_conversation(conversation_id, customer_id, online):
+    conversation = get_conversation(conversation_id)
+    if conversation:
+        conversation["online"] = online
+        conversation["customer_id"] = customer_id
+
+
+class ChatNamespace(socketio.AsyncNamespace):
+    """WebSocket namespace for chat functionality."""
+    receive_message = "recieve-message"
+    receive_typing = "typing"
+    stop_typing = "stop-typing"
+
+    def __init__(self):
+        super().__init__("/chat")
+        self.rooms = {}
+
+    async def on_connect(self, sid, environ, auth):
+        print(f"Chat connected: {sid}")
+        print("auth ", auth)
+        if not auth:
+            print("❌ No auth provided")
+            return False
+        token = auth.get("token")
+        customer_id = auth.get("customer_id")
+        conversation_id = auth.get("conversation_id")
+
+        if not customer_id or not conversation_id:
+            return False
+
+        conversation = get_conversation(conversation_id)
+
+        if not conversation:
+            conversation = create_conversation(conversation_id, customer_id)
+
+        self.rooms[sid] = conversation_id
+        conversation["sids"].append(sid)
+        conversation["online"] = True
+
+        print(f"✅ Connected to /chat: {sid} (conversation_id: {conversation_id})")
+        return True
+
+    async def on_message(self, sid, data):
+        conversation_id = self.rooms.get(sid)
+        if not conversation_id:
+            return
+
+        conversation = get_conversation(conversation_id)
+
+        print(f"conversation id {conversation_id} and conversation {conversation}")
+
+        if not conversation:
+            return
+
+        for si in conversation["sids"]:
+        
+            if si == sid:
+                continue
+
+            print(f"Sending message to {si} from {sid}")
+
+            await self.emit(self.receive_message, 
+                            {
+                        "message":data.get("message"),
+                        "sid": sid,
+                        "mode": "message",
+                    })
+  
+    async def on_typing(self, sid, data):
+        """Handle typing events."""
+        print(f"Typing event from {sid}: {data}")
+        conversation_id = self.rooms.get(sid)
+        if not conversation_id:
+            return
+
+        conversation = get_conversation(conversation_id)
+        if not conversation:
+            return
+
+        for si in conversation["sids"]:
+            if si == sid:
+                continue
+            
+            await self.emit(
+                self.receive_typing,
+                {
+                    "message": data.get("message"),
+                    "sid": sid,
+                    "mode": data.get("mode", "typing"),
+                },
+                room=si,
+            )
+    async def on_stop_typing(self, sid):
+        """Handle stop typing events."""
+        print(f"Stop typing event from {sid}")
+        conversation_id = self.rooms.get(sid)
+        if not conversation_id:
+            return
+
+        conversation = get_conversation(conversation_id)
+        if not conversation:
+            return
+
+        for si in conversation["sids"]:
+            if si == sid:
+                continue
+            print(f"Stopping typing for {si} from {sid}")
+            await self.emit(
+                self.stop_typing,
+                {
+                    "message": "",
+                    "sid": sid,
+                    "mode": "stop-typing",
+                },
+                room=si,
+            )
+
+  
+            
+
+    def on_disconnect(self, sid):
+        conversation_id = self.rooms.get(sid)
+        if conversation_id:
+            conversation = get_conversation(conversation_id)
+            if conversation:
+                conversation["sids"].remove(sid)
+                conversation["online"] = len(conversation["sids"]) > 0
+                print(f"❌ Disconnected: {sid} (conversation_id: {conversation_id})")
 
 
 
 
 
 
-
-# @app.websocket("/ws/{conversation_id}")
-# async def ws_room(websocket: WebSocket, conversation_id: int, token: str = Query(None)):
-#     # Get or create the room for this conversation
-#     role = "agent"
-
-#     room = rooms.setdefault(conversation_id, Room())
-
-#     await room.connect(websocket, role)
-
-#     user_id = None
-
-#     if token:
-#         user = get_user_by_token(token)
-#         if not user:
-#             await websocket.close(code=4401)
-#             return
-#         role = "user"
-#         user_id = user.id
-
-#     try:
-#         await run_until_first_complete(
-#             (
-#                 ws_recv,
-#                 {
-#                     "ws": websocket,
-#                     "conversation_id": conversation_id,
-#                     "user_id": user_id,
-#                 },
-#             ),
-#             (
-#                 ws_send,
-#                 {
-#                     "ws": websocket,
-#                     "conversation_id": conversation_id,
-#                     "user_id": user_id,
-#                 },
-#             ),
-#         )
-#         # while True:
-#         #     data = await websocket.receive_text()
-#         #     data = json.loads(data)
-
-#         #     if data.get('type') =='message':
-#         #         print("save messages in websocket")
-#         #         save_messages.delay(
-#         #         conversation_id=conversation_id,
-#         #         data={
-#         #             "message":data.get('message')
-#         #         },
-#         #         user_id=user_id)
-#         #     await room.broadcast(role, data)
-
-#     except WebSocketDisconnect:
-#         room.disconnect(websocket)
-#     except Exception as e:
-#         print(f"WebSocket error: {e}")
-#         room.disconnect(websocket)
