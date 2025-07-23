@@ -8,14 +8,17 @@ from src.common.dependencies import get_user_by_token
 from src.config.broadcast import broadcast
 from fastapi.concurrency import run_until_first_complete
 from typing import Optional
+
 # from src.socket_config import sio
 import socketio
 
 
 chat_namespace = "/chat"
 
+
 def get_room(conversationId: int):
     return f"conversation-{conversationId}"
+
 
 async def ws_send(conversation_id: int, user_id: Optional[int] = None):
     room = get_room(conversationId=conversation_id)
@@ -74,6 +77,7 @@ def update_conversation(conversation_id, customer_id, online):
 
 class ChatNamespace(socketio.AsyncNamespace):
     """WebSocket namespace for chat functionality."""
+
     receive_message = "recieve-message"
     receive_typing = "typing"
     stop_typing = "stop-typing"
@@ -120,19 +124,22 @@ class ChatNamespace(socketio.AsyncNamespace):
             return
 
         for si in conversation["sids"]:
-        
+
             if si == sid:
                 continue
 
             print(f"Sending message to {si} from {sid}")
 
-            await self.emit(self.receive_message, 
-                            {
-                        "message":data.get("message"),
-                        "sid": sid,
-                        "mode": "message",
-                    })
-  
+            await self.emit(
+                self.receive_message,
+                {
+                    "message": data.get("message"),
+                    "sid": sid,
+                    "mode": "message",
+                },
+                room=si,
+            )
+
     async def on_typing(self, sid, data):
         """Handle typing events."""
         print(f"Typing event from {sid}: {data}")
@@ -147,7 +154,7 @@ class ChatNamespace(socketio.AsyncNamespace):
         for si in conversation["sids"]:
             if si == sid:
                 continue
-            
+
             await self.emit(
                 self.receive_typing,
                 {
@@ -157,6 +164,7 @@ class ChatNamespace(socketio.AsyncNamespace):
                 },
                 room=si,
             )
+
     async def on_stop_typing(self, sid):
         """Handle stop typing events."""
         print(f"Stop typing event from {sid}")
@@ -182,9 +190,6 @@ class ChatNamespace(socketio.AsyncNamespace):
                 room=si,
             )
 
-  
-            
-
     def on_disconnect(self, sid):
         conversation_id = self.rooms.get(sid)
         if conversation_id:
@@ -193,9 +198,3 @@ class ChatNamespace(socketio.AsyncNamespace):
                 conversation["sids"].remove(sid)
                 conversation["online"] = len(conversation["sids"]) > 0
                 print(f"❌ Disconnected: {sid} (conversation_id: {conversation_id})")
-
-
-
-
-
-
