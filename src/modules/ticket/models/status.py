@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING, List
+
 from sqlalchemy import Column
-from sqlmodel import Field, ForeignKey, UniqueConstraint
+from sqlmodel import Field, ForeignKey, Relationship, UniqueConstraint
 
 from src.common.models import BaseModel
+
+if TYPE_CHECKING:
+    from src.modules.ticket.models.ticket import Ticket
 
 
 class TicketStatus(BaseModel, table=True):
@@ -13,3 +18,10 @@ class TicketStatus(BaseModel, table=True):
     organization_id: int = Field(
         sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
     )
+    tickets: List["Ticket"] = Relationship(back_populates="status_id")
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "color": self.color,
+        }

@@ -8,6 +8,7 @@ from src.db.config import async_session
 
 # from src.modules.auth.models import User
 from src.enums import InvitationStatus
+from src.modules.ticket.models.ticket import Ticket
 
 if TYPE_CHECKING:
     from src.modules.auth.models import User
@@ -29,6 +30,7 @@ class Organization(CommonModel, table=True):
     customers: list["Customer"] = Relationship(back_populates="organization")
     priorities: List["Priority"] = Relationship(back_populates="organization_id")
     ticket_status: List["TicketStatus"] = Relationship(back_populates="organization_id")
+    tickets: List["Ticket"] = Relationship(back_populates="organization_id")
 
     @classmethod
     async def get_orgs_by_user_id(cls, user_id: int):

@@ -1,15 +1,18 @@
-from src.common.models import CommonModel
+from typing import TYPE_CHECKING, List, Optional
+
 from sqlmodel import Field, Relationship
-from typing import Optional, TYPE_CHECKING,List
+
+from src.common.models import CommonModel
 
 if TYPE_CHECKING:
-    from src.modules.organizations.models import Organization
     from src.modules.chat.models.conversation import Conversation
     from src.modules.chat.models.message import Message
+    from src.modules.organizations.models import Organization
+    from src.modules.ticket.models.ticket import Ticket
 
 
 class Customer(CommonModel, table=True):
-    __tablename__ = "org_customers" #type:ignore
+    __tablename__ = "org_customers"  # type:ignore
     name: str = Field(max_length=255, index=True, nullable=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
@@ -25,3 +28,5 @@ class Customer(CommonModel, table=True):
     longitude: float = Field(nullable=True)
     city: str = Field(max_length=255, index=True, nullable=True)
     country: str = Field(max_length=255, index=True, nullable=True)
+
+    tickets: List["Ticket"] = Relationship(back_populates="customer_id")
