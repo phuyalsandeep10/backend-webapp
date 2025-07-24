@@ -11,6 +11,9 @@ class OrganizationDto(BaseModel):
     logo: str | None = Field(
         None, max_length=255, description="Logo URL for the organization"
     )
+    purpose: str | None = Field(
+        None, max_length=255, description="Purpose of organization creation"
+    )
     website: str | None = Field(
         None, max_length=255, description="Website URL for the organization"
     )

@@ -57,6 +57,7 @@ async def create_organization(
         slug=body.name.lower().replace(" ", "-"),  # Simple slug generation
         logo=body.logo,
         website=body.website,
+        purpose=body.purpose,
     )
 
     await OrganizationMember.create(
@@ -74,7 +75,7 @@ async def create_organization(
         )
 
         if not user:
-            raise HTTPException(404,"Not found User")
+            raise HTTPException(404, "Not found User")
 
         update_user_cache(token, user)
 
@@ -166,7 +167,7 @@ async def set_organization(
     user = await User.update(user.id, attributes={"organization_id": organization_id})
 
     if not user:
-        raise HTTPException(404,"Not found User")
+        raise HTTPException(404, "Not found User")
 
     if not organization:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -328,7 +329,7 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
 
     invitation = await OrganizationInvitation.get(invitation_id)
     if not invitation:
-        raise HTTPException(404,"Not Found")
+        raise HTTPException(404, "Not Found")
 
     if user.email != invitation.email:
         raise HTTPException(403, "Don't have authorization")
@@ -348,7 +349,7 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
         )
 
     for role_id in invitation.role_ids:
-       await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
+        await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
 
     return {"message": "Successfully approved"}
 

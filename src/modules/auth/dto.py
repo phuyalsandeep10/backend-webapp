@@ -8,6 +8,10 @@ class LoginDto(BaseModel):
     password: str
 
 
+class ValidateEmail(BaseModel):
+    email: EmailStr
+
+
 class RegisterDto(LoginDto):
     name: str
 

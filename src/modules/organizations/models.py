@@ -4,6 +4,7 @@ from typing import Optional, List
 
 from src.db.config import async_session
 import sqlalchemy as sa
+
 # from src.modules.auth.models import User
 from src.enums import InvitationStatus
 
@@ -15,10 +16,8 @@ if TYPE_CHECKING:
     from src.modules.chat.models.customer import Customer
 
 
-
-    
 class Organization(CommonModel, table=True):
-    __tablename__ = 'sys_organizations' #type:ignore
+    __tablename__ = "sys_organizations"  # type:ignore
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     slug: str = Field(default=None, max_length=255, nullable=False, index=True)
@@ -27,6 +26,7 @@ class Organization(CommonModel, table=True):
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
+    purpose: str = Field(default=None, max_length=250, nullable=True)
 
     @classmethod
     async def get_orgs_by_user_id(cls, user_id: int):
@@ -41,7 +41,7 @@ class Organization(CommonModel, table=True):
 
 
 class OrganizationRole(CommonModel, table=True):
-    __tablename__ ="sys_organization_roles" # type:ignore
+    __tablename__ = "sys_organization_roles"  # type:ignore
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     identifier: str = Field(default=None, max_length=500, nullable=False, index=True)
@@ -51,9 +51,8 @@ class OrganizationRole(CommonModel, table=True):
     member_roles: list["OrganizationMemberRole"] = Relationship(back_populates="role")
 
 
-
 class OrganizationMember(CommonModel, table=True):
-    __tablename__ = 'sys_organization_members' #type:ignore
+    __tablename__ = "sys_organization_members"  # type:ignore
     user_id: int = Field(foreign_key="sys_users.id", nullable=False)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
 
@@ -67,10 +66,8 @@ class OrganizationMember(CommonModel, table=True):
     member_roles: List["OrganizationMemberRole"] = Relationship(back_populates="member")
 
 
-
-
 class OrganizationMemberRole(CommonModel, table=True):
-    __tablename__ ='sys_organization_member_roles' #type:ignore
+    __tablename__ = "sys_organization_member_roles"  # type:ignore
     member_id: int = Field(foreign_key="sys_organization_members.id", nullable=False)
     role_id: int = Field(foreign_key="sys_organization_roles.id", nullable=False)
     member: Optional[OrganizationMember] = Relationship(back_populates="member_roles")
@@ -81,7 +78,7 @@ class OrganizationMemberRole(CommonModel, table=True):
 
 
 class OrganizationInvitation(CommonModel, table=True):
-    __tablename__ = 'sys_organization_invitations' #type:ignore
+    __tablename__ = "sys_organization_invitations"  # type:ignore
     email: str = Field(max_length=255, index=True)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
 
@@ -95,4 +92,3 @@ class OrganizationInvitation(CommonModel, table=True):
             "foreign_keys": "[OrganizationInvitation.invited_by_id]"
         }
     )
-
