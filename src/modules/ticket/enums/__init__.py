@@ -15,6 +15,12 @@ class StatusEnum(str, Enum):
     CLOSED = "closed"
 
 
+class TicketEmailTypeEnum(str, Enum):
+    EMAIL_RESPONSE = "email_response"
+    EMAIL_SLA_BREACH = "email_sla_breach"
+    EMAIL_TICKET_SOLVED = "email_ticket_solved"
+
+
 class WarningLevelEnum(str, Enum):
     WARNING_75 = 75
     WARNING_90 = 90
