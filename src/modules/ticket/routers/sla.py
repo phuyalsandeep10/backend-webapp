@@ -24,8 +24,8 @@ async def register_sla(payload: CreateSLASchema, user=Depends(get_current_user))
     summary="List all Service Level agreements",
     response_model=CustomResponseSchema[List[SLAOut]],
 )
-async def get_all():
-    return await sla_service.list_slas()
+async def get_all(user=Depends(get_current_user)):
+    return await sla_service.list_slas(user)
 
 
 @router.get(

@@ -52,9 +52,11 @@ class SLAServices:
                 message="Error while registering Service Level Agreement",
             )
 
-    async def list_slas(self):
+    async def list_slas(self, user):
         try:
-            sla_list = await SLA.get_all()
+            sla_list = await SLA.filter(
+                where={"organization_id": user.attributes.get("organization_id")}
+            )
             slas = [s.to_dict() for s in sla_list]
 
             return cr.success(
