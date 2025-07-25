@@ -33,7 +33,6 @@ def upgrade():
             sa.Integer,
             sa.ForeignKey("sys_users.id", ondelete="SET NULL"),
         ),
-        sa.PrimaryKeyConstraint("ticket_id", "assignee_id"),
     )
 
 

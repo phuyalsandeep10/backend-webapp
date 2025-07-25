@@ -26,12 +26,13 @@ class TicketServices:
             user_id = user.id
             data = dict(payload)
             data["issued_by"] = user_id
-            users = []
-            for assigne_id in data["assignees"]:
-                usr = await User.find_one(where={"id": assigne_id})
-                users.append(usr)
+            if "assignees" in data:
+                users = []
+                for assigne_id in data["assignees"]:
+                    usr = await User.find_one(where={"id": assigne_id})
+                    users.append(usr)
 
-            data["assignees"] = users
+                data["assignees"] = users
             await Ticket.create(**dict(data))
 
             return cr.success(
@@ -50,8 +51,10 @@ class TicketServices:
             all_tickets = await Ticket.get_all(
                 [
                     selectinload(Ticket.sla),
-                    selectinload(Ticket.contacts),
                     selectinload(Ticket.assignees),
+                    selectinload(Ticket.priority),
+                    selectinload(Ticket.status),
+                    selectinload(Ticket.customer),
                 ]
             )
             tickets = [ticket.to_dict() for ticket in all_tickets]

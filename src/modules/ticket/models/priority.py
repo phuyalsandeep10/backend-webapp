@@ -27,6 +27,7 @@ class Priority(BaseModel, table=True):
 
     def to_dict(self):
         return {
+            "id": self.id,
             "name": self.name,
             "level": self.level,
             "color": self.color,

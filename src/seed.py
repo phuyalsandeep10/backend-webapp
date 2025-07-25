@@ -8,7 +8,9 @@ import src.models
 from src.common.utils import hash_password
 from src.modules.auth.models import User
 from src.modules.organizations.models import Organization, OrganizationMember
+from src.modules.team.models import Team
 from src.modules.ticket.models import Priority, TicketStatus
+from src.modules.ticket.models.sla import SLA
 
 # default data
 priorities = [
@@ -71,6 +73,24 @@ async def organization_user_seed_dummy():
         print("User already added or there is not user with 1 id")
 
 
+async def department_team_seed_dummy():
+
+    record = await Team.find_one(
+        where={"name": {"mode": "insensitive", "value": "test"}}
+    )
+
+    if not record:
+
+        await Team.create(
+            name="test",
+            description="THis is test team",
+            organization_id=1,
+        )
+        print("Test Team created")
+    else:
+        print("Test team already exists")
+
+
 async def priority_seed():
     for i in priorities:
         record = await Priority.find_one(
@@ -108,12 +128,33 @@ async def status_seed():
             print("Status already created")
 
 
+async def sla_seed_dummy():
+    record = await SLA.find_one(
+        where={
+            "name": {"mode": "insensitive", "value": "test_sla"},
+        }
+    )
+    if not record:
+        await SLA.create(
+            name="test_sla",
+            response_time=18000,  # 5 hours
+            resolution_time=432000,  # 5 days
+            organization_id=1,
+            issued_by=1,
+        )
+        print("Test SLA has been created")
+    else:
+        print("Test SLA already exists")
+
+
 async def seed_func():
     await organization_seed_dummy()
     await user_seed_dummy()
     await organization_user_seed_dummy()
+    await department_team_seed_dummy()
     await priority_seed()
     await status_seed()
+    await sla_seed_dummy()
 
 
 if __name__ == "__main__":

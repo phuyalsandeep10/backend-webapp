@@ -22,7 +22,6 @@ async def register_contact(payload: CreateContactSchema):
     response_model=CustomResponseSchema[List[ContactOut]],
 )
 async def list_contacts():
-    print("Triggered")
     return await contact_service.list_contacts()
 
 

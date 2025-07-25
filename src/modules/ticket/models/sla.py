@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from sqlalchemy import Column
+from sqlalchemy import Column, ForeignKey
 from sqlmodel import BigInteger, Field, Relationship
 
 from src.common.models import BaseModel
@@ -15,6 +15,9 @@ class SLA(BaseModel, table=True):
     name: str = Field(nullable=True, unique=True)
     response_time: int = Field(sa_column=Column(BigInteger, nullable=False))
     resolution_time: int = Field(sa_column=Column(BigInteger, nullable=False))
+    organization_id: int = Field(
+        sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
+    )
     issued_by: int = Field(nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     tickets: List[Ticket] = Relationship(back_populates="sla", passive_deletes=True)

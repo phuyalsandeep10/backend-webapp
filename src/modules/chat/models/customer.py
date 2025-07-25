@@ -30,3 +30,11 @@ class Customer(CommonModel, table=True):
     country: str = Field(max_length=255, index=True, nullable=True)
 
     tickets: List["Ticket"] = Relationship(back_populates="customer")
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone,
+            "location": f"{self.city}, {self.country}",
+        }

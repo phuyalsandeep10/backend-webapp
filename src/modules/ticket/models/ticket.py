@@ -27,7 +27,6 @@ class TicketAssigneesLink(BaseModel, table=True):
     assignee_id: int = Field(
         sa_column=Column(ForeignKey("sys_users.id", ondelete="SET NULL"))
     )
-    __table_args__ = (PrimaryKeyConstraint("ticket_id", "assignee_id"),)
 
 
 class TicketAlert(BaseModel, table=True):
@@ -92,16 +91,24 @@ class Ticket(BaseModel, table=True):
     issued: List["User"] = Relationship(back_populates="tickets")
 
     def to_dict(self):
-        return {
+        payload = {
             "id": self.id,
             "title": self.title,
             "description": self.description,
-            "priority": self.priority_id,
-            "status": self.status_id,
+            "priority": self.priority.to_dict(),
+            "status": self.status.to_dict(),
             "sla": self.sla.to_dict(),
-            "customer": self.customer.to_dict(),
             "assignees": [assignee.to_dict() for assignee in self.assignees],
         }
+        if self.customer_id is None:
+            payload["customer_name"] = (self.customer_name,)
+            payload["customer_email"] = (self.customer_email,)
+            payload["customer_phone"] = (self.customer_phone,)
+            payload["customer_location"] = (self.customer_location,)
+        else:
+            payload["customer"] = self.customer.to_dict()
+
+        return payload
 
     def __str__(self):
         return self.title

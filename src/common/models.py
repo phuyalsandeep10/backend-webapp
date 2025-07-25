@@ -33,7 +33,7 @@ def case_insensitive(attributes):
 
 
 class BaseModel(SQLModel):
-    id: int = Field(default=None, primary_key=True)
+    id: int = Field(primary_key=True)
 
     @classmethod
     async def get(cls: Type[T], id: int) -> Optional[T]:

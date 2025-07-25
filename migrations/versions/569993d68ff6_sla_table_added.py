@@ -28,6 +28,12 @@ def upgrade() -> None:
         sa.Column("response_time", sa.BigInteger(), nullable=False),
         sa.Column("resolution_time", sa.BigInteger(), nullable=False),
         sa.Column("issued_by", sa.Integer(), nullable=False),
+        sa.Column(
+            "organization_id",
+            sa.Integer,
+            sa.ForeignKey("sys_organizations.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
