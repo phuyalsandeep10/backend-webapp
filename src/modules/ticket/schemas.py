@@ -55,6 +55,12 @@ class CreateTicketSchema(BaseModel):
         return self
 
 
+class CreatePrioriySchema(BaseModel):
+    name: str
+    level: int
+    color: str
+
+
 class CreateContactSchema(BaseModel):
 
     email: EmailStr
