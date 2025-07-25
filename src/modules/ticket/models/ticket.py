@@ -91,29 +91,6 @@ class Ticket(BaseModel, table=True):
     department: List["Team"] = Relationship(back_populates="tickets")
     issued: List["User"] = Relationship(back_populates="tickets")
 
-    # validators
-    @model_validator(mode="after")
-    def check_customer_anonymousness(self):
-        customer_id = self.customer_id
-        customer_name = self.customer_name
-        customer_email = self.customer_email
-        customer_phone = self.customer_phone
-        customer_location = self.customer_location
-
-        if customer_id is None and all(
-            not field
-            for field in [
-                customer_name,
-                customer_email,
-                customer_phone,
-                customer_location,
-            ]
-        ):
-            raise ValidationError(
-                "Either provide regular customer or anonymouse customer information"
-            )
-        return self
-
     def to_dict(self):
         return {
             "id": self.id,

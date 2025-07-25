@@ -2,7 +2,8 @@ from typing import List, Optional
 
 from fastapi import status
 from fastapi.exceptions import HTTPException
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from pydantic import BaseModel, EmailStr, Field, ValidationError, model_validator
+from pydantic_core import PydanticCustomError
 
 from src.modules.ticket.enums import PriorityEnum, StatusEnum
 
@@ -15,13 +16,45 @@ class AssigneeOut(BaseModel):
 class CreateTicketSchema(BaseModel):
     title: str
     description: str
-    priority: PriorityEnum = PriorityEnum.MEDIUM
-    status: StatusEnum = StatusEnum.OPEN
+    attachment: Optional[str] = None
+    priority_id: int
+    status_id: int
+    department_id: int
+    organization_id: int
     sla_id: int
-    contact_id: int
+    customer_id: Optional[int] = None
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
+    customer_location: Optional[str] = None
     assignees: Optional[List[int]] = None
 
     model_config = {"extra": "forbid"}
+
+    @model_validator(mode="after")
+    def check_customer_anonymousness(self):
+        customer_id = self.customer_id
+        customer_name = self.customer_name
+        customer_email = self.customer_email
+        customer_phone = self.customer_phone
+        customer_location = self.customer_location
+
+        result = [
+            field
+            for field in [
+                customer_name,
+                customer_email,
+                customer_phone,
+                customer_location,
+            ]
+        ]
+
+        if customer_id is None and any(res is None for res in result):
+            raise PydanticCustomError(
+                "missing_customer_info",
+                "Either provide customer_id or anonymous customer information (name/email/phone/location)",
+            )
+        return self
 
 
 class CreateContactSchema(BaseModel):
