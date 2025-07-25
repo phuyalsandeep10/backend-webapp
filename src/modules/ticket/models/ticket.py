@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
-from pydantic import EmailStr, ValidationError, root_validator
+from pydantic import EmailStr, ValidationError, model_validator
 from sqlalchemy import Column, ForeignKey
 from sqlmodel import Field, PrimaryKeyConstraint, Relationship
 
@@ -42,6 +42,7 @@ class Ticket(BaseModel, table=True):
 
     title: str
     description: str
+    attachment: Optional[str] = None
     organization_id: int = Field(
         sa_column=Column(ForeignKey("sys_organization.id", ondelete="CASCADE"))
     )
@@ -81,15 +82,15 @@ class Ticket(BaseModel, table=True):
     )
 
     # validators
-    @root_validator
-    def check_customer_anonymousness(cls, values):
-        contact_id = values.get("contact_id")
-        customer_name = values.get("customer_name")
-        customer_email = values.get("customer_email")
-        customer_phone = values.get("customer_phone")
-        customer_location = values.get("customer_location")
+    @model_validator(mode="after")
+    def check_customer_anonymousness(self):
+        customer_id = self.customer_id
+        customer_name = self.customer_name
+        customer_email = self.customer_email
+        customer_phone = self.customer_phone
+        customer_location = self.customer_location
 
-        if contact_id is None and all(
+        if customer_id is None and all(
             not field
             for field in [
                 customer_name,
@@ -101,6 +102,7 @@ class Ticket(BaseModel, table=True):
             raise ValidationError(
                 "Either provide regular customer or anonymouse customer information"
             )
+        return self
 
     def to_dict(self):
         return {
