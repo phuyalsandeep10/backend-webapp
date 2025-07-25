@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 import src.models
 from src.common.utils import hash_password
 from src.modules.auth.models import User
-from src.modules.organizations.models import Organization
+from src.modules.organizations.models import Organization, OrganizationMember
 from src.modules.ticket.models import Priority, TicketStatus
 
 # default data
@@ -26,7 +26,7 @@ status = [
 ]
 
 
-async def test_user_seed():
+async def user_seed_dummy():
     # checking if test user exists or not
     test_exist = await User.find_one(where={"email": "test@gmail.com"})
     data = {"email": "test@gmail.com", "password": "test12345", "name": "test"}
@@ -42,7 +42,7 @@ async def test_user_seed():
         print("Test User already exists")
 
 
-async def test_organization():
+async def organization_seed_dummy():
 
     record = await Organization.find_one(
         where={
@@ -60,6 +60,15 @@ async def test_organization():
         print("Organization created")
     else:
         print("Organization already created")
+
+
+async def organization_user_seed_dummy():
+    user = await OrganizationMember.find_one(where={"user_id": 1})
+    if not user:
+        await OrganizationMember.create(organization_id=1, user_id=1)
+        print("User added to organization 1")
+    else:
+        print("User already added or there is not user with 1 id")
 
 
 async def priority_seed():
@@ -100,8 +109,9 @@ async def status_seed():
 
 
 async def seed_func():
-    await test_organization()
-    await test_user_seed()
+    await organization_seed_dummy()
+    await user_seed_dummy()
+    await organization_user_seed_dummy()
     await priority_seed()
     await status_seed()
 
