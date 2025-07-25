@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from sqlmodel import BigInteger
 
 from src.common.dependencies import get_user_by_token
+from src.modules.auth.models import User
 from src.modules.ticket.models import SLA
 from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import CreateSLASchema
@@ -12,20 +13,13 @@ from src.utils.response import CustomResponse as cr
 
 class SLAServices:
 
-    async def register_sla(self, payload: CreateSLASchema, authorization: str):
+    async def register_sla(self, payload: CreateSLASchema, user: User):
         try:
-            # finding the user id from the request access token
-            token = authorization.split(" ")[1]
-            if authorization.split(" ")[0] != "Bearer":
-                raise IndexError()
-            user = await get_user_by_token(token)
-
-            if not user:
-                raise HTTPException(status_code=403, detail="Authorization denied")
 
             user_id = user.id
             data = dict(payload)
             data["issued_by"] = user_id
+            data["organization_id"] = user.attributes.get("organization_id")
 
             sla = await SLA.create(**data)
 

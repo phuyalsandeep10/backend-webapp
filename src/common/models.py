@@ -94,12 +94,21 @@ class BaseModel(SQLModel):
         limit: Optional[int] = None,
         joins: Optional[list[Any]] = None,
         options: Optional[list[Any]] = None,
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> List[T]:
         statement = query_statement(cls, where=where, joins=joins, options=options)
         if skip:
             statement = statement.offset(skip)
         if limit is not None:
             statement = statement.limit(limit)
+
+        if related_items:
+            # related_items can be a single selectinload() or a list of them
+            if isinstance(related_items, list):
+                for item in related_items:
+                    statement = statement.options(item)
+            else:
+                statement = statement.options(related_items)
         async with async_session() as session:
             result = await session.execute(statement)
             return list(result.scalars().all()) if result else []

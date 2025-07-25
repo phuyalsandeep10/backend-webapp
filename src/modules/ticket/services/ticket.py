@@ -41,10 +41,12 @@ class TicketServices:
                 message="Error while creating a ticket",
             )
 
-    async def list_tickets(self):
+    async def list_tickets(self, user: User):
         try:
-            all_tickets = await Ticket.get_all(
-                [
+
+            all_tickets = await Ticket.filter(
+                where={"organization_id": user.attributes.get("organization_id")},
+                related_items=[
                     selectinload(Ticket.sla),
                     selectinload(Ticket.assignees),
                     selectinload(Ticket.priority),
@@ -52,7 +54,7 @@ class TicketServices:
                     selectinload(Ticket.customer),
                     selectinload(Ticket.issued),
                     selectinload(Ticket.department),
-                ]
+                ],
             )
             tickets = [ticket.to_dict() for ticket in all_tickets]
             return cr.success(

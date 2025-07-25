@@ -1,7 +1,8 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Depends, Header
 
+from src.common.dependencies import get_current_user
 from src.modules.ticket.schemas import CreateSLASchema, SLAOut
 from src.modules.ticket.services.sla import sla_service
 from src.utils.response import CustomResponseSchema
@@ -14,10 +15,8 @@ router = APIRouter()
     summary="Creates new Service Level agreement",
     response_model=CustomResponseSchema,
 )
-async def register_sla(
-    payload: CreateSLASchema, authorization: Annotated[str, Header()]
-):
-    return await sla_service.register_sla(payload, authorization)
+async def register_sla(payload: CreateSLASchema, user=Depends(get_current_user)):
+    return await sla_service.register_sla(payload, user)
 
 
 @router.get(

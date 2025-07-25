@@ -24,8 +24,8 @@ async def register_ticket(payload: CreateTicketSchema, user=Depends(get_current_
     summary="List all tickets",
     response_model=CustomResponseSchema[List[TicketOut]],
 )
-async def list_tickets():
-    return await ticket_services.list_tickets()
+async def list_tickets(user=Depends(get_current_user)):
+    return await ticket_services.list_tickets(user)
 
 
 @router.get(
