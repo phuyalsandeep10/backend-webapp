@@ -29,4 +29,4 @@ class Customer(CommonModel, table=True):
     city: str = Field(max_length=255, index=True, nullable=True)
     country: str = Field(max_length=255, index=True, nullable=True)
 
-    tickets: List["Ticket"] = Relationship(back_populates="customer_id")
+    tickets: List["Ticket"] = Relationship(back_populates="customer")

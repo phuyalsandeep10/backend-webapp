@@ -16,7 +16,7 @@ class Team(CommonModel, table=True):
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
     description: str | None = Field(None, max_length=300)
 
-    tickets: List["Ticket"] = Relationship(back_populates="department_id")
+    tickets: List["Ticket"] = Relationship(back_populates="department")
 
 
 class TeamMember(CommonModel, table=True):

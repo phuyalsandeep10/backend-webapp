@@ -14,37 +14,70 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "0153f2ba2a04"
-down_revision: Union[str, Sequence[str], None] = "03f996d78561"
+down_revision: Union[str, Sequence[str], None] = "ea8c22fe9b79"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     """Upgrade schema."""
+
     op.create_table(
         "tickets",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("title", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("title", sa.String(length=255), nullable=False),
+        sa.Column("description", sa.Text, nullable=False),
+        sa.Column("attachment", sa.String(length=255), nullable=True),
         sa.Column(
-            "priority",
-            sa.Enum(
-                "CRITICAL", "HIGH", "MEDIUM", "LOW", "TRIVIAL", name="priorityenum"
-            ),
+            "organization_id",
+            sa.Integer,
+            sa.ForeignKey("sys_organizations.id", ondelete="CASCADE"),
             nullable=False,
         ),
         sa.Column(
-            "status",
-            sa.Enum("OPEN", "PENDING", "CLOSED", name="statusenum"),
-            nullable=False,
+            "priority_id",
+            sa.Integer,
+            sa.ForeignKey("priority.id", ondelete="SET NULL"),
+            nullable=True,
         ),
-        sa.Column("issued_by", sa.Integer(), nullable=False),
-        sa.Column("sla_id", sa.Integer(), nullable=True),
-        sa.Column("contact_id", sa.Integer(), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(["contact_id"], ["contacts.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["sla_id"], ["sla.id"], ondelete="SET NULL"),
-        sa.PrimaryKeyConstraint("id"),
+        sa.Column(
+            "status_id",
+            sa.Integer,
+            sa.ForeignKey("ticket_status.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "department_id",
+            sa.Integer,
+            sa.ForeignKey("org_teams.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "issued_by",
+            sa.Integer,
+            sa.ForeignKey("sys_users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "sla_id",
+            sa.Integer,
+            sa.ForeignKey("sla.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "created_at", sa.DateTime, nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "customer_id",
+            sa.Integer,
+            sa.ForeignKey("org_customers.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column("is_spam", sa.Boolean, nullable=False, server_default=sa.false()),
+        sa.Column("customer_name", sa.String(length=255), nullable=True),
+        sa.Column("customer_email", sa.String(length=255), nullable=True),
+        sa.Column("customer_phone", sa.String(length=50), nullable=True),
+        sa.Column("customer_location", sa.String(length=255), nullable=True),
     )
 
 

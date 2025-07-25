@@ -7,5 +7,7 @@ celery:
 test:
 	@echo "Starting testing"
 	pytest -v
+seed:
+	PYTHONPATH=./src python src/seed.py
 
 

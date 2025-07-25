@@ -6,11 +6,16 @@ from sqlalchemy import Column, ForeignKey
 from sqlmodel import Field, PrimaryKeyConstraint, Relationship
 
 from src.common.models import BaseModel
+from src.modules.chat.models.customer import Customer
 from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
 
 if TYPE_CHECKING:
     from src.modules.auth.models import User
+    from src.modules.organizations.models import Organization
+    from src.modules.team.models import Team
     from src.modules.ticket.models import SLA, Contact
+    from src.modules.ticket.models.priority import Priority
+    from src.modules.ticket.models.status import TicketStatus
 
 
 class TicketAssigneesLink(BaseModel, table=True):
@@ -44,19 +49,19 @@ class Ticket(BaseModel, table=True):
     description: str
     attachment: Optional[str] = None
     organization_id: int = Field(
-        sa_column=Column(ForeignKey("sys_organization.id", ondelete="CASCADE"))
+        sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
     )
     priority_id: int = Field(
         sa_column=Column(ForeignKey("priority.id", ondelete="SET NULL"))
     )
     status_id: int = Field(
-        sa_column=Column(ForeignKey("ticket_status", ondelete="SET NULL"))
+        sa_column=Column(ForeignKey("ticket_status.id", ondelete="SET NULL"))
     )
     department_id: int = Field(
         sa_column=Column(ForeignKey("org_teams.id", ondelete="SET NULL"))
     )
     issued_by: int = Field(
-        sa_column=Column(ForeignKey("sys_users", ondelete="SET NULL"))
+        sa_column=Column(ForeignKey("sys_users.id", ondelete="SET NULL"))
     )
     sla_id: int = Field(sa_column=Column(ForeignKey("sla.id", ondelete="SET NULL")))
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -73,13 +78,18 @@ class Ticket(BaseModel, table=True):
 
     # Relationships
     sla: "SLA" = Relationship(back_populates="tickets")
-    contacts: "Contact" = Relationship(back_populates="tickets")
+    customer: "Customer" = Relationship(back_populates="tickets")
+    priority: "Priority" = Relationship(back_populates="tickets")
+    status: "TicketStatus" = Relationship(back_populates="tickets")
     assignees: List["User"] = Relationship(
         back_populates="assigned_tickets", link_model=TicketAssigneesLink
     )
     alerts: List["TicketAlert"] = Relationship(
         back_populates="ticket",
     )
+    organization: List["Organization"] = Relationship(back_populates="tickets")
+    department: List["Team"] = Relationship(back_populates="tickets")
+    issued: List["User"] = Relationship(back_populates="tickets")
 
     # validators
     @model_validator(mode="after")
@@ -112,7 +122,7 @@ class Ticket(BaseModel, table=True):
             "priority": self.priority_id,
             "status": self.status_id,
             "sla": self.sla.to_dict(),
-            "contact": self.contacts.to_dict(),
+            "customer": self.customer.to_dict(),
             "assignees": [assignee.to_dict() for assignee in self.assignees],
         }
 

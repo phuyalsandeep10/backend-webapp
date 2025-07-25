@@ -28,9 +28,9 @@ class Organization(CommonModel, table=True):
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
-    priorities: List["Priority"] = Relationship(back_populates="organization_id")
-    ticket_status: List["TicketStatus"] = Relationship(back_populates="organization_id")
-    tickets: List["Ticket"] = Relationship(back_populates="organization_id")
+    priorities: List["Priority"] = Relationship(back_populates="organizations")
+    ticket_status: List["TicketStatus"] = Relationship(back_populates="organizations")
+    tickets: List["Ticket"] = Relationship(back_populates="organization")
 
     @classmethod
     async def get_orgs_by_user_id(cls, user_id: int):
