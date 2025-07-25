@@ -1,6 +1,6 @@
-from typing import Annotated, List
+from typing import List
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 
 from src.common.dependencies import get_current_user
 from src.modules.ticket.schemas import CreateSLASchema, SLAOut
