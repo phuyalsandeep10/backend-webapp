@@ -4,9 +4,9 @@ from sqlalchemy import Column
 from sqlmodel import Field, ForeignKey, Relationship, UniqueConstraint
 
 from src.common.models import BaseModel
-from src.modules.organizations.models import Organization
 
 if TYPE_CHECKING:
+    from src.modules.organizations.models import Organization
     from src.modules.ticket.models.ticket import Ticket
 
 
