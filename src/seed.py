@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+from datetime import datetime
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 
@@ -39,6 +40,12 @@ async def user_seed_dummy():
             name=data["name"],
             password=hash_password(data["password"]),
         )
+
+        await User.update(
+            user.id,
+            email_verified_at=datetime.utcnow(),
+            attributes={"organization_id": 1},
+        )
         print("Test User created")
     else:
         print("Test User already exists")
@@ -59,6 +66,7 @@ async def organization_seed_dummy():
             logo="test",
             website="test.com",
         )
+
         print("Organization created")
     else:
         print("Organization already created")
@@ -68,6 +76,7 @@ async def organization_user_seed_dummy():
     user = await OrganizationMember.find_one(where={"user_id": 1})
     if not user:
         await OrganizationMember.create(organization_id=1, user_id=1)
+
         print("User added to organization 1")
     else:
         print("User already added or there is not user with 1 id")

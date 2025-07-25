@@ -1,7 +1,8 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
 
+from src.common.dependencies import get_current_user
 from src.modules.ticket.schemas import (
     CreateTicketSchema,
     FullCreateTicketSchema,
@@ -14,10 +15,8 @@ router = APIRouter()
 
 
 @router.post("/", summary="Creates new ticket", response_model=CustomResponseSchema)
-async def register_ticket(
-    payload: CreateTicketSchema, authorization: Annotated[str, Header()]
-):
-    return await ticket_services.create_ticket(payload, authorization)
+async def register_ticket(payload: CreateTicketSchema, user=Depends(get_current_user)):
+    return await ticket_services.create_ticket(payload, user)
 
 
 @router.get(

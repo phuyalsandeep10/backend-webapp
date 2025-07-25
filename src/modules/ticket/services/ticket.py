@@ -12,27 +12,22 @@ from src.utils.response import CustomResponse as cr
 
 class TicketServices:
 
-    async def create_ticket(self, payload: CreateTicketSchema, authorization: str):
+    async def create_ticket(self, payload: CreateTicketSchema, user: User):
         try:
-
-            token = authorization.split(" ")[1]
-            if authorization.split(" ")[0] != "Bearer":
-                raise IndexError()
-            user = await get_user_by_token(token)
-
-            if not user:
-                raise HTTPException(status_code=403, detail="Authorization denied")
-
             user_id = user.id
             data = dict(payload)
             data["issued_by"] = user_id
-            if "assignees" in data:
+            data["organization_id"] = user.attributes.get("organization_id")
+            if data["assignees"] is not None:
+                print("First")
                 users = []
                 for assigne_id in data["assignees"]:
                     usr = await User.find_one(where={"id": assigne_id})
                     users.append(usr)
 
                 data["assignees"] = users
+
+            del data["assignees"]  # not assing None to the db
             await Ticket.create(**dict(data))
 
             return cr.success(
@@ -55,6 +50,8 @@ class TicketServices:
                     selectinload(Ticket.priority),
                     selectinload(Ticket.status),
                     selectinload(Ticket.customer),
+                    selectinload(Ticket.issued),
+                    selectinload(Ticket.department),
                 ]
             )
             tickets = [ticket.to_dict() for ticket in all_tickets]

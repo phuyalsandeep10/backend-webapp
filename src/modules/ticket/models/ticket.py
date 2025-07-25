@@ -86,19 +86,24 @@ class Ticket(BaseModel, table=True):
     alerts: List["TicketAlert"] = Relationship(
         back_populates="ticket",
     )
-    organization: List["Organization"] = Relationship(back_populates="tickets")
-    department: List["Team"] = Relationship(back_populates="tickets")
-    issued: List["User"] = Relationship(back_populates="tickets")
+    organization: "Organization" = Relationship(back_populates="tickets")
+    department: "Team" = Relationship(back_populates="tickets")
+    issued: "User" = Relationship(back_populates="tickets")
 
     def to_dict(self):
         payload = {
             "id": self.id,
             "title": self.title,
             "description": self.description,
+            "attachment": self.attachment,
             "priority": self.priority.to_dict(),
             "status": self.status.to_dict(),
             "sla": self.sla.to_dict(),
+            "department": self.department.to_dict(),
+            "issued": self.issued.to_dict(),
             "assignees": [assignee.to_dict() for assignee in self.assignees],
+            "created_at": self.created_at.isoformat(),
+            "is_spam": self.is_spam,
         }
         if self.customer_id is None:
             payload["customer_name"] = (self.customer_name,)

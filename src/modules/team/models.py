@@ -18,6 +18,12 @@ class Team(CommonModel, table=True):
 
     tickets: List["Ticket"] = Relationship(back_populates="department")
 
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "description": self.description,
+        }
+
 
 class TeamMember(CommonModel, table=True):
     __tablename__ = "org_team_members"  # type:ignore

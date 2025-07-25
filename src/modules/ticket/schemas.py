@@ -20,7 +20,6 @@ class CreateTicketSchema(BaseModel):
     priority_id: int
     status_id: int
     department_id: int
-    organization_id: int
     sla_id: int
     customer_id: Optional[int] = None
     customer_name: Optional[str] = None
