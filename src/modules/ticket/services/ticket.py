@@ -5,6 +5,7 @@ from src.common.dependencies import get_user_by_token
 from src.modules.auth.models import User
 from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import SLA
+from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import CreateTicketSchema, FullCreateTicketSchema
 from src.utils.response import CustomResponse as cr
@@ -18,6 +19,17 @@ class TicketServices:
             data = dict(payload)
             data["issued_by"] = user_id
             data["organization_id"] = user.attributes.get("organization_id")
+            sts = await TicketStatus.find_one(
+                where={
+                    "is_default": True,
+                    "organization_id": data["organization_id"],
+                }
+            )
+            if not sts:
+                raise HTTPException(
+                    status_code=500, detail="Ticket default status has not been set yet"
+                )
+            data["status_id"] = sts.id
             if data["assignees"] is not None:
                 print("First")
                 users = []

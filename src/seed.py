@@ -28,14 +28,18 @@ priorities2 = [
 ]
 
 status = [
-    {"name": "Open", "color": "#ffffff", "organization_id": 1},
-    {"name": "Pending", "color": "#ffffff", "organization_id": 1},
+    {
+        "name": "Open",
+        "color": "#ffffff",
+        "organization_id": 1,
+    },
+    {"name": "Pending", "color": "#ffffff", "organization_id": 1, "is_default": True},
     {"name": "Closed", "color": "#ffffff", "organization_id": 1},
 ]
 status2 = [
     {"name": "Open", "color": "#ffffff", "organization_id": 2},
     {"name": "In-Progress", "color": "#ffffff", "organization_id": 2},
-    {"name": "Pending", "color": "#ffffff", "organization_id": 2},
+    {"name": "Pending", "color": "#ffffff", "organization_id": 2, "is_default": True},
     {"name": "Closed", "color": "#ffffff", "organization_id": 2},
 ]
 
@@ -219,6 +223,7 @@ async def status_seed():
                 name=i["name"],
                 color=i["color"],
                 organization_id=i["organization_id"],
+                is_default=bool(i.get("is_default", False)),
             )
             print("Status 1 created")
         else:
@@ -236,6 +241,7 @@ async def status_seed():
                 name=i["name"],
                 color=i["color"],
                 organization_id=i["organization_id"],
+                is_default=bool(i.get("is_default", False)),
             )
             print("Status 2 created")
         else:

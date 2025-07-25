@@ -18,7 +18,6 @@ class CreateTicketSchema(BaseModel):
     description: str
     attachment: Optional[str] = None
     priority_id: int
-    status_id: int
     department_id: int
     sla_id: int
     customer_id: Optional[int] = None
