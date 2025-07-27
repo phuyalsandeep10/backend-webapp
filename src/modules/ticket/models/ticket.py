@@ -47,6 +47,8 @@ class Ticket(CommonModel, table=True):
     title: str
     description: str
     attachment: Optional[str] = None
+    sender_domain: EmailStr
+    notes: Optional[str] = None
     organization_id: int = Field(
         sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
     )
@@ -58,9 +60,6 @@ class Ticket(CommonModel, table=True):
     )
     department_id: int = Field(
         sa_column=Column(ForeignKey("org_teams.id", ondelete="SET NULL"))
-    )
-    issued_by: int = Field(
-        sa_column=Column(ForeignKey("sys_users.id", ondelete="SET NULL"))
     )
     sla_id: int = Field(
         sa_column=Column(ForeignKey("ticket_sla.id", ondelete="SET NULL"))
@@ -90,7 +89,10 @@ class Ticket(CommonModel, table=True):
     )
     organization: "Organization" = Relationship(back_populates="tickets")
     department: "Team" = Relationship(back_populates="tickets")
-    # issued: "User" = Relationship(back_populates="tickets")
+    created_by: "User" = Relationship(
+        back_populates="tickets",
+        sa_relationship_kwargs={"foreign_keys": "[Ticket.created_by_id]"},
+    )
 
     def to_dict(self):
         payload = {
@@ -102,7 +104,7 @@ class Ticket(CommonModel, table=True):
             "status": self.status.to_dict(),
             "sla": self.sla.to_dict(),
             "department": self.department.to_dict(),
-            # "issued": self.issued.to_dict(),
+            "created_by": self.created_by.to_dict(),
             "assignees": [assignee.to_dict() for assignee in self.assignees],
             "created_at": self.created_at.isoformat(),
             "is_spam": self.is_spam,
