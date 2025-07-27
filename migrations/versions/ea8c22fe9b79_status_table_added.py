@@ -30,6 +30,7 @@ def upgrade() -> None:
         sa.Column("color", sa.String(), nullable=False),
         sa.Column("is_default", sa.Boolean(), default=False),
         sa.Column("organization_id", sa.Integer(), nullable=False),
+        sa.Column("status_category", sa.String(), nullable=False),
         sa.ForeignKeyConstraint(
             ["organization_id"], ["sys_organizations.id"], ondelete="CASCADE"
         ),

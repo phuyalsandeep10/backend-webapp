@@ -9,7 +9,7 @@ class PriorityEnum(str, Enum):
     TRIVIAL = "trivial"
 
 
-class StatusEnum(str, Enum):
+class TicketStatusEnum(str, Enum):
     OPEN = "open"
     PENDING = "pending"
     CLOSED = "closed"

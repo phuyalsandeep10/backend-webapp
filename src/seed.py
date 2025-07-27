@@ -32,15 +32,42 @@ status = [
         "name": "Open",
         "color": "#ffffff",
         "organization_id": 1,
+        "status_category": "OPEN",
     },
-    {"name": "Pending", "color": "#ffffff", "organization_id": 1, "is_default": True},
-    {"name": "Closed", "color": "#ffffff", "organization_id": 1},
+    {
+        "name": "Pending",
+        "color": "#ffffff",
+        "organization_id": 1,
+        "is_default": True,
+        "status_category": "PENDING",
+    },
+    {
+        "name": "Closed",
+        "color": "#ffffff",
+        "organization_id": 1,
+        "status_category": "CLOSED",
+    },
 ]
 status2 = [
-    {"name": "Open", "color": "#ffffff", "organization_id": 2},
-    {"name": "In-Progress", "color": "#ffffff", "organization_id": 2},
-    {"name": "Pending", "color": "#ffffff", "organization_id": 2, "is_default": True},
-    {"name": "Closed", "color": "#ffffff", "organization_id": 2},
+    {
+        "name": "In-Progress",
+        "color": "#ffffff",
+        "organization_id": 2,
+        "status_category": "OPEN",
+    },
+    {
+        "name": "Pending",
+        "color": "#ffffff",
+        "organization_id": 2,
+        "is_default": True,
+        "status_category": "PENDING",
+    },
+    {
+        "name": "Closed",
+        "color": "#ffffff",
+        "organization_id": 2,
+        "status_category": "CLOSED",
+    },
 ]
 
 
@@ -224,6 +251,7 @@ async def status_seed():
                 color=i["color"],
                 organization_id=i["organization_id"],
                 is_default=bool(i.get("is_default", False)),
+                status_category=i["status_category"],
             )
             print("Status 1 created")
         else:
@@ -242,6 +270,7 @@ async def status_seed():
                 color=i["color"],
                 organization_id=i["organization_id"],
                 is_default=bool(i.get("is_default", False)),
+                status_category=i["status_category"],
             )
             print("Status 2 created")
         else:

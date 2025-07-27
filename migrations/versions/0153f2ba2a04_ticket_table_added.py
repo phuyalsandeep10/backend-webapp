@@ -31,6 +31,7 @@ def upgrade() -> None:
         sa.Column("attachment", sa.String(length=255), nullable=True),
         sa.Column("sender_domain", sa.String(), nullable=False),
         sa.Column("notes", sa.String(), nullable=True),
+        sa.Column("confirmation_token", sa.String(), nullable=True),
         sa.Column(
             "organization_id",
             sa.Integer,

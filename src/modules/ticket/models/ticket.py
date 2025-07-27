@@ -75,6 +75,7 @@ class Ticket(CommonModel, table=True):
     customer_email: EmailStr = Field(nullable=True)
     customer_phone: str = Field(nullable=True)
     customer_location: str = Field(nullable=True)
+    confirmation_token: Optional[str] = None
 
     # Relationships
     sla: "TicketSLA" = Relationship(back_populates="tickets")

@@ -5,7 +5,7 @@ from fastapi.exceptions import HTTPException
 from pydantic import BaseModel, EmailStr, Field, ValidationError, model_validator
 from pydantic_core import PydanticCustomError
 
-from src.modules.ticket.enums import PriorityEnum, StatusEnum
+from src.modules.ticket.enums import PriorityEnum, TicketStatusEnum
 
 
 class AssigneeOut(BaseModel):
@@ -66,6 +66,8 @@ class CreatePrioriySchema(BaseModel):
 class CreateTicketStatusSchema(BaseModel):
     name: str
     color: str
+    is_default: Optional[bool] = False
+    status_category: TicketStatusEnum
 
 
 class CreateContactSchema(BaseModel):
@@ -87,46 +89,6 @@ class CreateSLASchema(BaseModel):
     model_config = {"extra": "forbid"}
 
 
-class FullCreateTicketSchema(BaseModel):
-    title: str
-    description: str
-    priority: PriorityEnum = PriorityEnum.MEDIUM
-    status: StatusEnum = StatusEnum.OPEN
-    sla_id: Optional[int] = None
-    contact_id: Optional[int] = None
-    sla: Optional[CreateSLASchema] = None
-    contact: Optional[CreateContactSchema] = None
-    assignees: Optional[List[int]] = None
-
-    @model_validator(mode="after")
-    def check_sla_fields(self):
-        if self.sla_id is not None and self.sla is not None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Either provide sla_id or sla details",
-            )
-        if self.sla_id is None and self.sla is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Atleast provide sla_id or sla details",
-            )
-        return self
-
-    @model_validator(mode="after")
-    def check_contact_fields(self):
-        if self.contact_id is not None and self.contact is not None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Either provide contact_id or contact details",
-            )
-        if self.contact_id is None and self.contact is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Atleast provide contact_id or contact details",
-            )
-        return self
-
-
 class ContactOut(CreateContactSchema):
     id: int
 
@@ -141,8 +103,6 @@ class TicketOut(BaseModel):
     id: int
     title: str
     description: str
-    priority: PriorityEnum = PriorityEnum.MEDIUM
-    status: StatusEnum = StatusEnum.OPEN
 
     sla: SLAOut
     contact: ContactOut

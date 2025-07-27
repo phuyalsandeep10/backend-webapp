@@ -4,6 +4,7 @@ from sqlalchemy import Column
 from sqlmodel import Field, ForeignKey, Relationship, UniqueConstraint
 
 from src.common.models import BaseModel, CommonModel
+from src.modules.ticket.enums import TicketStatusEnum
 
 if TYPE_CHECKING:
     from src.modules.organizations.models import Organization
@@ -22,6 +23,7 @@ class TicketStatus(CommonModel, table=True):
     organization_id: int = Field(
         sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
     )
+    status_category: str
     tickets: List["Ticket"] = Relationship(back_populates="status")
     organizations: List["Organization"] = Relationship(back_populates="ticket_status")
 
