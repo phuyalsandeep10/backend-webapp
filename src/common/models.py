@@ -118,9 +118,6 @@ class BaseModel(SQLModel):
             statement = statement.offset(skip)
         if limit is not None:
             statement = statement.limit(limit)
-
-        print("The where is", where)
-
         if related_items:
             # related_items can be a single selectinload() or a list of them
             if isinstance(related_items, list):
