@@ -11,7 +11,7 @@ from src.modules.auth.models import User
 from src.modules.organizations.models import Organization, OrganizationMember
 from src.modules.team.models import Team
 from src.modules.ticket.models import TicketPriority, TicketStatus
-from src.modules.ticket.models.sla import SLA
+from src.modules.ticket.models.sla import TicketSLA
 
 # default data
 priorities = [
@@ -249,39 +249,39 @@ async def status_seed():
 
 
 async def sla_seed_dummy():
-    record = await SLA.find_one(
+    record = await TicketSLA.find_one(
         where={
             "name": {"mode": "insensitive", "value": "test_sla"},
         }
     )
-    record2 = await SLA.find_one(
+    record2 = await TicketSLA.find_one(
         where={
             "name": {"mode": "insensitive", "value": "test_sla2"},
         }
     )
     if not record:
-        await SLA.create(
+        await TicketSLA.create(
             name="test_sla",
             response_time=18000,  # 5 hours
             resolution_time=432000,  # 5 days
             organization_id=1,
             issued_by=1,
         )
-        print("Test SLA 1 has been created")
+        print("Test TicketSLA 1 has been created")
     else:
-        print("Test SLA 1 already exists")
+        print("Test TicketSLA 1 already exists")
 
     if not record2:
-        await SLA.create(
+        await TicketSLA.create(
             name="test_sla2",
             response_time=18000,  # 5 hours
             resolution_time=432000,  # 5 days
             organization_id=1,
             issued_by=1,
         )
-        print("Test SLA 2 has been created")
+        print("Test TicketSLA 2 has been created")
     else:
-        print("Test SLA 2 already exists")
+        print("Test TicketSLA 2 already exists")
 
 
 async def seed_func():

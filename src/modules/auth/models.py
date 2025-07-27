@@ -60,7 +60,7 @@ class User(BaseModel, table=True):
         back_populates="user",
         sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},
     )
-    tickets: List[Ticket] = Relationship(back_populates="issued")
+    # tickets: List[Ticket] = Relationship(back_populates="issued")
 
     assigned_tickets: List[Ticket] = Relationship(
         back_populates="assignees", link_model=TicketAssigneesLink

@@ -61,7 +61,7 @@ class TicketServices:
                 related_items=[
                     selectinload(Ticket.sla),
                     selectinload(Ticket.assignees),
-                    selectinload(Ticket.priority),
+                    selectinload(Ticket.TicketPriority),
                     selectinload(Ticket.status),
                     selectinload(Ticket.customer),
                     selectinload(Ticket.issued),

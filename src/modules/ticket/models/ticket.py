@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from src.modules.auth.models import User
     from src.modules.organizations.models import Organization
     from src.modules.team.models import Team
-    from src.modules.ticket.models import SLA, Contact
-    from src.modules.ticket.models.priority import Priority
+    from src.modules.ticket.models import TicketSLA
+    from src.modules.ticket.models.priority import TicketPriority
     from src.modules.ticket.models.status import TicketStatus
 
 
@@ -78,9 +78,9 @@ class Ticket(CommonModel, table=True):
     customer_location: str = Field(nullable=True)
 
     # Relationships
-    sla: "SLA" = Relationship(back_populates="tickets")
+    sla: "TicketSLA" = Relationship(back_populates="tickets")
     customer: "Customer" = Relationship(back_populates="tickets")
-    priority: "Priority" = Relationship(back_populates="tickets")
+    priority: "TicketPriority" = Relationship(back_populates="tickets")
     status: "TicketStatus" = Relationship(back_populates="tickets")
     assignees: List["User"] = Relationship(
         back_populates="assigned_tickets", link_model=TicketAssigneesLink
@@ -90,7 +90,7 @@ class Ticket(CommonModel, table=True):
     )
     organization: "Organization" = Relationship(back_populates="tickets")
     department: "Team" = Relationship(back_populates="tickets")
-    issued: "User" = Relationship(back_populates="tickets")
+    # issued: "User" = Relationship(back_populates="tickets")
 
     def to_dict(self):
         payload = {
@@ -102,7 +102,7 @@ class Ticket(CommonModel, table=True):
             "status": self.status.to_dict(),
             "sla": self.sla.to_dict(),
             "department": self.department.to_dict(),
-            "issued": self.issued.to_dict(),
+            # "issued": self.issued.to_dict(),
             "assignees": [assignee.to_dict() for assignee in self.assignees],
             "created_at": self.created_at.isoformat(),
             "is_spam": self.is_spam,

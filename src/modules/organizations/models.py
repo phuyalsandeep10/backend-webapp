@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from src.modules.auth.models import User
     from src.modules.chat.models.conversation import Conversation
     from src.modules.chat.models.customer import Customer
-    from src.modules.ticket.models.priority import Priority
+    from src.modules.ticket.models.priority import TicketPriority
     from src.modules.ticket.models.status import TicketStatus
 
 
@@ -28,7 +28,7 @@ class Organization(CommonModel, table=True):
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
-    priorities: List["Priority"] = Relationship(back_populates="organizations")
+    priorities: List["TicketPriority"] = Relationship(back_populates="organizations")
     ticket_status: List["TicketStatus"] = Relationship(back_populates="organizations")
     tickets: List["Ticket"] = Relationship(back_populates="organization")
 

@@ -13,14 +13,15 @@ class TicketPriorityService:
             priorities = await TicketPriority.filter(
                 where={"organization_id": organization_id}
             )
-            return cr.success(message="Successfully listed priorities", data=priorities)
+            payload = [priority.to_dict() for priority in priorities]
+            return cr.success(message="Successfully listed priorities", data=payload)
         except Exception as e:
             print(e)
             return cr.error(message="Error while listing priorities")
 
     async def create_priorities(self, payload, user):
         """
-        List single priorites or list of priorities at the same time
+        create single priority or list of priorities at the same time
         """
         try:
             organization_id: int = user.attributes.get("organization_id")
@@ -48,10 +49,27 @@ class TicketPriorityService:
             priority = await TicketPriority.find_one(
                 where={"organization_id": organization_id, "id": priority_id}
             )
-            return cr.success(message="Successfully listed priority", data=priority)
+            return cr.success(
+                message="Successfully listed priority",
+                data=priority.to_dict() if priority else None,
+            )
         except Exception as e:
             print(e)
             return cr.error(message="Error while listing priority")
+
+    async def delete_priority(self, priority_id: int, user):
+        """
+        soft delete particular priority of the organization
+        """
+        try:
+            organization_id: int = user.attributes.get("organization_id")
+            await TicketPriority.delete(
+                where={"organization_id": organization_id, "id": priority_id}
+            )
+            return cr.success(message="Successfully deleted priority", data=None)
+        except Exception as e:
+            print(e)
+            return cr.error(message="Error while deleting priority")
 
 
 priority_service = TicketPriorityService()

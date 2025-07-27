@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class TicketPriority(CommonModel, table=True):
-    __tablename__ = "priority"  # type:ignore
+    __tablename__ = "ticket_priority"  # type:ignore
     __table_args__ = (
         UniqueConstraint("organization_id", "name", name="uniq_org_name"),
     )

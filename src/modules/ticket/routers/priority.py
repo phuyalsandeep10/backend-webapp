@@ -43,4 +43,16 @@ async def get_priority(priority_id: int, user=Depends(get_current_user)):
     """
     List particular priority defined by the organization
     """
-    return await priority_service.list_priorities(user)
+    return await priority_service.get_priority(priority_id, user)
+
+
+@router.delete(
+    "/priority/{priority_id:int}",
+    summary="Delete particular priority",
+    response_model=CustomResponseSchema,
+)
+async def delete_priority(priority_id: int, user=Depends(get_current_user)):
+    """
+    Delete particular priority defined by the organization
+    """
+    return await priority_service.delete_priority(priority_id, user)

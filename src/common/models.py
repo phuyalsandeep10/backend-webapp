@@ -81,12 +81,20 @@ class BaseModel(SQLModel):
             return obj
 
     @classmethod
-    async def delete(cls: Type[T], id: int) -> None:
+    async def delete(cls: Type[T], where: Optional[dict] = None) -> None:
         async with async_session() as session:
-            obj = await session.get(cls, id)
+            statement = query_statement(
+                cls,
+                where=where,
+            )
+            result = await session.execute(statement)
+            obj = result.scalars().first()
             if obj:
-                await session.delete(obj)
+                obj.deleted_at = datetime.now()
+                session.add(obj)
+
                 await session.commit()
+                await session.refresh(obj)
 
     @classmethod
     async def filter(

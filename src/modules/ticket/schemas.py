@@ -61,6 +61,11 @@ class CreatePrioriySchema(BaseModel):
     color: str
 
 
+class CreateTicketStatusSchema(BaseModel):
+    name: str
+    color: str
+
+
 class CreateContactSchema(BaseModel):
 
     email: EmailStr
@@ -143,4 +148,8 @@ class TicketOut(BaseModel):
 
 
 class PriorityOut(CreatePrioriySchema):
+    id: int
+
+
+class TicketStatusOut(CreateTicketStatusSchema):
     id: int
