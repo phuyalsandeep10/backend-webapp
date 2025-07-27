@@ -10,10 +10,10 @@ from src.modules.chat.models.conversation import Conversation, ConversationMembe
 
 # Import chat models
 from src.modules.chat.models.customer import Customer
-from src.modules.chat.models.message import Message, MessageAttachment
+from src.modules.chat.models.message import Message 
 
 # Import organization models
-from src.modules.organizations.models import (
+from src.modules.organizations.models import     (
     Organization,
     OrganizationInvitation,
     OrganizationMember,

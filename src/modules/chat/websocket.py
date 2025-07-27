@@ -2,12 +2,13 @@ from fastapi import WebSocket, WebSocketDisconnect, Query, HTTPException, status
 from src.app import app
 
 import json
-from src.tasks import save_messages
-from src.models import Message
+# from src.tasks import save_message_db
+from src.models import Message,Conversation
 from src.common.dependencies import get_user_by_token
 from src.config.broadcast import broadcast
 from fastapi.concurrency import run_until_first_complete
 from typing import Optional
+
 
 # from src.socket_config import sio
 import socketio
@@ -74,6 +75,16 @@ def update_conversation(conversation_id, customer_id, online):
         conversation["online"] = online
         conversation["customer_id"] = customer_id
 
+async def save_message_db(conversation_id:int, data:dict, user_id:Optional[int]=None):
+
+    print("save message in db")
+    conversation = await Conversation.get(conversation_id)
+    
+
+    if not conversation:
+        print(f"Conversation with Id {conversation_id} not found")
+
+    await Message.create(conversation_id=conversation_id, content=data.get('message'), customer_id=conversation.customer_id, user_id=user_id)
 
 class ChatNamespace(socketio.AsyncNamespace):
     """WebSocket namespace for chat functionality."""
@@ -93,6 +104,7 @@ class ChatNamespace(socketio.AsyncNamespace):
             print("❌ No auth provided")
             return False
         token = auth.get("token")
+        user_id = auth.get('user_id')
         customer_id = auth.get("customer_id")
         conversation_id = auth.get("conversation_id")
 
@@ -120,8 +132,9 @@ class ChatNamespace(socketio.AsyncNamespace):
 
         print(f"conversation id {conversation_id} and conversation {conversation}")
 
-        if not conversation:
+        if not conversation:    
             return
+        # save_message_db.delay(conversation_id,data)
 
         for si in conversation["sids"]:
 
@@ -129,6 +142,9 @@ class ChatNamespace(socketio.AsyncNamespace):
                 continue
 
             print(f"Sending message to {si} from {sid}")
+        
+            #save messages
+            
 
             await self.emit(
                 self.receive_message,
@@ -139,6 +155,9 @@ class ChatNamespace(socketio.AsyncNamespace):
                 },
                 room=si,
             )
+        
+        await save_message_db(conversation_id=conversation_id,data=data,user_id=data.get('user_id'))
+            
 
     async def on_typing(self, sid, data):
         """Handle typing events."""
@@ -154,7 +173,7 @@ class ChatNamespace(socketio.AsyncNamespace):
         for si in conversation["sids"]:
             if si == sid:
                 continue
-
+            
             await self.emit(
                 self.receive_typing,
                 {
@@ -164,6 +183,7 @@ class ChatNamespace(socketio.AsyncNamespace):
                 },
                 room=si,
             )
+            
 
     async def on_stop_typing(self, sid):
         """Handle stop typing events."""

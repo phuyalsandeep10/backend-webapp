@@ -14,14 +14,10 @@ from src.config.settings import settings
 from src.models import Conversation, Message
 
 
-# @celery_app.task
-# async def save_message_db(conversation_id:int, data:dict,customer_id:Optional[int]=None, user_id:Optional[int]=None):
+#for temporary purpose only
 
-#     message = await Message.create(conversation_id=conversation_id,
-#     content=data?.get('message'),
-#     user_id=user_id,
-#     customer_id=customer_id)
 
+    
 
 @celery_app.task
 async def save_messages(

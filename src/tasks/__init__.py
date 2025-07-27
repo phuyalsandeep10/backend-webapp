@@ -5,4 +5,5 @@ from .message_task import (
     consume_kafka_messages_batch,
     run_kafka_consumer_batch,
     check_kafka_messages,
+
 )
