@@ -8,7 +8,6 @@ from src.modules.ticket.schemas import (
     CreateTicketStatusSchema,
     TicketStatusOut,
 )
-from src.modules.ticket.services.priority import priority_service
 from src.modules.ticket.services.status import ticket_status_service
 from src.utils.response import CustomResponseSchema
 
