@@ -9,7 +9,6 @@ Create Date: 2025-07-20 09:21:27.745427
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-import sqlmodel.sql.sqltypes
 from alembic import op
 
 from migrations.common import common_columns
