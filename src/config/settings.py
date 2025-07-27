@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
     CELEREY_BROKER_URL: str = "redis://localhost:6379"
 
+    CLOUDINARY_CLOUD_NAME:str = ''
+    CLOUDINARY_API_KEY:str = ''
+    CLOUDINARY_API_SECRET:str = ''
+
+
+
     model_config = SettingsConfigDict(env_file=".env")
 
 

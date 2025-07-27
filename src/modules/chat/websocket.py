@@ -99,7 +99,6 @@ class ChatNamespace(socketio.AsyncNamespace):
 
     async def on_connect(self, sid, environ, auth):
         print(f"Chat connected: {sid}")
-        print("auth ", auth)
         if not auth:
             print("❌ No auth provided")
             return False
@@ -144,8 +143,6 @@ class ChatNamespace(socketio.AsyncNamespace):
             print(f"Sending message to {si} from {sid}")
         
             #save messages
-            
-
             await self.emit(
                 self.receive_message,
                 {
