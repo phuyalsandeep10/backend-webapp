@@ -36,7 +36,7 @@ class User(BaseModel, table=True):
 
     is_superuser: bool = Field(default=False)
     is_staff: bool = Field(default=False)
-    attributes: Optional[dict] = Field(default=None, sa_column=sa.Column(sa.JSON))
+    attributes: Optional[dict] = Field(default={}, sa_column=sa.Column(sa.JSON))
 
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)

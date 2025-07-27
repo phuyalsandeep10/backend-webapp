@@ -1,24 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException
+
 from src.common.dependencies import (
-    get_current_user,
     get_bearer_token,
+    get_current_user,
     update_user_cache,
 )
-from .dto import OrganizationDto, OrganizationRoleDto, OrganizationInviteDto
-
+from src.common.models import Permission
+from src.enums import InvitationStatus
 from src.models import (
     Organization,
-    OrganizationMember,
-    OrganizationRole,
     OrganizationInvitation,
+    OrganizationMember,
     OrganizationMemberRole,
+    OrganizationRole,
     User,
 )
 from src.modules.organizations.dto import AssignRoleDto
-from src.common.models import Permission
 from src.tasks import send_invitation_email
-from src.enums import InvitationStatus
 
+from .dto import OrganizationDto, OrganizationInviteDto, OrganizationRoleDto
 
 router = APIRouter()
 
@@ -74,7 +74,7 @@ async def create_organization(
         )
 
         if not user:
-            raise HTTPException(404,"Not found User")
+            raise HTTPException(404, "Not found User")
 
         update_user_cache(token, user)
 
@@ -166,7 +166,7 @@ async def set_organization(
     user = await User.update(user.id, attributes={"organization_id": organization_id})
 
     if not user:
-        raise HTTPException(404,"Not found User")
+        raise HTTPException(404, "Not found User")
 
     if not organization:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -328,7 +328,7 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
 
     invitation = await OrganizationInvitation.get(invitation_id)
     if not invitation:
-        raise HTTPException(404,"Not Found")
+        raise HTTPException(404, "Not Found")
 
     if user.email != invitation.email:
         raise HTTPException(403, "Don't have authorization")
@@ -348,7 +348,7 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
         )
 
     for role_id in invitation.role_ids:
-       await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
+        await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
 
     return {"message": "Successfully approved"}
 

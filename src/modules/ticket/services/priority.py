@@ -1,11 +1,10 @@
-from src.modules.auth.models import User
 from src.modules.ticket.models import TicketPriority
 from src.utils.response import CustomResponse as cr
 
 
 class TicketPriorityService:
 
-    async def list_priorities(self, user: User):
+    async def list_priorities(self, user):
         """
         List all the priorites on the basis of the organization
         """
@@ -40,7 +39,7 @@ class TicketPriorityService:
             print(e)
             return cr.error(message="Error while creating priorities")
 
-    async def get_priority(self, priority_id: int, user: User):
+    async def get_priority(self, priority_id: int, user):
         """
         List particular priority of the organization
         """

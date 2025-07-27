@@ -26,7 +26,7 @@ def upgrade() -> None:
     op.create_table(
         "ticket_sla",
         *common_columns(),
-        sa.Column("name", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("name", sa.String(), nullable=True),
         sa.Column("response_time", sa.BigInteger(), nullable=False),
         sa.Column("resolution_time", sa.BigInteger(), nullable=False),
         sa.Column("issued_by", sa.Integer(), nullable=False),
