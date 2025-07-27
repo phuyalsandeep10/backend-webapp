@@ -12,6 +12,8 @@ import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 from alembic import op
 
+from migrations.common import common_columns
+
 # revision identifiers, used by Alembic.
 revision: str = "0153f2ba2a04"
 down_revision: Union[str, Sequence[str], None] = "ea8c22fe9b79"
@@ -23,8 +25,8 @@ def upgrade() -> None:
     """Upgrade schema."""
 
     op.create_table(
-        "tickets",
-        sa.Column("id", sa.Integer, primary_key=True),
+        "org_tickets",
+        *common_columns(),
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("description", sa.Text, nullable=False),
         sa.Column("attachment", sa.String(length=255), nullable=True),
@@ -37,7 +39,7 @@ def upgrade() -> None:
         sa.Column(
             "priority_id",
             sa.Integer,
-            sa.ForeignKey("priority.id", ondelete="SET NULL"),
+            sa.ForeignKey("ticket_priority.id", ondelete="SET NULL"),
             nullable=True,
         ),
         sa.Column(
@@ -61,11 +63,8 @@ def upgrade() -> None:
         sa.Column(
             "sla_id",
             sa.Integer,
-            sa.ForeignKey("sla.id", ondelete="SET NULL"),
+            sa.ForeignKey("ticket_sla.id", ondelete="SET NULL"),
             nullable=True,
-        ),
-        sa.Column(
-            "created_at", sa.DateTime, nullable=False, server_default=sa.func.now()
         ),
         sa.Column(
             "customer_id",
@@ -83,4 +82,4 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_table("tickets")
+    op.drop_table("org_tickets")

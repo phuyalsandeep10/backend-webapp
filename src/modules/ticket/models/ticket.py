@@ -5,7 +5,7 @@ from pydantic import EmailStr, ValidationError, model_validator
 from sqlalchemy import Column, ForeignKey
 from sqlmodel import Field, PrimaryKeyConstraint, Relationship
 
-from src.common.models import BaseModel
+from src.common.models import BaseModel, CommonModel
 from src.modules.chat.models.customer import Customer
 from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
 
@@ -22,7 +22,7 @@ class TicketAssigneesLink(BaseModel, table=True):
     __tablename__ = "ticket_assignees"  # type: ignore
 
     ticket_id: int = Field(
-        sa_column=Column(ForeignKey("tickets.id", ondelete="CASCADE"))
+        sa_column=Column(ForeignKey("org_tickets.id", ondelete="CASCADE"))
     )
     assignee_id: int = Field(
         sa_column=Column(ForeignKey("sys_users.id", ondelete="SET NULL"))
@@ -33,7 +33,7 @@ class TicketAlert(BaseModel, table=True):
     __tablename__ = "ticket_alerts"  # type:ignore
 
     ticket_id: int = Field(
-        sa_column=Column(ForeignKey("tickets.id", ondelete="CASCADE"))
+        sa_column=Column(ForeignKey("org_tickets.id", ondelete="CASCADE"))
     )
     alert_type: TicketAlertTypeEnum
     warning_level: WarningLevelEnum
@@ -41,8 +41,8 @@ class TicketAlert(BaseModel, table=True):
     ticket: Optional["Ticket"] = Relationship(back_populates="alerts")
 
 
-class Ticket(BaseModel, table=True):
-    __tablename__ = "tickets"  # type:ignore
+class Ticket(CommonModel, table=True):
+    __tablename__ = "org_tickets"  # type:ignore
 
     title: str
     description: str
@@ -51,7 +51,7 @@ class Ticket(BaseModel, table=True):
         sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
     )
     priority_id: int = Field(
-        sa_column=Column(ForeignKey("priority.id", ondelete="SET NULL"))
+        sa_column=Column(ForeignKey("ticket_priority.id", ondelete="SET NULL"))
     )
     status_id: int = Field(
         sa_column=Column(ForeignKey("ticket_status.id", ondelete="SET NULL"))
@@ -62,7 +62,9 @@ class Ticket(BaseModel, table=True):
     issued_by: int = Field(
         sa_column=Column(ForeignKey("sys_users.id", ondelete="SET NULL"))
     )
-    sla_id: int = Field(sa_column=Column(ForeignKey("sla.id", ondelete="SET NULL")))
+    sla_id: int = Field(
+        sa_column=Column(ForeignKey("ticket_sla.id", ondelete="SET NULL"))
+    )
     created_at: datetime = Field(default_factory=datetime.utcnow)
     customer_id: int = Field(
         sa_column=Column(

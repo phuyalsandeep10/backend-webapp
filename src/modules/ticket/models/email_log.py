@@ -12,7 +12,7 @@ class TicketEmailLog(BaseModel, table=True):
     __tablename__ = "ticket_email_log"  # type:ignore
 
     ticket_id: int = Field(
-        sa_column=Column(ForeignKey("tickets.id", ondelete="CASCADE"))
+        sa_column=Column(ForeignKey("org_tickets.id", ondelete="CASCADE"))
     )
     email_type: TicketEmailTypeEnum
     recipient: EmailStr

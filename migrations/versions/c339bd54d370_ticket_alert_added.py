@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column(
             "ticket_id",
             sa.Integer,
-            sa.ForeignKey("tickets.id", ondelete="CASCADE"),
+            sa.ForeignKey("org_tickets.id", ondelete="CASCADE"),
             nullable=False,
         ),
         sa.Column(

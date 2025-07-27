@@ -3,14 +3,14 @@ from typing import TYPE_CHECKING, List
 from sqlalchemy import Column
 from sqlmodel import Field, ForeignKey, Relationship, UniqueConstraint
 
-from src.common.models import BaseModel
+from src.common.models import BaseModel, CommonModel
 
 if TYPE_CHECKING:
     from src.modules.organizations.models import Organization
     from src.modules.ticket.models.ticket import Ticket
 
 
-class TicketStatus(BaseModel, table=True):
+class TicketStatus(CommonModel, table=True):
     __tablename__ = "ticket_status"  # type:ignore
     __table_args__ = (
         UniqueConstraint("organization_id", "name", name="uniq_org_status_name"),

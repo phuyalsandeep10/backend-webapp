@@ -12,6 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from migrations.common import base_columns
+
 # revision identifiers, used by Alembic.
 revision: str = "03f996d78561"
 down_revision: Union[str, Sequence[str], None] = "0153f2ba2a04"
@@ -24,16 +26,11 @@ def upgrade() -> None:
 
     op.create_table(
         "ticket_email_log",
-        sa.Column("id", sa.Integer(), primary_key=True),
+        *base_columns(),
         sa.Column("ticket_id", sa.Integer(), nullable=False),
         sa.Column(
             "email_type",
-            postgresql.ENUM(
-                "email_response",
-                "email_sla_breach",
-                "email_ticket_solved",
-                name="ticketemailtypeenum",
-            ),
+            sa.String(),
             nullable=False,
         ),
         sa.Column("recipient", sa.String(), nullable=False),
@@ -43,11 +40,10 @@ def upgrade() -> None:
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(["ticket_id"], ["tickets.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["ticket_id"], ["org_tickets.id"], ondelete="CASCADE"),
     )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     op.drop_table("ticket_email_log")
-    op.execute(sa.text("DROP TYPE ticketemailtypeenum"))

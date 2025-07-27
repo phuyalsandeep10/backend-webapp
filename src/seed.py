@@ -10,7 +10,7 @@ from src.common.utils import hash_password
 from src.modules.auth.models import User
 from src.modules.organizations.models import Organization, OrganizationMember
 from src.modules.team.models import Team
-from src.modules.ticket.models import Priority, TicketStatus
+from src.modules.ticket.models import TicketPriority, TicketStatus
 from src.modules.ticket.models.sla import SLA
 
 # default data
@@ -174,40 +174,40 @@ async def department_team_seed_dummy():
 
 async def priority_seed():
     for i in priorities:
-        record = await Priority.find_one(
+        record = await TicketPriority.find_one(
             where={
                 "name": {"mode": "insensitive", "value": i["name"]},
                 "organization_id": i["organization_id"],
             }
         )
         if not record:
-            await Priority.create(
+            await TicketPriority.create(
                 name=i["name"],
                 level=i["level"],
                 color=i["color"],
                 organization_id=i["organization_id"],
             )
-            print("Priority 1 created")
+            print("TicketPriority 1 created")
         else:
-            print("Priority 1 already created")
+            print("TicketPriority 1 already created")
 
     for i in priorities2:
-        record = await Priority.find_one(
+        record = await TicketPriority.find_one(
             where={
                 "name": {"mode": "insensitive", "value": i["name"]},
                 "organization_id": i["organization_id"],
             }
         )
         if not record:
-            await Priority.create(
+            await TicketPriority.create(
                 name=i["name"],
                 level=i["level"],
                 color=i["color"],
                 organization_id=i["organization_id"],
             )
-            print("Priority2 created")
+            print("TicketPriority2 created")
         else:
-            print("Priority2 already created")
+            print("TicketPriority2 already created")
 
 
 async def status_seed():

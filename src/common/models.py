@@ -34,6 +34,8 @@ def case_insensitive(attributes):
 
 class BaseModel(SQLModel):
     id: int = Field(primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
     @classmethod
     async def get(cls: Type[T], id: int) -> Optional[T]:
@@ -130,8 +132,7 @@ class CommonModel(BaseModel):
     active: bool = Field(default=True, nullable=False)
     created_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
     updated_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    deleted_at: Optional[datetime] = None
 
     # arbitrary_types_allowed = True
 

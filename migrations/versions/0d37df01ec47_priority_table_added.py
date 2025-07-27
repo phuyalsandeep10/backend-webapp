@@ -12,6 +12,8 @@ import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 from alembic import op
 
+from migrations.common import base_columns, common_columns
+
 # revision identifiers, used by Alembic.
 revision: str = "0d37df01ec47"
 down_revision: Union[str, Sequence[str], None] = "569993d68ff6"
@@ -22,8 +24,8 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     op.create_table(
-        "priority",
-        sa.Column("id", sa.Integer(), nullable=False),
+        "ticket_priority",
+        *common_columns(),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("level", sa.Integer(), nullable=False),
         sa.Column("color", sa.String(), nullable=False),
@@ -38,4 +40,4 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_table("priority")
+    op.drop_table("ticket_priority")

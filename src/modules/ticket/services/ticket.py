@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 from src.common.dependencies import get_user_by_token
 from src.modules.auth.models import User
 from src.modules.ticket.models.contact import Contact
-from src.modules.ticket.models.sla import SLA
+from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import CreateTicketSchema, FullCreateTicketSchema
@@ -137,7 +137,7 @@ class TicketServices:
             # now checking if sla_id exists or not
             if data["sla_id"] is None:
                 # we need to register sla first
-                sla = await SLA.create(**dict(data["sla"]))
+                sla = await TicketSLA.create(**dict(data["sla"]))
                 data["sla_id"] = sla.id
 
             if data["contact_id"] is None:

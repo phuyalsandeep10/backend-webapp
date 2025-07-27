@@ -23,7 +23,7 @@ from src.modules.organizations.models import (
 
 # Import team models
 from src.modules.team.models import Team, TeamMember
-from src.modules.ticket.models.priority import Priority
+from src.modules.ticket.models.priority import TicketPriority
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket, TicketAlert, TicketAssigneesLink
 
@@ -50,6 +50,6 @@ __all__ = [
     "TicketStatus",
     "TicketAssigneesLink",
     "TicketAlert",
-    "Priority",
+    "TicketPriority",
     # "Admin"
 ]

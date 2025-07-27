@@ -5,13 +5,13 @@ from sqlmodel import BigInteger
 
 from src.common.dependencies import get_user_by_token
 from src.modules.auth.models import User
-from src.modules.ticket.models import SLA
+from src.modules.ticket.models import TicketSLA
 from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import CreateSLASchema
 from src.utils.response import CustomResponse as cr
 
 
-class SLAServices:
+class TicketSLAServices:
 
     async def register_sla(self, payload: CreateSLASchema, user: User):
         try:
@@ -21,7 +21,7 @@ class SLAServices:
             data["issued_by"] = user_id
             data["organization_id"] = user.attributes.get("organization_id")
 
-            sla = await SLA.create(**data)
+            sla = await TicketSLA.create(**data)
 
             if not sla:
                 return cr.error(
@@ -54,7 +54,7 @@ class SLAServices:
 
     async def list_slas(self, user):
         try:
-            sla_list = await SLA.filter(
+            sla_list = await TicketSLA.filter(
                 where={"organization_id": user.attributes.get("organization_id")}
             )
             slas = [s.to_dict() for s in sla_list]
@@ -74,7 +74,7 @@ class SLAServices:
 
     async def get_sla(self, sla_id: int):
         try:
-            sla = await SLA.find_one(where={"id": sla_id})
+            sla = await TicketSLA.find_one(where={"id": sla_id})
 
             return cr.success(
                 status_code=status.HTTP_200_OK,
@@ -91,7 +91,7 @@ class SLAServices:
 
     async def delete_sla(self, sla_id: int):
         try:
-            await SLA.delete(id=sla_id)
+            await TicketSLA.delete(id=sla_id)
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully deleted the SLA",
@@ -130,4 +130,4 @@ class SLAServices:
         return response_time, resolution_time
 
 
-sla_service = SLAServices()
+sla_service = TicketSLAServices()

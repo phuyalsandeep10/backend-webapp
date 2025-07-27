@@ -12,6 +12,8 @@ import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 from alembic import op
 
+from migrations.common import base_columns, common_columns
+
 # revision identifiers, used by Alembic.
 revision: str = "ea8c22fe9b79"
 down_revision: Union[str, Sequence[str], None] = "0d37df01ec47"
@@ -23,7 +25,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.create_table(
         "ticket_status",
-        sa.Column("id", sa.Integer(), nullable=False),
+        *common_columns(),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("color", sa.String(), nullable=False),
         sa.Column("is_default", sa.Boolean(), default=False),
