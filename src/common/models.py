@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, List, Optional, Type, TypeVar, Union
 
 import sqlalchemy as sa
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, inspect, or_
 from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlmodel import Field, SQLModel, select
@@ -45,10 +45,14 @@ class BaseModel(SQLModel):
     @classmethod
     async def get_all(
         cls: Type[T],
+        where: Optional[dict] = None,
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> List[T]:
         async with async_session() as session:
-            statement = select(cls)
+            if where is not None:
+                if "deleted_at" in inspect(cls).columns:  # type:ignore
+                    where.setdefault("deleted_at", None)
+            statement = query_statement(cls, where=where)
             if related_items:
                 # related_items can be a single selectinload() or a list of them
                 if isinstance(related_items, list):
@@ -106,11 +110,16 @@ class BaseModel(SQLModel):
         options: Optional[list[Any]] = None,
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> List[T]:
+        if where is not None:
+            if "deleted_at" in inspect(cls).columns:  # type:ignore
+                where.setdefault("deleted_at", None)
         statement = query_statement(cls, where=where, joins=joins, options=options)
         if skip:
             statement = statement.offset(skip)
         if limit is not None:
             statement = statement.limit(limit)
+
+        print("The where is", where)
 
         if related_items:
             # related_items can be a single selectinload() or a list of them
@@ -130,6 +139,9 @@ class BaseModel(SQLModel):
         joins: Optional[list[Any]] = None,
         options: Optional[list[Any]] = None,
     ) -> Optional[T]:
+        if where is not None:
+            if "deleted_at" in inspect(cls).columns:  # type:ignore
+                where.setdefault("deleted_at", None)
         statement = query_statement(cls, where=where, joins=joins, options=options)
         async with async_session() as session:
             result = await session.execute(statement)

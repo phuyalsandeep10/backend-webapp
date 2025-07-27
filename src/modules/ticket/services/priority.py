@@ -1,3 +1,5 @@
+from kombu import message
+
 from src.modules.ticket.models import TicketPriority
 from src.utils.response import CustomResponse as cr
 
@@ -13,6 +15,7 @@ class TicketPriorityService:
             priorities = await TicketPriority.filter(
                 where={"organization_id": organization_id}
             )
+
             payload = [priority.to_dict() for priority in priorities]
             return cr.success(message="Successfully listed priorities", data=payload)
         except Exception as e:
@@ -49,6 +52,8 @@ class TicketPriorityService:
             priority = await TicketPriority.find_one(
                 where={"organization_id": organization_id, "id": priority_id}
             )
+            if priority is None:
+                return cr.error(message="Not found")
             return cr.success(
                 message="Successfully listed priority",
                 data=priority.to_dict() if priority else None,
