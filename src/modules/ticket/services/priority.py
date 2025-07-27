@@ -1,7 +1,4 @@
-from fastapi import HTTPException
-
 from src.modules.auth.models import User
-from src.modules.chat.models import message
 from src.modules.ticket.models import Priority
 from src.utils.response import CustomResponse as cr
 
@@ -50,20 +47,6 @@ class PriorityService:
         try:
             organization_id: int = user.attributes.get("organization_id")
             priority = await Priority.find_one(
-                where={"organization_id": organization_id, "id": priority_id}
-            )
-            return cr.success(message="Successfully listed priority", data=priority)
-        except Exception as e:
-            print(e)
-            return cr.error(message="Error while listing priority")
-
-    async def delete_priority(self, priority_id: int, user: User):
-        """
-        delete particular priority of the organization
-        """
-        try:
-            organization_id: int = user.attributes.get("organization_id")
-            priority = await Priority.delete(
                 where={"organization_id": organization_id, "id": priority_id}
             )
             return cr.success(message="Successfully listed priority", data=priority)

@@ -140,3 +140,7 @@ class TicketOut(BaseModel):
     sla: SLAOut
     contact: ContactOut
     assignees: AssigneeOut
+
+
+class PriorityOut(CreatePrioriySchema):
+    id: int
