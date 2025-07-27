@@ -14,11 +14,15 @@ from src.utils.response import CustomResponse as cr
 class TicketServices:
 
     async def create_ticket(self, payload: CreateTicketSchema, user):
+        """
+        Create ticket for the organization
+        """
         try:
             user_id = user.id
             data = dict(payload)
             data["created_by_id"] = user_id
             data["organization_id"] = user.attributes.get("organization_id")
+            # for getting the default ticket status set by the organization
             sts = await TicketStatus.find_one(
                 where={
                     "is_default": True,
@@ -31,7 +35,6 @@ class TicketServices:
                 )
             data["status_id"] = sts.id
             if data["assignees"] is not None:
-                print("First")
                 users = []
                 for assigne_id in data["assignees"]:
                     usr = await User.find_one(where={"id": assigne_id})
@@ -39,7 +42,7 @@ class TicketServices:
 
                 data["assignees"] = users
 
-            del data["assignees"]  # not assing None to the db
+            del data["assignees"]  # not assigning None to the db
             await Ticket.create(**dict(data))
 
             return cr.success(
@@ -53,9 +56,11 @@ class TicketServices:
                 message="Error while creating a ticket",
             )
 
-    async def list_tickets(self, user: User):
+    async def list_tickets(self, user):
+        """
+        List all the tickets of the user organization
+        """
         try:
-
             all_tickets = await Ticket.filter(
                 where={"organization_id": user.attributes.get("organization_id")},
                 related_items=[
@@ -64,7 +69,7 @@ class TicketServices:
                     selectinload(Ticket.priority),
                     selectinload(Ticket.status),
                     selectinload(Ticket.customer),
-                    selectinload(Ticket.issued),
+                    selectinload(Ticket.created_by),
                     selectinload(Ticket.department),
                 ],
             )
@@ -81,20 +86,30 @@ class TicketServices:
                 message="Error while listing  tickets",
             )
 
-    async def get_ticket(self, ticket_id: int):
+    async def get_ticket(self, ticket_id: int, user):
+        """
+        List the particular ticket of the organization by id
+        """
         try:
+            organization_id = user.attributes.get("organization_id")
             ticket = await Ticket.find_one(
-                where={"id": ticket_id},
+                where={"id": ticket_id, "organization_id": organization_id},
                 options=[
                     selectinload(Ticket.sla),
-                    selectinload(Ticket.contacts),
                     selectinload(Ticket.assignees),
+                    selectinload(Ticket.priority),
+                    selectinload(Ticket.status),
+                    selectinload(Ticket.customer),
+                    selectinload(Ticket.created_by),
+                    selectinload(Ticket.department),
                 ],
             )
+            if ticket is None:
+                return cr.error(message="Not found")
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully listed the ticket",
-                data=ticket.to_dict(),
+                data=ticket.to_dict() if ticket else [],
             )
         except Exception as e:
             print(e)
@@ -103,9 +118,14 @@ class TicketServices:
                 message="Error while listing ticket",
             )
 
-    async def delete_ticket(self, ticket_id: int):
+    async def delete_ticket(self, ticket_id: int, user):
         try:
-            await Ticket.delete(id=ticket_id)
+            await Ticket.delete(
+                where={
+                    "id": ticket_id,
+                    "organization_id": user.attributes.get("organization_id"),
+                }
+            )
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully deleted the ticket",

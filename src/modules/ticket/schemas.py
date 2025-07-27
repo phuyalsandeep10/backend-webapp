@@ -16,6 +16,8 @@ class AssigneeOut(BaseModel):
 class CreateTicketSchema(BaseModel):
     title: str
     description: str
+    sender_domain: EmailStr
+    notes: Optional[str] = None
     attachment: Optional[str] = None
     priority_id: int
     department_id: int
