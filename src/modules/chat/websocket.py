@@ -2,8 +2,9 @@ from fastapi import WebSocket, WebSocketDisconnect, Query, HTTPException, status
 from src.app import app
 
 import json
+
 # from src.tasks import save_message_db
-from src.models import Message,Conversation,MessageAttachment
+from src.models import Message, Conversation, MessageAttachment
 from src.common.dependencies import get_user_by_token
 from src.config.broadcast import broadcast
 from fastapi.concurrency import run_until_first_complete
@@ -75,16 +76,30 @@ def update_conversation(conversation_id, customer_id, online):
         conversation["online"] = online
         conversation["customer_id"] = customer_id
 
-async def save_message_db(conversation_id:int, data:dict, user_id:Optional[int]=None):
+
+async def save_message_db(
+    conversation_id: int, data: dict, user_id: Optional[int] = None
+):
 
     print("save message in db")
     conversation = await Conversation.get(conversation_id)
-    
+    replyId = data.get("reply_id")
 
     if not conversation:
         print(f"Conversation with Id {conversation_id} not found")
 
-    return await Message.create(conversation_id=conversation_id, content=data.get('message'), customer_id=conversation.customer_id, user_id=user_id)
+    return await Message.create(
+        conversation_id=conversation_id,
+        content=data.get("message"),
+        customer_id=conversation.customer_id,
+        user_id=user_id,
+        reply_to_id=replyId,
+    )
+
+
+async def update_for_seen_db(messageId: int):
+    return await Message.update(id=messageId, seen=True)
+
 
 class ChatNamespace(socketio.AsyncNamespace):
     """WebSocket namespace for chat functionality."""
@@ -92,6 +107,7 @@ class ChatNamespace(socketio.AsyncNamespace):
     receive_message = "recieve-message"
     receive_typing = "typing"
     stop_typing = "stop-typing"
+    receive_seen = "seen"
 
     def __init__(self):
         super().__init__("/chat")
@@ -103,7 +119,7 @@ class ChatNamespace(socketio.AsyncNamespace):
             print("❌ No auth provided")
             return False
         token = auth.get("token")
-        user_id = auth.get('user_id')
+        user_id = auth.get("user_id")
         customer_id = auth.get("customer_id")
         conversation_id = auth.get("conversation_id")
 
@@ -131,7 +147,7 @@ class ChatNamespace(socketio.AsyncNamespace):
 
         print(f"conversation id {conversation_id} and conversation {conversation}")
 
-        if not conversation:    
+        if not conversation:
             return
         # save_message_db.delay(conversation_id,data)
 
@@ -141,8 +157,8 @@ class ChatNamespace(socketio.AsyncNamespace):
                 continue
 
             print(f"Sending message to {si} from {sid}")
-        
-            #save messages
+
+            # save messages
             await self.emit(
                 self.receive_message,
                 {
@@ -152,15 +168,42 @@ class ChatNamespace(socketio.AsyncNamespace):
                 },
                 room=si,
             )
-        
-        message = await save_message_db(conversation_id=conversation_id,data=data,user_id=data.get('user_id'))
-        files = data.get('files',[])
+
+        message = await save_message_db(
+            conversation_id=conversation_id, data=data, user_id=data.get("user_id")
+        )
+        files = data.get("files", [])
         print(f"files {files}")
         for file in files:
-            await MessageAttachment.create(message_id=message.id,file_url=file.get('url'),file_name=file.get('file_name'),file_type=file.get('file_type'),file_size=file.get('file_size'))
-        
-    
-            
+            await MessageAttachment.create(
+                message_id=message.id,
+                file_url=file.get("url"),
+                file_name=file.get("file_name"),
+                file_type=file.get("file_type"),
+                file_size=file.get("file_size"),
+            )
+
+    async def on_seen(self, sid, data):
+        messageId = data.get("message_id")
+        conversation_id = self.rooms.get(sid)
+        if not conversation_id:
+            return
+
+        conversation = get_conversation(conversation_id)
+
+        if not conversation:
+            return
+        for si in conversation["sids"]:
+            if si == sid:
+                continue
+
+            await self.emit(
+                self.receive_seen,
+                {"message_id": messageId, "sid": sid},
+                room=si,
+            )
+
+        await update_for_seen_db(messageId=messageId)
 
     async def on_typing(self, sid, data):
         """Handle typing events."""
@@ -176,7 +219,7 @@ class ChatNamespace(socketio.AsyncNamespace):
         for si in conversation["sids"]:
             if si == sid:
                 continue
-            
+
             await self.emit(
                 self.receive_typing,
                 {
@@ -186,7 +229,6 @@ class ChatNamespace(socketio.AsyncNamespace):
                 },
                 room=si,
             )
-            
 
     async def on_stop_typing(self, sid):
         """Handle stop typing events."""
