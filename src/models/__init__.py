@@ -10,7 +10,7 @@ from src.modules.chat.models.conversation import Conversation, ConversationMembe
 
 # Import chat models
 from src.modules.chat.models.customer import Customer
-from src.modules.chat.models.message import Message 
+from src.modules.chat.models.message import Message,MessageAttachment
 
 # Import organization models
 from src.modules.organizations.models import     (

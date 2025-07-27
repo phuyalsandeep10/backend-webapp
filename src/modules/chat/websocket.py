@@ -3,7 +3,7 @@ from src.app import app
 
 import json
 # from src.tasks import save_message_db
-from src.models import Message,Conversation
+from src.models import Message,Conversation,MessageAttachment
 from src.common.dependencies import get_user_by_token
 from src.config.broadcast import broadcast
 from fastapi.concurrency import run_until_first_complete
@@ -84,7 +84,7 @@ async def save_message_db(conversation_id:int, data:dict, user_id:Optional[int]=
     if not conversation:
         print(f"Conversation with Id {conversation_id} not found")
 
-    await Message.create(conversation_id=conversation_id, content=data.get('message'), customer_id=conversation.customer_id, user_id=user_id)
+    return await Message.create(conversation_id=conversation_id, content=data.get('message'), customer_id=conversation.customer_id, user_id=user_id)
 
 class ChatNamespace(socketio.AsyncNamespace):
     """WebSocket namespace for chat functionality."""
@@ -153,7 +153,13 @@ class ChatNamespace(socketio.AsyncNamespace):
                 room=si,
             )
         
-        await save_message_db(conversation_id=conversation_id,data=data,user_id=data.get('user_id'))
+        message = await save_message_db(conversation_id=conversation_id,data=data,user_id=data.get('user_id'))
+        files = data.get('files',[])
+        print(f"files {files}")
+        for file in files:
+            await MessageAttachment.create(message_id=message.id,file_url=file.get('url'),file_name=file.get('file_name'),file_type=file.get('file_type'),file_size=file.get('file_size'))
+        
+    
             
 
     async def on_typing(self, sid, data):
