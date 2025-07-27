@@ -42,14 +42,3 @@ async def get_ticket(ticket_id: int):
 )
 async def delete_ticket(ticket_id: int):
     return await ticket_services.delete_ticket(ticket_id)
-
-
-@router.post(
-    "/full-create",
-    summary="Creates new ticket with full credentials",
-    response_model=CustomResponseSchema,
-)
-async def register_full_ticket(
-    payload: FullCreateTicketSchema, authorization: Annotated[str, Header()]
-):
-    return await ticket_services.create_full_ticket(payload, authorization)
