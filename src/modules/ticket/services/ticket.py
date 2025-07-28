@@ -3,17 +3,20 @@ import secrets
 from fastapi import HTTPException, status
 from kombu import message
 from sqlalchemy.orm import selectinload
-from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
 from src.common.dependencies import get_user_by_token
 from src.modules.auth.models import User
+from src.modules.team.models import Team
+from src.modules.ticket.models import TicketPriority
 from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket
-from src.modules.ticket.schemas import CreateTicketSchema
+from src.modules.ticket.schemas import CreateTicketSchema, EditTicketSchema
 from src.tasks.ticket_task import send_ticket_verification_email
 from src.utils.response import CustomResponse as cr
+from src.utils.validations import TenantEntityValidator
 
 
 class TicketServices:
@@ -192,6 +195,55 @@ class TicketServices:
         except Exception as e:
             print(e)
             return cr.error(message="Invalid confirmation token")
+
+    async def edit_ticket(self, ticket_id: int, payload: EditTicketSchema, user):
+        """
+        Edit ticket on the basis of the id
+        """
+        try:
+            ticket = await Ticket.find_one(
+                where={
+                    "id": ticket_id,
+                    "organization_id": user.attributes.get("organization_id"),
+                },
+                related_items=[
+                    selectinload(Ticket.sla),
+                    selectinload(Ticket.assignees),
+                    selectinload(Ticket.priority),
+                    selectinload(Ticket.status),
+                    selectinload(Ticket.customer),
+                    selectinload(Ticket.created_by),
+                    selectinload(Ticket.department),
+                ],
+            )
+            if ticket is None:
+                return cr.error(
+                    message="Ticket with this id doesn't exist",
+                    status_code=HTTP_404_NOT_FOUND,
+                )
+
+            # checking if the foreignkeys don't belong to the other organization
+            tenant = TenantEntityValidator(org_id=user.attributes.get("organization"))
+            data = dict(payload.model_dump(exclude_none=True))
+
+            if "priority_id" in data:
+                await tenant.validate(TicketPriority, data["priority_id"])
+            if "status_id" in data:
+                await tenant.validate(TicketStatus, data["status_id"])
+            if "sla_id" in data:
+                await tenant.validate(TicketSLA, data["sla_id"])
+            if "department_id" in data:
+                await tenant.validate(Team, data["department_id"])
+
+            await Ticket.update(ticket.id, **data)
+
+            return cr.success(
+                message="Successfully updated the ticket", data=ticket.to_dict()
+            )
+
+        except Exception as e:
+            print(e)
+            return cr.error(message="Error while editing the ticket", data=str(e))
 
 
 ticket_services = TicketServices()

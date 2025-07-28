@@ -57,6 +57,29 @@ class CreateTicketSchema(BaseModel):
         return self
 
 
+class EditTicketSchema(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    sender_domain: Optional[str] = None
+    notes: Optional[str] = None
+    attachment: Optional[str] = None
+    priority_id: Optional[int] = None
+    status_id: Optional[int] = None
+    department_id: Optional[str] = None
+    sla_id: Optional[str] = None
+    created_by_id: Optional[str] = None
+    updated_by_id: Optional[str] = None
+    customer_id: Optional[int] = None
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
+    customer_location: Optional[str] = None
+    assignees: Optional[List[int]] = None
+    is_spam: Optional[List[int]] = None
+
+    model_config = {"extra": "forbid"}
+
+
 class CreatePrioriySchema(BaseModel):
     name: str
     level: int

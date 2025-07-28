@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends
 
 from src.common.dependencies import get_current_user
-from src.modules.ticket.schemas import CreateTicketSchema, TicketOut
+from src.modules.ticket.schemas import CreateTicketSchema, EditTicketSchema, TicketOut
 from src.modules.ticket.services.ticket import ticket_services
 from src.utils.response import CustomResponseSchema
 
@@ -40,6 +40,20 @@ async def get_ticket(ticket_id: int, user=Depends((get_current_user))):
     Get ticket of the organization by id
     """
     return await ticket_services.get_ticket(ticket_id, user)
+
+
+@router.patch(
+    "/{ticket_id:int}",
+    summary="Get a ticket",
+    response_model=CustomResponseSchema[TicketOut],
+)
+async def edit_ticket(
+    ticket_id: int, payload: EditTicketSchema, user=Depends((get_current_user))
+):
+    """
+    Edit ticket of the organization by id
+    """
+    return await ticket_services.edit_ticket(ticket_id, payload, user)
 
 
 @router.delete(
