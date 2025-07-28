@@ -1,10 +1,8 @@
 from datetime import datetime
 
 from fastapi import HTTPException, status
-from sqlmodel import BigInteger
 from starlette.status import HTTP_403_FORBIDDEN
 
-from src.common.dependencies import get_user_by_token
 from src.modules.auth.models import User
 from src.modules.ticket.models import TicketSLA
 from src.modules.ticket.models.ticket import Ticket
