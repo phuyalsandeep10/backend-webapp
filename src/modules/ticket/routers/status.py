@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends
 
 from src.common.dependencies import get_current_user
 from src.modules.ticket.schemas import (
-    CreatePrioriySchema,
     CreateTicketStatusSchema,
     EditTicketStatusSchema,
     TicketStatusOut,
