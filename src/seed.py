@@ -295,6 +295,7 @@ async def sla_seed_dummy():
             resolution_time=432000,  # 5 days
             organization_id=1,
             issued_by=1,
+            is_default=True,
         )
         print("Test TicketSLA 1 has been created")
     else:
@@ -307,6 +308,7 @@ async def sla_seed_dummy():
             resolution_time=432000,  # 5 days
             organization_id=2,
             issued_by=2,
+            is_default=True,
         )
         print("Test TicketSLA 2 has been created")
     else:

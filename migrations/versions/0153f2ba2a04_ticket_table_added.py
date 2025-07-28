@@ -32,6 +32,7 @@ def upgrade() -> None:
         sa.Column("sender_domain", sa.String(), nullable=False),
         sa.Column("notes", sa.String(), nullable=True),
         sa.Column("confirmation_token", sa.String(), nullable=True),
+        sa.Column("opened_at", sa.DateTime, nullable=True),
         sa.Column(
             "organization_id",
             sa.Integer,

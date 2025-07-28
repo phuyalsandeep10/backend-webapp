@@ -1,4 +1,5 @@
 import secrets
+from datetime import datetime
 
 from fastapi import HTTPException, status
 from kombu import message
@@ -200,7 +201,11 @@ class TicketServices:
                 return cr.error(
                     message="Open status category is not set in the ticket status"
                 )
-            await Ticket.update(id=ticket.id, status_id=open_status_category.id)
+            await Ticket.update(
+                id=ticket.id,
+                status_id=open_status_category.id,
+                opened_at=datetime.utcnow(),
+            )
             return cr.success(
                 message="Your ticket has been activated.", data={"id": ticket.id}
             )
