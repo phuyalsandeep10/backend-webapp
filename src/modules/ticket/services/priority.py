@@ -1,6 +1,8 @@
 from kombu import message
+from starlette.status import HTTP_400_BAD_REQUEST
 
 from src.modules.ticket.models import TicketPriority
+from src.modules.ticket.schemas import EditTicketPrioritySchema
 from src.utils.response import CustomResponse as cr
 
 
@@ -75,6 +77,36 @@ class TicketPriorityService:
         except Exception as e:
             print(e)
             return cr.error(message="Error while deleting priority")
+
+    async def edit_priority(
+        self, priority_id: int, payload: EditTicketPrioritySchema, user
+    ):
+        """
+        Edit priority of the organization
+        """
+        try:
+            priority = await TicketPriority.find_one(
+                where={
+                    "id": priority_id,
+                    "organization_id": user.attributes.get("organization_id"),
+                }
+            )
+            if priority is None:
+                return cr.error(
+                    message="Priority not found", status_code=HTTP_400_BAD_REQUEST
+                )
+
+            updated_priority = await TicketPriority.update(
+                priority.id, **payload.model_dump(exclude_none=True)
+            )
+
+            return cr.success(
+                message="Successfully updated  prioirty",
+                data=(updated_priority.to_dict() if updated_priority else None),
+            )
+        except Exception as e:
+            print(e)
+            return cr.error(message="Error while editing priority", data=str(e))
 
 
 priority_service = TicketPriorityService()

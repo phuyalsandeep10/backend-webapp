@@ -3,7 +3,11 @@ from typing import List
 from fastapi import APIRouter, Depends
 
 from src.common.dependencies import get_current_user
-from src.modules.ticket.schemas import CreatePrioriySchema, PriorityOut
+from src.modules.ticket.schemas import (
+    CreatePrioriySchema,
+    EditTicketPrioritySchema,
+    PriorityOut,
+)
 from src.modules.ticket.services.priority import priority_service
 from src.utils.response import CustomResponseSchema
 
@@ -44,6 +48,20 @@ async def get_priority(priority_id: int, user=Depends(get_current_user)):
     List particular priority defined by the organization
     """
     return await priority_service.get_priority(priority_id, user)
+
+
+@router.patch(
+    "/priority/{priority_id:int}",
+    summary="Edit particular priority",
+    response_model=CustomResponseSchema[PriorityOut],
+)
+async def edit_priority(
+    priority_id: int, payload: EditTicketPrioritySchema, user=Depends(get_current_user)
+):
+    """
+    Edit particular priority defined by the organization
+    """
+    return await priority_service.edit_priority(priority_id, payload, user)
 
 
 @router.delete(

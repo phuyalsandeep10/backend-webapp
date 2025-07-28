@@ -86,6 +86,12 @@ class CreatePrioriySchema(BaseModel):
     color: str
 
 
+class EditTicketPrioritySchema(BaseModel):
+    name: Optional[str] = None
+    level: Optional[str] = None
+    color: Optional[str] = None
+
+
 class CreateTicketStatusSchema(BaseModel):
     name: str
     color: str
