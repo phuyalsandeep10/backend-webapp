@@ -305,8 +305,8 @@ async def sla_seed_dummy():
             name="test_sla2",
             response_time=18000,  # 5 hours
             resolution_time=432000,  # 5 days
-            organization_id=1,
-            issued_by=1,
+            organization_id=2,
+            issued_by=2,
         )
         print("Test TicketSLA 2 has been created")
     else:

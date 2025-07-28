@@ -41,7 +41,19 @@ class TicketServices:
                 raise HTTPException(
                     status_code=500, detail="Ticket default status has not been set yet"
                 )
+            # for getting the default SLA set by the organization
+            sla = await TicketSLA.find_one(
+                where={
+                    "is_default": True,
+                    "organization_id": data["organization_id"],
+                }
+            )
+            if not sla:
+                raise HTTPException(
+                    status_code=500, detail="SLA default has not been set yet"
+                )
             data["status_id"] = sts.id
+            data["sla_id"] = sla.id
             if data["assignees"] is not None:
                 users = []
                 for assigne_id in data["assignees"]:
@@ -86,6 +98,7 @@ class TicketServices:
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while creating a ticket",
+                data=str(e),
             )
 
     async def list_tickets(self, user):

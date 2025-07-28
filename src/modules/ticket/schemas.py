@@ -21,7 +21,6 @@ class CreateTicketSchema(BaseModel):
     attachment: Optional[str] = None
     priority_id: int
     department_id: int
-    sla_id: int
     customer_id: Optional[int] = None
     customer_name: Optional[str] = None
     customer_email: Optional[str] = None
@@ -121,6 +120,7 @@ class CreateSLASchema(BaseModel):
     name: str
     response_time: int
     resolution_time: int
+    is_default: Optional[bool] = False
 
     model_config = {"extra": "forbid"}
 

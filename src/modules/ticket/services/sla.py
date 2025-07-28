@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import HTTPException, status
 from sqlmodel import BigInteger
+from starlette.status import HTTP_403_FORBIDDEN
 
 from src.common.dependencies import get_user_by_token
 from src.modules.auth.models import User
@@ -20,6 +21,14 @@ class TicketSLAServices:
             data = dict(payload)
             data["issued_by"] = user_id
             data["organization_id"] = user.attributes.get("organization_id")
+
+            # checking if the there is any default sla before
+            is_sla_default = await TicketSLA.find_one(where={"is_default": True})
+
+            if is_sla_default:
+                return cr.error(
+                    message="Default SLA exists before", status_code=HTTP_403_FORBIDDEN
+                )
 
             sla = await TicketSLA.create(**data)
 

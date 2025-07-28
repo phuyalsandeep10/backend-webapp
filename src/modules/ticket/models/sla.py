@@ -18,6 +18,7 @@ class TicketSLA(CommonModel, table=True):
     organization_id: int = Field(
         sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
     )
+    is_default: bool = Field(default=False, nullable=False)
     issued_by: int = Field(nullable=False)
     tickets: List[Ticket] = Relationship(back_populates="sla", passive_deletes=True)
 
@@ -28,6 +29,7 @@ class TicketSLA(CommonModel, table=True):
             "response_time": self.response_time,
             "resolution_time": self.resolution_time,
             "issued_by": self.issued_by,
+            "is_default": self.is_default,
             "created_at": self.created_at.isoformat(),
         }
 

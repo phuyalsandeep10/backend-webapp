@@ -19,7 +19,7 @@ class TicketStatus(CommonModel, table=True):
 
     name: str
     color: str
-    is_default: bool = Field(default=False)
+    is_default: bool = Field(default=False, unique=True)
     organization_id: int = Field(
         sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
     )

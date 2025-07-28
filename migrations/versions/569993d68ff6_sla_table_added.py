@@ -31,6 +31,12 @@ def upgrade() -> None:
         sa.Column("resolution_time", sa.BigInteger(), nullable=False),
         sa.Column("issued_by", sa.Integer(), nullable=False),
         sa.Column(
+            "is_default",
+            sa.Boolean(),
+            default=False,
+            nullable=False,
+        ),
+        sa.Column(
             "organization_id",
             sa.Integer,
             sa.ForeignKey("sys_organizations.id", ondelete="CASCADE"),
