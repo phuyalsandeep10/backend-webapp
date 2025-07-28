@@ -135,11 +135,19 @@ class BaseModel(SQLModel):
         where: Optional[dict] = None,
         joins: Optional[list[Any]] = None,
         options: Optional[list[Any]] = None,
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> Optional[T]:
         if where is not None:
             if "deleted_at" in inspect(cls).columns:  # type:ignore
                 where.setdefault("deleted_at", None)
         statement = query_statement(cls, where=where, joins=joins, options=options)
+        if related_items:
+            # related_items can be a single selectinload() or a list of them
+            if isinstance(related_items, list):
+                for item in related_items:
+                    statement = statement.options(item)
+            else:
+                statement = statement.options(related_items)
         async with async_session() as session:
             result = await session.execute(statement)
             return result.scalars().first() if result else None
