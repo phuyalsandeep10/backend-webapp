@@ -166,29 +166,28 @@ class TicketServices:
                 message="Error while deleting the tickets",
             )
 
-    async def confirm_ticket(self, ticket_id: int, token: str, user):
+    async def confirm_ticket(self, ticket_id: int, token: str):
         try:
-            ticket = await Ticket.find_one(where={"id": ticket_id})
+            ticket = await Ticket.find_one(
+                where={"id": ticket_id, "confirmation_token": token}
+            )
             if ticket is None:
-                return cr.error(message="Ticket with this id not found")
+                return cr.error(message="Invalid credentials")
             # to find which is the open status category status defined the organization it could be in-progress, or open,ongoing
             open_status_category = await TicketStatus.find_one(
                 where={
-                    "organization_id": user.attributes.get("organization_id"),
-                    "status_category": "open",
+                    "organization_id": ticket.organization_id,
+                    "status_category": {"mode": "insensitive", "value": "open"},
                 }
             )
             if open_status_category is None:
                 return cr.error(
                     message="Open status category is not set in the ticket status"
                 )
-            if ticket.confirmation_token == token:
-                ticket.status_id = open_status_category.id
-                return cr.error(
-                    message="Your ticket has been activated.", data=ticket.to_dict()
-                )
-
-            return cr.error(message="Invalid confirmation token")
+            await Ticket.update(id=ticket.id, status_id=open_status_category.id)
+            return cr.success(
+                message="Your ticket has been activated.", data={"id": ticket.id}
+            )
 
         except Exception as e:
             print(e)

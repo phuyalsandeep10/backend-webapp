@@ -24,6 +24,9 @@ async def register_ticket(payload: CreateTicketSchema, user=Depends(get_current_
     response_model=CustomResponseSchema[List[TicketOut]],
 )
 async def list_tickets(user=Depends(get_current_user)):
+    """
+    List all the tickets of the organization
+    """
     return await ticket_services.list_tickets(user)
 
 
@@ -33,6 +36,9 @@ async def list_tickets(user=Depends(get_current_user)):
     response_model=CustomResponseSchema[TicketOut],
 )
 async def get_ticket(ticket_id: int, user=Depends((get_current_user))):
+    """
+    Get ticket of the organization by id
+    """
     return await ticket_services.get_ticket(ticket_id, user)
 
 
@@ -40,4 +46,18 @@ async def get_ticket(ticket_id: int, user=Depends((get_current_user))):
     "/{ticket_id:int}", summary="Delete a ticket", response_model=CustomResponseSchema
 )
 async def delete_ticket(ticket_id: int, user=Depends(get_current_user)):
+    """
+    Delete ticket of the organiation by id
+    """
     return await ticket_services.delete_ticket(ticket_id, user)
+
+
+@router.post(
+    "/confirm/{ticket_id:int}/{confirmation_token:str}",
+    response_model=CustomResponseSchema,
+)
+async def confirm_ticket(ticket_id: int, confirmation_token: str):
+    """
+    Confirmt the ticket and set status to open defined by the organization
+    """
+    return await ticket_services.confirm_ticket(ticket_id, token=confirmation_token)
