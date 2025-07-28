@@ -3,6 +3,7 @@ import secrets
 from fastapi import HTTPException, status
 from kombu import message
 from sqlalchemy.orm import selectinload
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from src.common.dependencies import get_user_by_token
 from src.modules.auth.models import User
@@ -11,6 +12,7 @@ from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import CreateTicketSchema
+from src.tasks.ticket_task import send_ticket_verification_email
 from src.utils.response import CustomResponse as cr
 
 
@@ -48,7 +50,29 @@ class TicketServices:
             del data["assignees"]  # not assigning None to the db
             # generating the confirmation token using secrets
             data["confirmation_token"] = secrets.token_hex(32)
-            await Ticket.create(**dict(data))
+            tick = await Ticket.find_one(
+                where={
+                    "id": (await Ticket.create(**dict(data))).id,
+                    "organization_id": data["organization_id"],
+                },
+                related_items=[selectinload(Ticket.customer)],
+            )
+
+            if not tick:
+                return cr.error(
+                    message="Error while processing ticket",
+                    status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            send_ticket_verification_email.delay(
+                email=(
+                    tick.customer.email
+                    if tick.customer is not None
+                    else tick.customer_email
+                ),
+                token=data["confirmation_token"],
+                ticket_id=tick.id,
+            )
 
             return cr.success(
                 status_code=status.HTTP_201_CREATED,
