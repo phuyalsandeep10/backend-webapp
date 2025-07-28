@@ -6,6 +6,7 @@ from src.common.dependencies import get_current_user
 from src.modules.ticket.schemas import (
     CreatePrioriySchema,
     CreateTicketStatusSchema,
+    EditTicketStatusSchema,
     TicketStatusOut,
 )
 from src.modules.ticket.services.status import ticket_status_service
@@ -41,11 +42,29 @@ async def register_ticket_status(
     summary="List particular status",
     response_model=CustomResponseSchema[TicketStatusOut],
 )
-async def get_priority(ticket_status_id: int, user=Depends(get_current_user)):
+async def get_ticket_status(ticket_status_id: int, user=Depends(get_current_user)):
     """
     List particular ticket status defined by the organization
     """
     return await ticket_status_service.get_ticket_status(ticket_status_id, user)
+
+
+@router.patch(
+    "/status/{ticket_status_id:int}",
+    summary="Edit particular status",
+    response_model=CustomResponseSchema[TicketStatusOut],
+)
+async def edit_ticket_status(
+    ticket_status_id: int,
+    payload: EditTicketStatusSchema,
+    user=Depends(get_current_user),
+):
+    """
+    Edit particular ticket status defined by the organization
+    """
+    return await ticket_status_service.edit_ticket_status(
+        ticket_status_id, payload, user
+    )
 
 
 @router.delete(
@@ -53,7 +72,7 @@ async def get_priority(ticket_status_id: int, user=Depends(get_current_user)):
     summary="Delete particular status",
     response_model=CustomResponseSchema[TicketStatusOut],
 )
-async def delete_priority(ticket_status_id: int, user=Depends(get_current_user)):
+async def delete_ticket_status(ticket_status_id: int, user=Depends(get_current_user)):
     """
     Delete particular ticket status defined by the organization
     """

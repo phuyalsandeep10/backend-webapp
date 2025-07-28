@@ -1,10 +1,11 @@
 from typing import List
 
 from kombu import message
+from starlette.status import HTTP_400_BAD_REQUEST
 
 from src.modules.auth.models import User
 from src.modules.ticket.models import TicketStatus
-from src.modules.ticket.schemas import CreateTicketStatusSchema
+from src.modules.ticket.schemas import CreateTicketStatusSchema, EditTicketStatusSchema
 from src.utils.response import CustomResponse as cr
 
 
@@ -79,6 +80,38 @@ class TicketStatusService:
         except Exception as e:
             print(e)
             return cr.error(message="Error while deleting the ticket status")
+
+    async def edit_ticket_status(
+        self, ticket_status_id: int, payload: EditTicketStatusSchema, user
+    ):
+        """
+        Edit ticket status of the organization
+        """
+        try:
+            ticket_status = await TicketStatus.find_one(
+                where={
+                    "id": ticket_status_id,
+                    "organization_id": user.attributes.get("organization_id"),
+                }
+            )
+            if ticket_status is None:
+                return cr.error(
+                    message="Ticket Status not found", status_code=HTTP_400_BAD_REQUEST
+                )
+
+            updated_ticket_status = await TicketStatus.update(
+                ticket_status.id, **payload.model_dump(exclude_none=True)
+            )
+
+            return cr.success(
+                message="Successfully updated ticket status",
+                data=(
+                    updated_ticket_status.to_dict() if updated_ticket_status else None
+                ),
+            )
+        except Exception as e:
+            print(e)
+            return cr.error(message="Error while editing ticket status", data=str(e))
 
 
 ticket_status_service = TicketStatusService()

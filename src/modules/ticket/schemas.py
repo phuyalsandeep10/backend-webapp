@@ -99,6 +99,13 @@ class CreateTicketStatusSchema(BaseModel):
     status_category: TicketStatusEnum
 
 
+class EditTicketStatusSchema(BaseModel):
+    name: Optional[str] = None
+    is_default: Optional[bool] = None
+    color: Optional[str] = None
+    status_category: Optional[TicketStatusEnum] = None
+
+
 class CreateContactSchema(BaseModel):
 
     email: EmailStr
