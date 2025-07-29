@@ -109,6 +109,7 @@ class Ticket(CommonModel, table=True):
             "created_by": self.created_by.to_dict(),
             "assignees": [assignee.to_dict() for assignee in self.assignees],
             "created_at": self.created_at.isoformat(),
+            "opened_at": self.opened_at.isoformat() if self.opened_at else None,
             "is_spam": self.is_spam,
         }
         if self.customer_id is None:

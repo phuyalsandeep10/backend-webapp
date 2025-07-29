@@ -42,6 +42,7 @@ class TicketServices:
                 raise HTTPException(
                     status_code=500, detail="Ticket default status has not been set yet"
                 )
+
             # for getting the default SLA set by the organization
             sla = await TicketSLA.find_one(
                 where={
@@ -64,6 +65,15 @@ class TicketServices:
                 data["assignees"] = users
 
             del data["assignees"]  # not assigning None to the db
+            # validating the data
+            tenant = TenantEntityValidator(
+                org_id=user.attributes.get("organization_id")
+            )
+
+            await tenant.validate(TicketPriority, data["priority_id"])
+            await tenant.validate(TicketStatus, data["status_id"])
+            await tenant.validate(TicketSLA, data["sla_id"])
+            await tenant.validate(Team, data["department_id"])
             # generating the confirmation token using secrets
             data["confirmation_token"] = secrets.token_hex(32)
             tick = await Ticket.find_one(
