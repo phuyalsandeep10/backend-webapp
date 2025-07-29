@@ -9,11 +9,11 @@ from src.modules.auth.models import User
 from src.modules.chat.models.conversation import Conversation, ConversationMember
 
 # Import chat models
-from src.modules.chat.models.customer import Customer
-from src.modules.chat.models.message import Message,MessageAttachment
+from src.modules.chat.models.customer import Customer, CustomerVisitLogs
+from src.modules.chat.models.message import Message, MessageAttachment
 
 # Import organization models
-from src.modules.organizations.models import     (
+from src.modules.organizations.models import (
     Organization,
     OrganizationInvitation,
     OrganizationMember,

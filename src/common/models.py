@@ -124,8 +124,6 @@ class CommonModel(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
-    # arbitrary_types_allowed = True
-
 
 def query_statement(
     cls: Type[T],

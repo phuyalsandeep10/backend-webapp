@@ -107,7 +107,7 @@ class ChatNamespace(socketio.AsyncNamespace):
     receive_message = "recieve-message"
     receive_typing = "typing"
     stop_typing = "stop-typing"
-    receive_seen = "seen"
+    message_seen = "message_seen"
 
     def __init__(self):
         super().__init__("/chat")
@@ -138,6 +138,8 @@ class ChatNamespace(socketio.AsyncNamespace):
         print(f"✅ Connected to /chat: {sid} (conversation_id: {conversation_id})")
         return True
 
+    # async def on_message(self,sid,data):
+
     async def on_message(self, sid, data):
         conversation_id = self.rooms.get(sid)
         if not conversation_id:
@@ -165,6 +167,8 @@ class ChatNamespace(socketio.AsyncNamespace):
                     "message": data.get("message"),
                     "sid": sid,
                     "mode": "message",
+                    "uuid": data.get("uuid"),
+                    "seen": data.get("seen"),
                 },
                 room=si,
             )
@@ -183,8 +187,8 @@ class ChatNamespace(socketio.AsyncNamespace):
                 file_size=file.get("file_size"),
             )
 
-    async def on_seen(self, sid, data):
-        messageId = data.get("message_id")
+    async def on_message_seen(self, sid, data):
+        messageId = data.get("uuid")
         conversation_id = self.rooms.get(sid)
         if not conversation_id:
             return
@@ -198,8 +202,8 @@ class ChatNamespace(socketio.AsyncNamespace):
                 continue
 
             await self.emit(
-                self.receive_seen,
-                {"message_id": messageId, "sid": sid},
+                self.message_seen,
+                {"uui": messageId, "sid": sid},
                 room=si,
             )
 
