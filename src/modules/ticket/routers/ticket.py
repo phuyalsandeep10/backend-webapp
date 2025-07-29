@@ -66,7 +66,7 @@ async def delete_ticket(ticket_id: int, user=Depends(get_current_user)):
     return await ticket_services.delete_ticket(ticket_id, user)
 
 
-@router.post(
+@router.get(
     "/confirm/{ticket_id:int}/{confirmation_token:str}",
     response_model=CustomResponseSchema,
 )
