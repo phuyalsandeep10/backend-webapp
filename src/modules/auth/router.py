@@ -56,6 +56,7 @@ from .models import EmailVerification, RefreshToken, User
 from .social_auth import oauth
 from jose.exceptions import JWTError
 from fastapi.encoders import jsonable_encoder
+from .dto import ValidateEmail
 
 router = APIRouter()
 
@@ -145,6 +146,14 @@ async def refresh_token(body: RefreshTokenDto):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
+@router.post("/validate-email")
+async def validateEmail(body: ValidateEmail):
+    user = await User.find_one({"email": body.email})
+    if user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return {"success": True}
+
+
 @router.post("/register")
 async def register(request: RegisterDto):
 
@@ -223,9 +232,10 @@ async def verify_email_token(body: VerifyEmailTokenDto):
     # Mark the token as used
     await EmailVerification.update(verification.id, is_used=True)
     # Here you would typically update the user's email verification status
-    await User.update(user.id, email_verified_at=datetime.utcnow())
+    user = await User.update(user.id, email_verified_at=datetime.utcnow())
+    tokens = await create_token(user)
 
-    return {"message": "Email verified successfully"}
+    return {"message": "Email verified successfully", **tokens}
 
 
 @router.post("/reset-password")

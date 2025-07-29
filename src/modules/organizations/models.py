@@ -31,6 +31,7 @@ class Organization(CommonModel, table=True):
     priorities: List["TicketPriority"] = Relationship(back_populates="organizations")
     ticket_status: List["TicketStatus"] = Relationship(back_populates="organizations")
     tickets: List["Ticket"] = Relationship(back_populates="organization")
+    purpose: str = Field(default=None, max_length=250, nullable=True)
 
     @classmethod
     async def get_orgs_by_user_id(cls, user_id: int):

@@ -57,6 +57,7 @@ async def create_organization(
         slug=body.name.lower().replace(" ", "-"),  # Simple slug generation
         logo=body.logo,
         website=body.website,
+        purpose=body.purpose,
     )
 
     await OrganizationMember.create(

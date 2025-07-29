@@ -14,8 +14,15 @@ from src.config.settings import settings
 from src.models import Conversation, Message
 
 
+#for temporary purpose only
+
+
+    
+
 @celery_app.task
-async def save_messages(conversation_id: int, data: dict, user_id: Optional[int] = None):
+async def save_messages(
+    conversation_id: int, data: dict, user_id: Optional[int] = None
+):
     try:
         print(f"saving message in queue for conversation_id: {conversation_id}")
 

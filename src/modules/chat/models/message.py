@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from src.modules.auth.models import User
 
 
+
 class Message(CommonModel, table=True):
     __tablename__ = "org_messages" #type:ignore
     conversation_id: int = Field(foreign_key="org_conversations.id", nullable=False)
@@ -24,11 +25,13 @@ class Message(CommonModel, table=True):
     attachments: list["MessageAttachment"] = Relationship(back_populates="message")
 
 
+
+
 class MessageAttachment(CommonModel, table=True):
     __tablename__ = "org_message_attachments" #type:ignore
     message_id: int = Field(foreign_key="org_messages.id", nullable=False)
-    message: Optional[Message] = Relationship(back_populates="attachments")
+    message: Optional["Message"] = Relationship(back_populates="attachments")
     file_name: str = Field(max_length=255)
-    file_type: str = Field(max_length=255)
-    file_size: int = Field(index=True)
+    file_type: str = Field(max_length=255)  
+    # file_size: int = Field(index=True)
     file_url: str = Field(max_length=255)

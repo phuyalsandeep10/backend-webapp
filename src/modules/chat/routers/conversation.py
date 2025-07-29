@@ -27,7 +27,6 @@ async def conversation_detail(conversation_id: int, user=Depends(get_current_use
 
     return {"conversation": record, "customer": customer}
 
-
 @router.get("/{conversation_id}/customer_messages")
 async def customer_messages(conversation_id: int, limit: int = 20):
     messages = await Message.filter(

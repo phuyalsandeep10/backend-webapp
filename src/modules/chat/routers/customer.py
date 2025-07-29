@@ -22,7 +22,6 @@ async def create_customer(organizationId: int, request: Request):
         ip_address=ip,
         organization_id=organizationId,
     )
-
     return {"customer": customer, "conversation": conversation}
 
 
