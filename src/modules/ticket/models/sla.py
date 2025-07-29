@@ -1,22 +1,26 @@
 from datetime import datetime
 from typing import List
 
-from sqlmodel import Field, Relationship
+from sqlalchemy import Column, ForeignKey
+from sqlmodel import BigInteger, Field, Relationship
 
-from src.common.models import BaseModel
+from src.common.models import BaseModel, CommonModel
 
 from .ticket import Ticket
 
 
-class SLA(BaseModel, table=True):
-    __tablename__: str = "sla"  # type: ignore
+class TicketSLA(CommonModel, table=True):
+    __tablename__: str = "ticket_sla"  # type: ignore
 
     name: str = Field(nullable=True, unique=True)
-    response_time: int = Field(nullable=False)
-    resolution_time: int = Field(nullable=False)
+    response_time: int = Field(sa_column=Column(BigInteger, nullable=False))
+    resolution_time: int = Field(sa_column=Column(BigInteger, nullable=False))
+    organization_id: int = Field(
+        sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
+    )
+    is_default: bool = Field(default=False, nullable=False)
     issued_by: int = Field(nullable=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-    tickets: List[Ticket] = Relationship(back_populates="sla")
+    tickets: List[Ticket] = Relationship(back_populates="sla", passive_deletes=True)
 
     def to_dict(self):
         return {
@@ -25,6 +29,7 @@ class SLA(BaseModel, table=True):
             "response_time": self.response_time,
             "resolution_time": self.resolution_time,
             "issued_by": self.issued_by,
+            "is_default": self.is_default,
             "created_at": self.created_at.isoformat(),
         }
 

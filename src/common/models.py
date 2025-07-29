@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, List, Optional, Type, TypeVar, Union
 
 import sqlalchemy as sa
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, inspect, or_
 from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlmodel import Field, SQLModel, select
@@ -33,7 +33,9 @@ def case_insensitive(attributes):
 
 
 class BaseModel(SQLModel):
-    id: int = Field(default=None, primary_key=True)
+    id: int = Field(primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
     @classmethod
     async def get(cls: Type[T], id: int) -> Optional[T]:
@@ -43,10 +45,14 @@ class BaseModel(SQLModel):
     @classmethod
     async def get_all(
         cls: Type[T],
+        where: Optional[dict] = None,
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> List[T]:
         async with async_session() as session:
-            statement = select(cls)
+            if where is not None:
+                if "deleted_at" in inspect(cls).columns:  # type:ignore
+                    where.setdefault("deleted_at", None)
+            statement = query_statement(cls, where=where)
             if related_items:
                 # related_items can be a single selectinload() or a list of them
                 if isinstance(related_items, list):
@@ -79,12 +85,20 @@ class BaseModel(SQLModel):
             return obj
 
     @classmethod
-    async def delete(cls: Type[T], id: int) -> None:
+    async def delete(cls: Type[T], where: Optional[dict] = None) -> None:
         async with async_session() as session:
-            obj = await session.get(cls, id)
+            statement = query_statement(
+                cls,
+                where=where,
+            )
+            result = await session.execute(statement)
+            obj = result.scalars().first()
             if obj:
-                await session.delete(obj)
+                obj.deleted_at = datetime.now()
+                session.add(obj)
+
                 await session.commit()
+                await session.refresh(obj)
 
     @classmethod
     async def filter(
@@ -94,12 +108,23 @@ class BaseModel(SQLModel):
         limit: Optional[int] = None,
         joins: Optional[list[Any]] = None,
         options: Optional[list[Any]] = None,
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> List[T]:
+        if where is not None:
+            if "deleted_at" in inspect(cls).columns:  # type:ignore
+                where.setdefault("deleted_at", None)
         statement = query_statement(cls, where=where, joins=joins, options=options)
         if skip:
             statement = statement.offset(skip)
         if limit is not None:
             statement = statement.limit(limit)
+        if related_items:
+            # related_items can be a single selectinload() or a list of them
+            if isinstance(related_items, list):
+                for item in related_items:
+                    statement = statement.options(item)
+            else:
+                statement = statement.options(related_items)
         async with async_session() as session:
             result = await session.execute(statement)
             return list(result.scalars().all()) if result else []
@@ -110,8 +135,19 @@ class BaseModel(SQLModel):
         where: Optional[dict] = None,
         joins: Optional[list[Any]] = None,
         options: Optional[list[Any]] = None,
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> Optional[T]:
+        if where is not None:
+            if "deleted_at" in inspect(cls).columns:  # type:ignore
+                where.setdefault("deleted_at", None)
         statement = query_statement(cls, where=where, joins=joins, options=options)
+        if related_items:
+            # related_items can be a single selectinload() or a list of them
+            if isinstance(related_items, list):
+                for item in related_items:
+                    statement = statement.options(item)
+            else:
+                statement = statement.options(related_items)
         async with async_session() as session:
             result = await session.execute(statement)
             return result.scalars().first() if result else None
@@ -121,8 +157,7 @@ class CommonModel(BaseModel):
     active: bool = Field(default=True, nullable=False)
     created_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
     updated_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    deleted_at: Optional[datetime] = None
 
 
 def query_statement(

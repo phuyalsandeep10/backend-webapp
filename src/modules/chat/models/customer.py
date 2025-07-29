@@ -1,12 +1,15 @@
-from src.common.models import CommonModel
+from typing import TYPE_CHECKING, List, Optional
+
 from sqlmodel import Field, Relationship
 from typing import Optional, TYPE_CHECKING, List
 import datetime
+from src.common.models import CommonModel
 
 if TYPE_CHECKING:
-    from src.modules.organizations.models import Organization
     from src.modules.chat.models.conversation import Conversation
     from src.modules.chat.models.message import Message
+    from src.modules.organizations.models import Organization
+    from src.modules.ticket.models.ticket import Ticket
 
 
 class Customer(CommonModel, table=True):
@@ -26,6 +29,7 @@ class Customer(CommonModel, table=True):
     ip_address: str = Field(max_length=255, index=True, nullable=True)
 
     is_online: bool = Field(default=False)
+    tickets: List["Ticket"] = Relationship(back_populates="customer")
 
 
 class CustomerVisitLogs(CommonModel, table=True):
@@ -35,7 +39,6 @@ class CustomerVisitLogs(CommonModel, table=True):
     longitude: float = Field(nullable=True)
     city: str = Field(max_length=255, nullable=True)
     country: str = Field(max_length=255, nullable=True)
-
     location: str = Field(max_length=300, nullable=True)
     customer_id: int = Field(foreign_key="org_customers.id", nullable=False)
     customer: Optional["Customer"] = Relationship(back_populates="visit_logs")
@@ -54,3 +57,13 @@ class CustomerVisitLogs(CommonModel, table=True):
 
     join_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     left_at: Optional[datetime] = Field(default=None, nullable=True)
+    city: str = Field(max_length=255, index=True, nullable=True)
+    country: str = Field(max_length=255, index=True, nullable=True)
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone,
+            "location": f"{self.city}, {self.country}",
+        }

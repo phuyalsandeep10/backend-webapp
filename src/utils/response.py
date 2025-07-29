@@ -1,7 +1,16 @@
-from typing import Any, Optional
+from typing import Any, Generic, List, Optional, TypeVar, Union
 
 from fastapi import status
 from fastapi.responses import JSONResponse
+from pydantic.generics import GenericModel
+
+T = TypeVar("T")
+
+
+class CustomResponseSchema(GenericModel, Generic[T]):
+    success: bool
+    data: Optional[Union[T, List[T]]]
+    message: str
 
 
 class CustomResponse:
