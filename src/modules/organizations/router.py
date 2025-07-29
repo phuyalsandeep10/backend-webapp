@@ -1,24 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException
+
 from src.common.dependencies import (
-    get_current_user,
     get_bearer_token,
+    get_current_user,
     update_user_cache,
 )
-from .dto import OrganizationDto, OrganizationRoleDto, OrganizationInviteDto
-
+from src.common.models import Permission
+from src.enums import InvitationStatus
 from src.models import (
     Organization,
-    OrganizationMember,
-    OrganizationRole,
     OrganizationInvitation,
+    OrganizationMember,
     OrganizationMemberRole,
+    OrganizationRole,
     User,
 )
 from src.modules.organizations.dto import AssignRoleDto
-from src.common.models import Permission
 from src.tasks import send_invitation_email
-from src.enums import InvitationStatus
 
+from .dto import OrganizationDto, OrganizationInviteDto, OrganizationRoleDto
 
 router = APIRouter()
 

@@ -15,7 +15,9 @@ class Contact(BaseModel, table=True):
     last_name: str = Field(nullable=False)
     phone: str = Field(nullable=False, max_digits=10)
 
-    tickets: List[Ticket] = Relationship(back_populates="contacts")
+    # tickets: List[Ticket] = Relationship(
+    #     back_populates="contacts", passive_deletes=True
+    # )
 
     def to_dict(self):
         return {

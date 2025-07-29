@@ -1,13 +1,14 @@
-from sqlalchemy.orm import foreign
-from src.common.models import CommonModel
-from sqlmodel import Field, Relationship
-from typing import Optional, TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
+from sqlalchemy.orm import foreign
+from sqlmodel import Field, Relationship
+
+from src.common.models import CommonModel
 
 if TYPE_CHECKING:
-    from src.modules.organizations.models import Organization
     from src.modules.auth.models import User
     from src.modules.chat.models.customer import Customer
+    from src.modules.organizations.models import Organization
 
 
 class Conversation(CommonModel, table=True):

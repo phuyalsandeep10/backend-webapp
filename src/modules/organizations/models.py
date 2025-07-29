@@ -1,19 +1,21 @@
-from src.common.models import CommonModel
-from sqlmodel import Field, Relationship, SQLModel, Session, select
-from typing import Optional, List
+from typing import TYPE_CHECKING, List, Optional
 
-from src.db.config import async_session
 import sqlalchemy as sa
+from sqlmodel import Field, Relationship, Session, SQLModel, select
+
+from src.common.models import CommonModel
+from src.db.config import async_session
 
 # from src.modules.auth.models import User
 from src.enums import InvitationStatus
-
-from typing import TYPE_CHECKING
+from src.modules.ticket.models.ticket import Ticket
 
 if TYPE_CHECKING:
     from src.modules.auth.models import User
     from src.modules.chat.models.conversation import Conversation
     from src.modules.chat.models.customer import Customer
+    from src.modules.ticket.models.priority import TicketPriority
+    from src.modules.ticket.models.status import TicketStatus
 
 
 class Organization(CommonModel, table=True):
@@ -26,6 +28,9 @@ class Organization(CommonModel, table=True):
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
+    priorities: List["TicketPriority"] = Relationship(back_populates="organizations")
+    ticket_status: List["TicketStatus"] = Relationship(back_populates="organizations")
+    tickets: List["Ticket"] = Relationship(back_populates="organization")
     purpose: str = Field(default=None, max_length=250, nullable=True)
 
     @classmethod

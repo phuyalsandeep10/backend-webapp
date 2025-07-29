@@ -23,6 +23,9 @@ from src.modules.organizations.models import     (
 
 # Import team models
 from src.modules.team.models import Team, TeamMember
+from src.modules.ticket.models.priority import TicketPriority
+from src.modules.ticket.models.status import TicketStatus
+from src.modules.ticket.models.ticket import Ticket, TicketAlert, TicketAssigneesLink
 
 # Import admin models
 # from src.modules.admin.models import Admin
@@ -43,5 +46,10 @@ __all__ = [
     "MessageAttachment",
     "Team",
     "TeamMember",
+    "Ticket",
+    "TicketStatus",
+    "TicketAssigneesLink",
+    "TicketAlert",
+    "TicketPriority",
     # "Admin"
 ]

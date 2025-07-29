@@ -1,12 +1,15 @@
-from typing import Optional, TYPE_CHECKING, List
-from sqlmodel import Field, Relationship
 from datetime import datetime
+from typing import TYPE_CHECKING, List, Optional
+
 import sqlalchemy as sa
+from sqlmodel import Field, Relationship
+
 from src.common.models import BaseModel
-from src.modules.organizations.models import OrganizationMember
-from src.modules.team.models import TeamMember
 from src.modules.chat.models.conversation import ConversationMember
 from src.modules.chat.models.message import Message
+from src.modules.organizations.models import OrganizationMember
+from src.modules.team.models import TeamMember
+from src.modules.ticket.models.ticket import Ticket, TicketAssigneesLink
 
 
 class User(BaseModel, table=True):
@@ -33,7 +36,7 @@ class User(BaseModel, table=True):
 
     is_superuser: bool = Field(default=False)
     is_staff: bool = Field(default=False)
-    attributes: Optional[dict] = Field(default=None, sa_column=sa.Column(sa.JSON))
+    attributes: Optional[dict] = Field(default={}, sa_column=sa.Column(sa.JSON))
 
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
@@ -57,6 +60,17 @@ class User(BaseModel, table=True):
         back_populates="user",
         sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},
     )
+    tickets: List[Ticket] = Relationship(
+        back_populates="created_by",
+        sa_relationship_kwargs={"foreign_keys": "[Ticket.created_by_id]"},
+    )
+
+    assigned_tickets: List[Ticket] = Relationship(
+        back_populates="assignees", link_model=TicketAssigneesLink
+    )
+
+    def to_dict(self):
+        return {"email": self.email, "name": self.name}
 
     @property
     def is_2fa_verified(self):
