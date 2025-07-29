@@ -9,5 +9,11 @@ test:
 	pytest -v
 seed:
 	PYTHONPATH=./src python src/seed.py
+migration:
+	@echo "Creating migration"
+	alembic revision -m "$(msg)" --rev-id $(shell date -u +%Y%m%d_%H%M%S)
+migrate:
+	@echo "Migrating the migrations to the database"
+	alembic upgrade head
 
 
