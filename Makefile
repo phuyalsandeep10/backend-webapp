@@ -11,7 +11,7 @@ seed:
 	PYTHONPATH=./src python src/seed.py
 migration:
 	@echo "Creating migration"
-	alembic revision -m "$(msg)" --rev-id $(shell date -u +%Y%m%d_%H%M%S)
+	MIGRATION_NAME=$(name) alembic revision -m "$(msg)" --rev-id $(shell date -u +%Y%m%d_%H%M%S)
 migrate:
 	@echo "Migrating the migrations to the database"
 	alembic upgrade head
