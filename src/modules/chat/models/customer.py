@@ -2,8 +2,10 @@ from typing import TYPE_CHECKING, List, Optional
 
 from sqlmodel import Field, Relationship
 from typing import Optional, TYPE_CHECKING, List
-import datetime
+from datetime import datetime
 from src.common.models import CommonModel
+from sqlalchemy import Column, JSON
+
 
 if TYPE_CHECKING:
     from src.modules.chat.models.conversation import Conversation
@@ -24,9 +26,10 @@ class Customer(CommonModel, table=True):
     phone: str = Field(max_length=255, index=True, nullable=True)
     email: str = Field(max_length=255, index=True, nullable=True)
 
-    attributes: dict = Field(default={})
+    attributes: Optional[dict] = Field(default=None, sa_column=Column(JSON))
 
     ip_address: str = Field(max_length=255, index=True, nullable=True)
+    visit_logs: List["CustomerVisitLogs"] = Relationship(back_populates="customer")
 
     is_online: bool = Field(default=False)
     tickets: List["Ticket"] = Relationship(back_populates="customer")

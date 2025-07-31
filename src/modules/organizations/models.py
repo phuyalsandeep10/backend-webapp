@@ -25,6 +25,14 @@ class Organization(CommonModel, table=True):
     slug: str = Field(default=None, max_length=255, nullable=False, index=True)
     logo: str = Field(default=None, max_length=255, nullable=True)
     website: str = Field(default=None, max_length=255, nullable=True)
+
+    identifier: str = Field(default=None, max_length=255, nullable=True)
+
+    instagram: str = Field(default=None, max_lenght=255, nullable=True)
+    twitter_username: str = Field(default=None, max_length=255, nullable=True)
+    phone: str = Field(default=None, max_length=10, nullable=True)
+    dial_code: str = Field(default=None, max_lenght=10, nullable=True)
+
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")

@@ -23,6 +23,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+
     op.create_table(
         "ticket_priority",
         *common_columns(),
