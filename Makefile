@@ -15,5 +15,6 @@ migration:
 migrate:
 	@echo "Migrating the migrations to the database"
 	alembic upgrade head
-
-
+downgrade:
+	@echo "Migrating the migrations to the database"
+	alembic downgrade -1

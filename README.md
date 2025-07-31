@@ -12,7 +12,7 @@ alembic revision --autogenerate -m "create users table"
 
 
 alembic revision -m "create table"
-
+make migration name=add_users_table msg="Add users table migration"
 
 
 alembic upgrade head
