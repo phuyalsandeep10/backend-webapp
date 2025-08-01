@@ -101,6 +101,25 @@ class BaseModel(SQLModel):
                 await session.refresh(obj)
 
     @classmethod
+    async def soft_delete(cls: Type[T], where: Optional[dict] = None) -> None:
+        """
+        This function is used for soft delete by setting the current time at deleted_at field
+        """
+        async with async_session() as session:
+            statement = query_statement(
+                cls,
+                where=where,
+            )
+            result = await session.execute(statement)
+            obj = result.scalars().first()
+            if obj:
+                obj.deleted_at = datetime.now()
+                session.add(obj)
+
+                await session.commit()
+                await session.refresh(obj)
+
+    @classmethod
     async def filter(
         cls: Type[T],
         where: Optional[dict] = None,
