@@ -1,6 +1,6 @@
 run:
 		@echo "Starting fastapi"
-		fastapi dev src/main.py
+		fastapi dev src/main.py --host 0.0.0.0
 celery:
 		@echo "Starting celery"
 		celery -A src.config.celery worker --loglevel=INFO
