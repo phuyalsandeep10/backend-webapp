@@ -82,7 +82,10 @@ class EditTicketSchema(BaseModel):
 class CreatePrioriySchema(BaseModel):
     name: str
     level: int
-    color: str
+    bg_color: str
+    fg_color: str
+
+    model_config = {"extra": "forbid"}
 
 
 class EditTicketPrioritySchema(BaseModel):
@@ -93,9 +96,11 @@ class EditTicketPrioritySchema(BaseModel):
 
 class CreateTicketStatusSchema(BaseModel):
     name: str
-    color: str
+    bg_color: str
+    fg_color: str
     is_default: Optional[bool] = False
     status_category: TicketStatusEnum
+    model_config = {"extra": "forbid"}
 
 
 class EditTicketStatusSchema(BaseModel):

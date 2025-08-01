@@ -18,10 +18,13 @@ class TicketStatus(CommonModel, table=True):
     )
 
     name: str
-    color: str
-    is_default: bool = Field(default=False, unique=True)
+    bg_color: str
+    fg_color: str
+    is_default: bool = Field(default=False)
     organization_id: int = Field(
-        sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
+        sa_column=Column(
+            ForeignKey("sys_organizations.id", ondelete="CASCADE"), nullable=True
+        )
     )
     status_category: str
     tickets: List["Ticket"] = Relationship(back_populates="status")
@@ -31,5 +34,6 @@ class TicketStatus(CommonModel, table=True):
         return {
             "id": self.id,
             "name": self.name,
-            "color": self.color,
+            "bg_color": self.bg_color,
+            "fg_color": self.fg_color,
         }

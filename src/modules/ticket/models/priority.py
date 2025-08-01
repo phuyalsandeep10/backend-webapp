@@ -13,14 +13,19 @@ if TYPE_CHECKING:
 class TicketPriority(CommonModel, table=True):
     __tablename__ = "ticket_priority"  # type:ignore
     __table_args__ = (
-        UniqueConstraint("organization_id", "name", name="uniq_org_name"),
+        UniqueConstraint(
+            "organization_id", "name", "level", name="uniq_org_name_level"
+        ),
     )
 
     name: str
     level: int
-    color: str
+    bg_color: str
+    fg_color: str
     organization_id: int = Field(
-        sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
+        sa_column=Column(
+            ForeignKey("sys_organizations.id", ondelete="CASCADE"), nullable=True
+        )
     )
     tickets: List["Ticket"] = Relationship(back_populates="priority")
     organizations: List["Organization"] = Relationship(back_populates="priorities")
@@ -30,5 +35,6 @@ class TicketPriority(CommonModel, table=True):
             "id": self.id,
             "name": self.name,
             "level": self.level,
-            "color": self.color,
+            "bg_color": self.bg_color,
+            "fg_color": self.bg_color,
         }

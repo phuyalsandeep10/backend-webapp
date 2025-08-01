@@ -30,7 +30,7 @@ async def list_priorities(user=Depends(get_current_user)):
     "/priority", summary="Create a priority", response_model=CustomResponseSchema
 )
 async def register_priority(
-    payload: List[CreatePrioriySchema], user=Depends(get_current_user)
+    payload: list[CreatePrioriySchema], user=Depends(get_current_user)
 ):
     """
     Create priorities for the particular organization
