@@ -29,4 +29,3 @@ def common_columns():
 
 def base_columns():
     return [sa.Column("id", sa.Integer, primary_key=True), *timestamp_columns()]
-

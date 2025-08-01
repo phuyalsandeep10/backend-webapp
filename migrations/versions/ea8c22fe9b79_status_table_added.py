@@ -27,15 +27,69 @@ def upgrade() -> None:
         "ticket_status",
         *common_columns(),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("color", sa.String(), nullable=False),
+        sa.Column("bg_color", sa.String(), nullable=False),
+        sa.Column("fg_color", sa.String(), nullable=False),
+        sa.Column("is_default", sa.Boolean(), default=False),
+        sa.Column("organization_id", sa.Integer(), nullable=True),
+        sa.Column("status_category", sa.String(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["organization_id"],
+            ["sys_organizations.id"],
+            ondelete="CASCADE",
+        ),
+        sa.UniqueConstraint("organization_id", "name", name="uniq_org_status_name"),
+    )
+
+    ticket_status_table = sa.table(
+        "ticket_status",
+        *common_columns(),
+        sa.Column("name", sa.String(), nullable=False),
+        sa.Column("bg_color", sa.String(), nullable=False),
+        sa.Column("fg_color", sa.String(), nullable=False),
         sa.Column("is_default", sa.Boolean(), default=False),
         sa.Column("organization_id", sa.Integer(), nullable=False),
         sa.Column("status_category", sa.String(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["organization_id"], ["sys_organizations.id"], ondelete="CASCADE"
-        ),
-        sa.UniqueConstraint("organization_id", "name", name="uniq_org_status_name"),
-        sa.PrimaryKeyConstraint("id"),
+    )
+    op.bulk_insert(
+        ticket_status_table,
+        [
+            {
+                "id": 1,
+                "name": "Unassigned",
+                "bg_color": "#F61818",
+                "fg_color": "#ffffff",
+                "organization_id": None,
+                "status_category": "pending",
+            },
+            {
+                "id": 2,
+                "name": "Assigned",
+                "bg_color": "#FFF0D2",
+                "fg_color": "#ffffff",
+                "organization_id": None,
+                "status_category": "open",
+            },
+            {
+                "id": 3,
+                "name": "Solved",
+                "bg_color": "#009959",
+                "fg_color": "#ffffff",
+                "organization_id": None,
+                "status_category": "closed",
+            },
+            {
+                "id": 4,
+                "name": "Reopened",
+                "bg_color": "#DAE8FA",
+                "fg_color": "#ffffff",
+                "organization_id": None,
+                "status_category": "open",
+            },
+        ],
+    )
+
+    op.execute(
+        "SELECT setval('ticket_status_id_seq', (SELECT MAX(id) FROM ticket_status))"
     )
 
 
