@@ -21,6 +21,7 @@ class ${name}Migration(BaseMigration):
     table_name = ""
     def __init__(self):
         super().__init__(revision=${repr(up_revision)},down_revision=${repr(down_revision)})
+        self.create_whole_table=True
         #describe your schemas here
 
 
