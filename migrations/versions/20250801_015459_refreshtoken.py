@@ -23,8 +23,6 @@ class RefreshTokenMigration(BaseMigration):
         self.foreign("user_id", "sys_users", ondelete="CASCADE")
         self.string("token", nullable=False)
         self.date_time("expires_at", nullable=False)
-        
-
         #describe your schemas here
 
 
