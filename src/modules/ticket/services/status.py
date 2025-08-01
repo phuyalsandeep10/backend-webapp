@@ -20,6 +20,13 @@ class TicketStatusService:
             ticket_status = await TicketStatus.filter(
                 where={"organization_id": organization_id}
             )
+            # if there is none of them, then list the default ones
+            if len(ticket_status) == 0:
+                default_ticket_status = await TicketStatus.filter(
+                    where={"organization_id": None}
+                )
+                payload = [status.to_dict() for status in default_ticket_status]
+                return cr.success(message="Successfully listed status", data=payload)
             payload = [status.to_dict() for status in ticket_status]
             return cr.success(message="Successfully listed status", data=payload)
         except Exception as e:
@@ -32,14 +39,14 @@ class TicketStatusService:
         """
         try:
             organization_id: int = user.attributes.get("organization_id")
-            for data in payload:
+            for d in payload:
+                data = d.model_dump()
                 record = await TicketStatus.find_one(
-                    where={"name": data.name, "organization_id": organization_id}
+                    where={"name": data["name"], "organization_id": organization_id}
                 )
                 if not record:
-                    dict_data = dict(data)
-                    dict_data["organization_id"] = organization_id
-                    await TicketStatus.create(**dict_data)
+                    data["organization_id"] = organization_id
+                    await TicketStatus.create(**data)
 
             return cr.success(
                 message="Successfully created ticket status", status_code=201

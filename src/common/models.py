@@ -173,7 +173,7 @@ class BaseModel(SQLModel):
 
 
 class CommonModel(BaseModel):
-    active: bool = Field(default=True, nullable=False)
+    active: bool = Field(default=True)
     created_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
     updated_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
     deleted_at: Optional[datetime] = None

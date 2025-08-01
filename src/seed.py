@@ -15,35 +15,100 @@ from src.modules.ticket.models.sla import TicketSLA
 
 # default data
 priorities = [
-    {"name": "Critical", "level": 0, "color": "#ffffff", "organization_id": 1},
-    {"name": "High", "level": 1, "color": "#ffffff", "organization_id": 1},
-    {"name": "Medium", "level": 2, "color": "#ffffff", "organization_id": 1},
-    {"name": "Low", "level": 3, "color": "#ffffff", "organization_id": 1},
-    {"name": "Trivial", "level": 4, "color": "#ffffff", "organization_id": 1},
+    {
+        "name": "Critical",
+        "level": 0,
+        "fg_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "organization_id": 1,
+    },
+    {
+        "name": "High",
+        "level": 1,
+        "fg_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "organization_id": 1,
+    },
+    {
+        "name": "Medium",
+        "level": 2,
+        "fg_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "organization_id": 1,
+    },
+    {
+        "name": "Low",
+        "level": 3,
+        "fg_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "organization_id": 1,
+    },
+    {
+        "name": "Trivial",
+        "level": 4,
+        "fg_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "organization_id": 1,
+    },
 ]
 priorities2 = [
-    {"name": "High", "level": 0, "color": "#ffffff", "organization_id": 2},
-    {"name": "Medium", "level": 1, "color": "#ffffff", "organization_id": 2},
-    {"name": "Low", "level": 2, "color": "#ffffff", "organization_id": 2},
+    {
+        "name": "Critical",
+        "level": 0,
+        "fg_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "organization_id": 2,
+    },
+    {
+        "name": "High",
+        "level": 1,
+        "fg_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "organization_id": 2,
+    },
+    {
+        "name": "Medium",
+        "level": 2,
+        "fg_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "organization_id": 2,
+    },
+    {
+        "name": "Low",
+        "level": 3,
+        "fg_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "organization_id": 2,
+    },
+    {
+        "name": "Trivial",
+        "level": 4,
+        "fg_color": "#ffffff",
+        "bg_color": "#ffffff",
+        "organization_id": 2,
+    },
 ]
 
 status = [
     {
         "name": "Open",
-        "color": "#ffffff",
+        "bg_color": "#ffffff",
+        "fg_color": "#ffffff",
         "organization_id": 1,
         "status_category": "OPEN",
     },
     {
         "name": "Pending",
-        "color": "#ffffff",
+        "bg_color": "#ffffff",
+        "fg_color": "#ffffff",
         "organization_id": 1,
         "is_default": True,
         "status_category": "PENDING",
     },
     {
         "name": "Closed",
-        "color": "#ffffff",
+        "bg_color": "#ffffff",
+        "fg_color": "#ffffff",
         "organization_id": 1,
         "status_category": "CLOSED",
     },
@@ -51,13 +116,15 @@ status = [
 status2 = [
     {
         "name": "In-Progress",
-        "color": "#ffffff",
+        "bg_color": "#ffffff",
+        "fg_color": "#ffffff",
         "organization_id": 2,
         "status_category": "OPEN",
     },
     {
         "name": "Pending",
-        "color": "#ffffff",
+        "bg_color": "#ffffff",
+        "fg_color": "#ffffff",
         "organization_id": 2,
         "is_default": True,
         "status_category": "PENDING",
@@ -66,6 +133,8 @@ status2 = [
         "name": "Closed",
         "color": "#ffffff",
         "organization_id": 2,
+        "bg_color": "#ffffff",
+        "fg_color": "#ffffff",
         "status_category": "CLOSED",
     },
 ]
@@ -211,7 +280,8 @@ async def priority_seed():
             await TicketPriority.create(
                 name=i["name"],
                 level=i["level"],
-                color=i["color"],
+                bg_color=i["bg_color"],
+                fg_color=i["fg_color"],
                 organization_id=i["organization_id"],
             )
             print("TicketPriority 1 created")
@@ -229,7 +299,8 @@ async def priority_seed():
             await TicketPriority.create(
                 name=i["name"],
                 level=i["level"],
-                color=i["color"],
+                bg_color=i["bg_color"],
+                fg_color=i["fg_color"],
                 organization_id=i["organization_id"],
             )
             print("TicketPriority2 created")
@@ -248,7 +319,8 @@ async def status_seed():
         if not record:
             await TicketStatus.create(
                 name=i["name"],
-                color=i["color"],
+                bg_color=i["bg_color"],
+                fg_color=i["fg_color"],
                 organization_id=i["organization_id"],
                 is_default=bool(i.get("is_default", False)),
                 status_category=i["status_category"],
@@ -267,7 +339,8 @@ async def status_seed():
         if not record:
             await TicketStatus.create(
                 name=i["name"],
-                color=i["color"],
+                bg_color=i["bg_color"],
+                fg_color=i["fg_color"],
                 organization_id=i["organization_id"],
                 is_default=bool(i.get("is_default", False)),
                 status_category=i["status_category"],
@@ -320,8 +393,8 @@ async def seed_func():
     await user_seed_dummy()
     await organization_user_seed_dummy()
     await department_team_seed_dummy()
-    await priority_seed()
-    await status_seed()
+    # await priority_seed()
+    # await status_seed()
     await sla_seed_dummy()
 
 
