@@ -11,6 +11,8 @@ services:
       - POSTGRES_PASSWORD=postgres
     ports:
       - "5432:5432"
+    networks:
+      - mynetwork
 
   redis:
     image: redis
@@ -67,7 +69,11 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "kafka-consumer-groups --bootstrap-server kafka:9092 --describe"]
+      test:
+        [
+          "CMD-SHELL",
+          "kafka-consumer-groups --bootstrap-server kafka:9092 --describe",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -79,7 +85,6 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -88,7 +93,7 @@ services:
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
-      
+
     depends_on:
       - kafka
     healthcheck:
@@ -96,9 +101,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    
 
 volumes:
   postgres_data:
   redis_data:
   kafka_data:
+
+networks:
+  mynetwork:
+    driver: bridge
