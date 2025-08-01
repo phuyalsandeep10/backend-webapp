@@ -30,8 +30,16 @@ class add_users_tableMigration(BaseMigration):
         self.date_time("email_verified_at", nullable=True)
         self.date_time("mobile_verified_at", nullable=True)
         self.boolean("is_active", default=True)
+
         self.boolean("is_superuser", default=False)
         self.boolean("is_staff", default=False)
+        self.json("attributes", nullable=True, default={})
+
+        self.boolean('is_two_fa_enabled', default=False)
+        self.string('two_fa_secret')
+        self.string('two_fa_auth_url', nullable=True)
+
+
         self.timestamp_columns()
 
 

@@ -46,11 +46,11 @@ class BaseMigration:
         co = sa.Column(name, sa.Integer(), **kwargs)
         self.fields.append(co)
 
-    def string(self, name: str, length=55, **kwargs):
+    def string(self, name: str, length=55,nullable=True,default=None, **kwargs):
         """
         Returns the SQLALchemy String column
         """
-        co = sa.Column(name, sa.String(length=length), **kwargs)
+        co = sa.Column(name, sa.String(length=length),nullable=nullable,default=default, **kwargs)
         self.fields.append(co)
 
     def boolean(self, name: str, **kwargs):
@@ -60,6 +60,13 @@ class BaseMigration:
         co = sa.Column(name, sa.Boolean(), **kwargs)
         self.fields.append(co)
 
+    def json(self, name: str, **kwargs):
+        """
+        Returns the SQLALchemy JSON column
+        """
+        co = sa.Column(name, sa.JSON(), **kwargs)
+        self.fields.append(co)
+
     def primary_key(self, name: str, **kwargs):
         """
         Returns the SQLALChemy Integer column with primary_key true
@@ -67,12 +74,12 @@ class BaseMigration:
         co = sa.Column(name, sa.Integer(), primary_key=True, **kwargs)
         self.fields.append(co)
 
-    def foregin_key(self, name: str, table: str, ondelete=None, **kwargs):
+    def foreign(self, name: str, table: str, ondelete=None,nullable=True,index=True, **kwargs):
         """
         Returns the SQLAlchemy Integer column with foreign key
         """
         co = sa.Column(
-            name, sa.Integer(), sa.ForeignKey(table, ondelete=ondelete), **kwargs
+            name, sa.Integer(), sa.ForeignKey(table, ondelete=ondelete),nullable=nullable,index=index **kwargs
         )
         self.fields.append(co)
 
