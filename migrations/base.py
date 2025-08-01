@@ -13,6 +13,8 @@ class BaseMigration:
     # attributes
     table_name: str
     fields: List
+    added_column: List
+    create_new_table: bool
     revision: str
     down_revision: str
 
@@ -20,6 +22,14 @@ class BaseMigration:
         self.revision = revision
         self.down_revision = down_revision
         self.fields = []
+        self.added_column = []
+        self.create_whole_table = True  # by default set the create table true
+
+    def add_column(self, col: sa.Column):
+        """
+        This function is used to add column
+        """
+        self.added_column.append(col)
 
     def upgrade(self) -> None:
         """
@@ -29,7 +39,13 @@ class BaseMigration:
             raise OperationalError(
                 "table name and fields must be set", params=None, orig=None
             )
-        op.create_table(self.table_name, *self.fields)
+        if self.create_whole_table:
+            op.create_table(self.table_name, *self.fields)
+            return None
+
+        for col in self.added_column:
+            op.add_column(self.table_name, col)
+        return None
 
     def downgrade(self) -> None:
         """
@@ -37,7 +53,13 @@ class BaseMigration:
         """
         if not self.table_name:
             raise OperationalError("table name must be set", params=None, orig=None)
-        op.drop_table(self.table_name)
+        if self.create_whole_table:
+            op.drop_table(self.table_name)
+            return None
+
+        for col in reversed(self.added_column):  # FIFO
+            op.drop_column(self.table_name, col.name)
+        return None
 
     def integer(self, name: str, **kwargs):
         """
@@ -45,6 +67,7 @@ class BaseMigration:
         """
         co = sa.Column(name, sa.Integer(), **kwargs)
         self.fields.append(co)
+        return co
 
     def string(self, name: str, length=55, **kwargs):
         """
@@ -52,6 +75,7 @@ class BaseMigration:
         """
         co = sa.Column(name, sa.String(length=length), **kwargs)
         self.fields.append(co)
+        return co
 
     def boolean(self, name: str, **kwargs):
         """
@@ -59,6 +83,7 @@ class BaseMigration:
         """
         co = sa.Column(name, sa.Boolean(), **kwargs)
         self.fields.append(co)
+        return co
 
     def primary_key(self, name: str, **kwargs):
         """
@@ -66,6 +91,7 @@ class BaseMigration:
         """
         co = sa.Column(name, sa.Integer(), primary_key=True, **kwargs)
         self.fields.append(co)
+        return co
 
     def foregin_key(self, name: str, table: str, ondelete=None, **kwargs):
         """
@@ -75,6 +101,7 @@ class BaseMigration:
             name, sa.Integer(), sa.ForeignKey(table, ondelete=ondelete), **kwargs
         )
         self.fields.append(co)
+        return co
 
     def date_time(self, name: str, **kwargs):
         """
@@ -82,6 +109,15 @@ class BaseMigration:
         """
         co = sa.Column(name, sa.DateTime, **kwargs)
         self.fields.append(co)
+        return co
+
+    def unique_constraint(self, *columns, name: str):
+        """
+        Returns the unique constraint
+        """
+        co = sa.UniqueConstraint(*columns, name)
+        self.fields.append(co)
+        return co
 
     def timestamp_columns(self):
         """
@@ -112,3 +148,23 @@ class BaseMigration:
         )
         self.fields.append(self.date_time(name="deleted_at", nullable=True))
         self.timestamp_columns()
+
+    def bulk_insert_data(self, rows: List[dict]):
+        """
+        Insert multiple rows into the table using bulk_insert.
+        Dynamically constructs the table using current fields.
+        """
+
+        if not self.table_name:
+            raise OperationalError("table name must be set", params=None, orig=None)
+        if not rows or not isinstance(rows, list):
+            raise ValueError(
+                "bulk_insert_data requires a non-empty list of dictionaries"
+            )
+
+        # Create a table representation for insert
+        metadata = sa.MetaData()
+        cols = [col for col in self.fields if isinstance(col, sa.Column)]
+        table = sa.Table(self.table_name, metadata, *cols)
+
+        op.bulk_insert(table, rows)
