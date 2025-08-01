@@ -6,8 +6,9 @@ Create Date: 2025-08-01 14:57:43.840256
 
 """
 
-from migrations.base import BaseMigration
 from typing import Sequence, Union
+
+from migrations.base import BaseMigration
 
 revision: str = "20250801_091243"
 down_revision: Union[str, Sequence[str], None] = "20250801_090823"
@@ -17,7 +18,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 class MessageMigration(BaseMigration):
 
-    table_name = ""
+    table_name = "org_messages"
 
     def __init__(self):
         super().__init__(revision="20250801_091243", down_revision="20250801_090823")
