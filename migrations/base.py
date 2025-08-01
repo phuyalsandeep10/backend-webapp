@@ -3,6 +3,7 @@ from typing import List
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.exc import OperationalError
+from sqlmodel import ForeignKey
 
 
 class BaseMigration:
@@ -46,11 +47,13 @@ class BaseMigration:
         co = sa.Column(name, sa.Integer(), **kwargs)
         self.fields.append(co)
 
-    def string(self, name: str, length=55,nullable=True,default=None, **kwargs):
+    def string(self, name: str, length=55, nullable=True, default=None, **kwargs):
         """
         Returns the SQLALchemy String column
         """
-        co = sa.Column(name, sa.String(length=length),nullable=nullable,default=default, **kwargs)
+        co = sa.Column(
+            name, sa.String(length=length), nullable=nullable, default=default, **kwargs
+        )
         self.fields.append(co)
 
     def boolean(self, name: str, **kwargs):
@@ -67,19 +70,26 @@ class BaseMigration:
         co = sa.Column(name, sa.JSON(), **kwargs)
         self.fields.append(co)
 
-    def primary_key(self, name: str, **kwargs):
+    def primary_key(self, name: str = "id", **kwargs):
         """
         Returns the SQLALChemy Integer column with primary_key true
         """
         co = sa.Column(name, sa.Integer(), primary_key=True, **kwargs)
         self.fields.append(co)
 
-    def foreign(self, name: str, table: str, ondelete=None,nullable=True,index=True, **kwargs):
+    def foreign(
+        self, name: str, table: str, ondelete=None, nullable=True, index=True, **kwargs
+    ):
         """
         Returns the SQLAlchemy Integer column with foreign key
         """
         co = sa.Column(
-            name, sa.Integer(), sa.ForeignKey(table, ondelete=ondelete),nullable=nullable,index=index **kwargs
+            name,
+            sa.Integer(),
+            sa.ForeignKey(table, ondelete=ondelete),
+            nullable=nullable,
+            index=index,
+            **kwargs,
         )
         self.fields.append(co)
 
@@ -112,10 +122,10 @@ class BaseMigration:
         self.fields.append(self.primary_key(name="id"))
         self.fields.append(self.boolean(name="active", default=True, nullable=False))
         self.fields.append(
-            self.foregin_key(name="created_by_id", table="sys_users.id", nullable=True)
+            self.foreign(name="created_by_id", table="sys_users.id", nullable=True)
         )
         self.fields.append(
-            self.foregin_key(name="updated_by_id", table="sys_users.id", nullable=True)
+            self.foreign(name="updated_by_id", table="sys_users.id", nullable=True)
         )
         self.fields.append(self.date_time(name="deleted_at", nullable=True))
         self.timestamp_columns()
