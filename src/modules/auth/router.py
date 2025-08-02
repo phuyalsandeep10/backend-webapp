@@ -143,7 +143,8 @@ async def refresh_token(body: RefreshTokenSchema):
 async def validateEmail(body: ValidateEmailSchema):
     user = await User.find_one({"email": body.email})
     if user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        return cr.error(data={"success": False},message='Email already registered')
+       
     return cr.success(data={"success": True})
 
 
@@ -155,7 +156,7 @@ async def register(request: RegisterSchema):
     # Check if user already exists
 
     if user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        return cr.error(data={"success": False},message='Email already registered') 
 
     hashed_password = hash_password(request.password)
     user = await User.create(
@@ -205,16 +206,15 @@ async def verify_email_token(body: VerifyEmailTokenSchema):
     user = await User.find_one({"email": body.email})
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        return cr.error(data={"success": False},message='User not found')
 
     verification = await EmailVerification.find_one(
         {"token": body.token, "is_used": False, "user_id": user.id}
     )
 
     if not verification:
-        raise HTTPException(
-            status_code=400, detail="Invalid or expired verification token"
-        )
+        return cr.error(data={"success": False},message='Invalid or expired verification token')
+      
 
     expires_at = verification.expires_at
     if isinstance(expires_at, str):
@@ -289,9 +289,8 @@ async def forgot_password_verify(body: ForgotPasswordVerifySchema):
     )
 
     if not verification:
-        raise HTTPException(
-            status_code=400, detail="Invalid or expired verification token"
-        )
+        return cr.error(data={"success": False},message='Invalid or expired verification token')
+      
 
     expires_at = verification.expires_at
     if isinstance(expires_at, str):
@@ -299,7 +298,7 @@ async def forgot_password_verify(body: ForgotPasswordVerifySchema):
 
     # Check if the token has expired
     if expires_at < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="Verification token has expired")
+        return cr.error(data={"success": False},message='Verification token has expired')
 
     # Mark the token as used
     await EmailVerification.update(verification.id, is_used=True)
@@ -311,7 +310,9 @@ async def forgot_password_verify(body: ForgotPasswordVerifySchema):
 
 @router.get("/invitations")
 async def get_invitations(user=Depends(get_current_user)):
-    return await OrganizationInvitation.filter(where={"email": user.email})
+    
+    data = await OrganizationInvitation.filter(where={"email": user.email})
+    return cr.success(data=data)
 
 
 @router.get("/oauth/{provider}")
