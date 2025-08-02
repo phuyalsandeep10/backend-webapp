@@ -30,7 +30,9 @@ async def get_organizations(user=Depends(get_current_user)):
     """
     Get the list of organizations the user belongs to.
     """
-    return await Organization.get_orgs_by_user_id(user_id=user.id)
+    records =  await Organization.get_orgs_by_user_id(user_id=user.id)
+    data = [item.to_json() for item in records]
+    return cr.success(data=data)
 
 
 @router.post("")
@@ -61,6 +63,7 @@ async def create_organization(
         domain=body.domain,
         purpose=body.purpose,
         identifier=f"{slug}-{random_unique_key()}",
+        owner_id=user.id
     )
 
     await OrganizationMember.create(
@@ -81,7 +84,9 @@ async def create_organization(
             raise HTTPException(404, "Not found User")
 
         update_user_cache(token, user)
-    return cr.success(data=organization)
+   
+    
+    return cr.success(data=organization.to_json())
 
 
 

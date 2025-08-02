@@ -52,11 +52,11 @@ class Organization(CommonModel, table=True):
                 .where(OrganizationMember.user_id == user_id)
             )
             result = await session.execute(statement)
-            return result.scalars().all()
+            return list(result.scalars().all())
 
 
 class OrganizationRole(CommonModel, table=True):
-    __tablename__ = "orgs_roles"  # type:ignore
+    __tablename__ = "org_roles"  # type:ignore
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     identifier: str = Field(default=None, max_length=500, nullable=False, index=True)

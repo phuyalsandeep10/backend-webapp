@@ -6,6 +6,7 @@ from sqlalchemy import and_, inspect, or_
 from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlmodel import Field, SQLModel, select
+import json
 
 from src.db.config import async_session
 
@@ -36,6 +37,16 @@ class BaseModel(SQLModel):
     id: int = Field(primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
+    def to_json(self):
+        try:
+            return json.loads(self.model_dump_json())
+        except Exception as e:
+            raise e
+    
+    
+    
+        
 
     @classmethod
     async def get(cls: Type[T], id: int) -> Optional[T]:
