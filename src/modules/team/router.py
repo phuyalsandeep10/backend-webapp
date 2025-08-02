@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from .dto import TeamDto, TeamMemberDto
+from .schema import TeamSchema, TeamMemberSchema
 from .models import Team, TeamMember
 from src.common.permissions import get_current_user
 from sqlalchemy.orm import selectinload
@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.post("")
-async def create_team(body: TeamDto, user=Depends(get_current_user)):
+async def create_team(body: TeamSchema, user=Depends(get_current_user)):
     organization_id = user.attributes.get("organization_id")
 
     if not organization_id:
@@ -36,7 +36,7 @@ async def get_teams(user=Depends(get_current_user)):
 
 
 @router.put("/{team_id}")
-async def update_data(team_id: int, body: TeamDto, user=Depends(get_current_user)):
+async def update_data(team_id: int, body: TeamSchema, user=Depends(get_current_user)):
     # user update data
     organizationId = user.attributes.get("organization_id")
 
@@ -76,7 +76,7 @@ async def delete_team(team_id: int, user=Depends(get_current_user)):
 
 @router.put("/{team_id}/assign-member")
 async def assign_team_member(
-    team_id: int, body: TeamMemberDto, user=Depends(get_current_user)
+    team_id: int, body: TeamMemberSchema, user=Depends(get_current_user)
 ):
     team = await Team.get(team_id)
     if not team:

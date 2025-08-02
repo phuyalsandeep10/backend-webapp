@@ -3,42 +3,42 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 
-class LoginDto(BaseModel):
+class LoginSchema(BaseModel):
     email: EmailStr
     password: str
 
 
-class ValidateEmail(BaseModel):
+class ValidateEmailSchema(BaseModel):
     email: EmailStr
 
 
-class RegisterDto(LoginDto):
+class RegisterSchema(LoginSchema):
     name: str
 
 
-class VerifyEmailTokenDto(BaseModel):
+class VerifyEmailTokenSchema(BaseModel):
     token: str
     email: EmailStr
 
 
-class VerifyEmailDto(BaseModel):
+class VerifyEmailSchema(BaseModel):
     email: EmailStr
 
 
-class ForgotPasswordVerifyDto(VerifyEmailTokenDto):
+class ForgotPasswordVerifySchema(VerifyEmailTokenSchema):
     new_password: str
 
 
-class RefreshTokenDto(BaseModel):
+class RefreshTokenSchema(BaseModel):
     token: str  # this is the refresh token to be validated
 
 
-class ResetPasswordDto(BaseModel):
+class ResetPasswordSchema(BaseModel):
     new_password: str
     old_password: str
 
 
-class VerifyTwoFAOtpDto(BaseModel):
+class VerifyTwoFAOtpSchema(BaseModel):
     token: str
 
 

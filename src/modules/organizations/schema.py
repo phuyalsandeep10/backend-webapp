@@ -2,11 +2,12 @@ from pydantic import BaseModel, Field, EmailStr
 from typing import List
 
 
-class OrganizationDto(BaseModel):
+class OrganizationSchema(BaseModel):
     name: str = Field(..., max_length=255, description="Name of the organization")
     description: str | None = Field(
         None, max_length=500, description="Description of the organization"
     )
+    domain:str = Field(..., max_length=255, description="Domain of the organization")
     # slug: str = Field(..., max_length=255, description="Unique slug for the organization")
     logo: str | None = Field(
         None, max_length=255, description="Logo URL for the organization"
@@ -14,12 +15,9 @@ class OrganizationDto(BaseModel):
     purpose: str | None = Field(
         None, max_length=255, description="Purpose of organization creation"
     )
-    website: str | None = Field(
-        None, max_length=255, description="Website URL for the organization"
-    )
 
 
-class OrganizationRoleDto(BaseModel):
+class OrganizationRoleSchema(BaseModel):
     name: str = Field(..., max_length=255, description="Name of the role")
     description: str | None = Field(
         None, max_length=500, description="Description of the role"
@@ -27,25 +25,25 @@ class OrganizationRoleDto(BaseModel):
     permissions: list[str] = Field([])
 
 
-class PermissionDto(BaseModel):
+class PermissionSchema(BaseModel):
     name: str = Field(..., max_length=255)
     description: str | None = Field(None, max_length=250)
 
 
-class OrganizationInviteDto(BaseModel):
+class OrganizationInviteSchema(BaseModel):
     email: EmailStr
     role_ids: List[int]
 
 
-class OrganizationInvitationApproveDto(BaseModel):
+class OrganizationInvitationApproveSchema(BaseModel):
     email: EmailStr
     token: str
 
 
-class AssignRoleDto(BaseModel):
+class AssignRoleSchema(BaseModel):
     user_id: int
     role_id: int
 
 
-class AssignPermissionDto(BaseModel):
+class AssignPermissionSchema(BaseModel):
     permission_ids: List[int]

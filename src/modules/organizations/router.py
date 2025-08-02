@@ -15,10 +15,11 @@ from src.models import (
     OrganizationRole,
     User,
 )
-from src.modules.organizations.dto import AssignRoleDto
-from src.tasks import send_invitation_email
 
-from .dto import OrganizationDto, OrganizationInviteDto, OrganizationRoleDto
+from src.tasks import send_invitation_email
+from src.common.utils import random_unique_key
+
+from .schema import OrganizationSchema , OrganizationInviteSchema, OrganizationRoleSchema,AssignRoleSchema
 
 router = APIRouter()
 
@@ -33,7 +34,7 @@ async def get_organizations(user=Depends(get_current_user)):
 
 @router.post("")
 async def create_organization(
-    body: OrganizationDto,
+    body: OrganizationSchema,
     user=Depends(get_current_user),
     token: str = Depends(get_bearer_token),
 ):
@@ -50,14 +51,15 @@ async def create_organization(
         raise HTTPException(
             status_code=400, detail="Organization with this name already exists"
         )
-
+    slug = body.name.lower().replace(" ", "-")
     organization = await Organization.create(
         name=body.name,
         description=body.description,
-        slug=body.name.lower().replace(" ", "-"),  # Simple slug generation
+        slug=slug,
         logo=body.logo,
-        website=body.website,
+        domain=body.domain,
         purpose=body.purpose,
+        identifier=f"{slug}-{random_unique_key()}",
     )
 
     await OrganizationMember.create(
@@ -111,7 +113,7 @@ async def get_members(user=Depends(get_current_user)):
 
 @router.put("/{organization_id}")
 async def update_organization(
-    organization_id: int, body: OrganizationDto, user=Depends(get_current_user)
+    organization_id: int, body: OrganizationSchema, user=Depends(get_current_user)
 ):
     """
     Update an existing organization.
@@ -144,9 +146,8 @@ async def update_organization(
         organization_id,
         name=body.name,
         description=body.description,
-        slug=body.name.lower().replace(" ", "-"),  # Simple slug generation
         logo=body.logo,
-        website=body.website,
+        domain=body.domain,
     )
 
     return record
@@ -177,7 +178,7 @@ async def set_organization(
 
 
 @router.post("/roles")
-async def create_role(body: OrganizationRoleDto, user=Depends(get_current_user)):
+async def create_role(body: OrganizationRoleSchema, user=Depends(get_current_user)):
     """
     Create a new role for an organization.
     """
@@ -208,7 +209,7 @@ async def create_role(body: OrganizationRoleDto, user=Depends(get_current_user))
 
 @router.put("/roles/{role_id}")
 async def update_role(
-    role_id: int, body: OrganizationRoleDto, user=Depends(get_current_user)
+    role_id: int, body: OrganizationRoleSchema, user=Depends(get_current_user)
 ):
     """
     Update an existing role for an organization.
@@ -276,7 +277,7 @@ async def delete_role(role_id: int, user=Depends(get_current_user)):
 
 
 @router.post("/invitation")
-async def invite_user(body: OrganizationInviteDto, user=Depends(get_current_user)):
+async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_user)):
     record = await OrganizationInvitation.find_one(
         where={"email": body.email, "status": "pending"}
     )
@@ -355,7 +356,7 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
 
 
 @router.post("/roles-assign")
-async def assign_role(body: AssignRoleDto, user=Depends(get_current_user)):
+async def assign_role(body: AssignRoleSchema, user=Depends(get_current_user)):
 
     organization_id = user.attributes.get("organization_id")
     member = await OrganizationMember.find_one(
@@ -376,7 +377,7 @@ async def assign_role(body: AssignRoleDto, user=Depends(get_current_user)):
 
 
 @router.post("/remove-assign-role")
-async def remove_assign_role(body: AssignRoleDto, user=Depends(get_current_user)):
+async def remove_assign_role(body: AssignRoleSchema, user=Depends(get_current_user)):
     organization_id = user.attributes.get("organization_id")
 
     member = await OrganizationMember.find_one(

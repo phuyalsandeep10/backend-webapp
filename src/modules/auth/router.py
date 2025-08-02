@@ -14,16 +14,17 @@ from fastapi import Depends
 from src.common.dependencies import create_access_token
 from src.enums import ProviderEnum
 import pyotp
-from .dto import (
-    LoginDto,
-    RegisterDto,
-    VerifyEmailTokenDto,
-    ForgotPasswordVerifyDto,
-    VerifyEmailDto,
-    ResetPasswordDto,
-    RefreshTokenDto,
-    VerifyTwoFAOtpDto,
+from .schema import (
+    LoginSchema,
+    RegisterSchema,
+    VerifyEmailTokenSchema,
+    ForgotPasswordVerifySchema,
+    VerifyEmailSchema,
+    ResetPasswordSchema,
+    RefreshTokenSchema,
+    VerifyTwoFAOtpSchema,
     UserSchema,
+    ValidateEmailSchema
 )
 from src.utils.response import CustomResponse as cr
 
@@ -43,20 +44,12 @@ from src.config.settings import settings
 from src.modules.organizations.models import OrganizationInvitation
 from src.tasks import send_forgot_password_email, send_verification_email
 
-from .dto import (
-    ForgotPasswordVerifyDto,
-    LoginDto,
-    RefreshTokenDto,
-    RegisterDto,
-    ResetPasswordDto,
-    VerifyEmailDto,
-    VerifyEmailTokenDto,
-)
+
 from .models import EmailVerification, RefreshToken, User
 from .social_auth import oauth
 from jose.exceptions import JWTError
 from fastapi.encoders import jsonable_encoder
-from .dto import ValidateEmail
+
 
 router = APIRouter()
 
@@ -77,7 +70,7 @@ async def create_token(user):
 
 
 @router.post("/login")
-async def user_login(request: LoginDto):
+async def user_login(request: LoginSchema):
 
     user = await User.find_one(where={"email": request.email})
 
@@ -116,7 +109,7 @@ async def logout(user=Depends(get_current_user)):
 
 
 @router.post("/refresh-token")
-async def refresh_token(body: RefreshTokenDto):
+async def refresh_token(body: RefreshTokenSchema):
     # Validate the refresh token
     token_data = await RefreshToken.find_one(
         where={"token": body.token, "active": True}
@@ -147,7 +140,7 @@ async def refresh_token(body: RefreshTokenDto):
 
 
 @router.post("/validate-email")
-async def validateEmail(body: ValidateEmail):
+async def validateEmail(body: ValidateEmailSchema):
     user = await User.find_one({"email": body.email})
     if user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -155,7 +148,7 @@ async def validateEmail(body: ValidateEmail):
 
 
 @router.post("/register")
-async def register(request: RegisterDto):
+async def register(request: RegisterSchema):
 
     user = await User.find_one({"email": request.email})
 
@@ -207,7 +200,7 @@ async def get_auth_user(user=Depends(get_current_user)):
 
 
 @router.post("/verify-email")
-async def verify_email_token(body: VerifyEmailTokenDto):
+async def verify_email_token(body: VerifyEmailTokenSchema):
 
     user = await User.find_one({"email": body.email})
 
@@ -239,7 +232,7 @@ async def verify_email_token(body: VerifyEmailTokenDto):
 
 
 @router.post("/reset-password")
-async def reset_password(body: ResetPasswordDto, user=Depends(get_current_user)):
+async def reset_password(body: ResetPasswordSchema, user=Depends(get_current_user)):
 
     user = await User.find_one({"email": user.email})
 
@@ -261,7 +254,7 @@ async def reset_password(body: ResetPasswordDto, user=Depends(get_current_user))
 
 
 @router.post("/forgot-password-request")
-async def forgot_password_request(body: VerifyEmailDto):
+async def forgot_password_request(body: VerifyEmailSchema):
     user = await User.find_one({"email": body.email})
 
     # Check if user exists
@@ -284,7 +277,7 @@ async def forgot_password_request(body: VerifyEmailDto):
 
 
 @router.post("/forgot-password-verify")
-async def forgot_password_verify(body: ForgotPasswordVerifyDto):
+async def forgot_password_verify(body: ForgotPasswordVerifySchema):
 
     user = await User.find_one({"email": body.email})
 
@@ -389,7 +382,7 @@ async def geerate_two_fa_otp(user=Depends(get_current_user)):
 
 @router.post("/2fa-verfiy")
 async def verify_two_fa(
-    body: VerifyTwoFAOtpDto,
+    body: VerifyTwoFAOtpSchema,
     user=Depends(get_current_user),
     token: str = Depends(get_bearer_token),
 ):
