@@ -39,7 +39,6 @@ class add_users_tableMigration(BaseMigration):
         self.string('two_fa_secret')
         self.string('two_fa_auth_url', nullable=True)
 
-
         self.timestamp_columns()
 
 
