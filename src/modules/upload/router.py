@@ -3,6 +3,8 @@ from typing import List
 from fastapi import  UploadFile, File, HTTPException, APIRouter
 from cloudinary.uploader import upload as cloud_upload
 from src.config.cloudinary import cloudinary
+from src.utils.response import CustomResponse as cr
+
 router = APIRouter()
 
 @router.post("/files")
@@ -25,4 +27,4 @@ async def upload_multiple(
             })
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Upload failed for {upload.filename}: {str(e)}")
-    return {"files": results}
+    return cr.success(data={"files": results})

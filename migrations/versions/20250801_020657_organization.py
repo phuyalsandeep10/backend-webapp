@@ -28,7 +28,6 @@ class OrganizationMigration(BaseMigration):
         self.string("slug", nullable=False, unique=True, index=True)
         self.string("logo", nullable=True, default=None)
         self.string("domain", nullable=False, unique=True, index=True)
-        self.string("website", nullable=True, default=None)
         self.string("contact_email", nullable=True, default=None)
         self.string("contact_dial_code")
         self.string("contact_phone", nullable=True, default=None)
