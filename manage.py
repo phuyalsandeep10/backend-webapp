@@ -30,7 +30,7 @@ def run_tests():
 
 def run_seed():
     print("Running seed script")
-    subprocess.run(["python", "src/seed.py"], env={**os.environ, "PYTHONPATH": "./src"}, check=True)
+    subprocess.run(["python", "src/seed/script.py"], env={**os.environ, "PYTHONPATH": "."}, check=True)
 
 
 def sanitize_name(name):

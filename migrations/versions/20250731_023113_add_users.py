@@ -27,6 +27,7 @@ class add_users_tableMigration(BaseMigration):
         self.string("email", unique=True, index=True)
         self.string("mobile", unique=True, index=True)
         self.string("image", nullable=True)
+        self.string("password", nullable=True)
         self.date_time("email_verified_at", nullable=True)
         self.date_time("mobile_verified_at", nullable=True)
         self.boolean("is_active", default=True)
@@ -35,7 +36,7 @@ class add_users_tableMigration(BaseMigration):
         self.boolean("is_staff", default=False)
         self.json("attributes", nullable=True, default={})
 
-        self.boolean('is_two_fa_enabled', default=False)
+        self.boolean('two_fa_enabled', default=False)
         self.string('two_fa_secret')
         self.string('two_fa_auth_url', nullable=True)
 

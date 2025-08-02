@@ -70,7 +70,7 @@ class BaseMigration:
         self.fields.append(co)
         return co
 
-    def string(self, name: str, length=55, nullable=True, default=None, **kwargs):
+    def string(self, name: str, length=255, nullable=True, default=None, **kwargs):
         """
         Returns the SQLALchemy String column
         """
@@ -108,12 +108,13 @@ class BaseMigration:
         Returns the SQLAlchemy Integer column with foreign key
         """
         kwargs.setdefault("nullable", True)
-        kwargs.setdefault("index", True)
+        # kwargs.setdefault("index", True)
         table = f"{table}.id"  # by default it will be id
         co = sa.Column(
             name,
             sa.Integer(),
             sa.ForeignKey(table, ondelete=ondelete),
+       
             **kwargs,
         )
         self.fields.append(co)
@@ -157,10 +158,10 @@ class BaseMigration:
         self.fields.append(self.primary_key(name="id"))
         self.fields.append(self.boolean(name="active", default=True, nullable=False))
         self.fields.append(
-            self.foreign(name="created_by_id", table="sys_users", nullable=True)
+            self.foreign(name="created_by_id", table="sys_users",key='created_by_id')
         )
         self.fields.append(
-            self.foreign(name="updated_by_id", table="sys_users", nullable=True)
+            self.foreign(name="updated_by_id", table="sys_users",key='updated_by_id')
         )
         self.fields.append(self.date_time(name="deleted_at", nullable=True))
         self.timestamp_columns()

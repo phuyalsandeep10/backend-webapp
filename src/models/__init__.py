@@ -26,6 +26,7 @@ from src.modules.team.models import Team, TeamMember
 from src.modules.ticket.models.priority import TicketPriority
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket, TicketAlert, TicketAssigneesLink
+from src.modules.ticket.models.sla import TicketSLA
 
 # Import admin models
 # from src.modules.admin.models import Admin
@@ -51,5 +52,6 @@ __all__ = [
     "TicketAssigneesLink",
     "TicketAlert",
     "TicketPriority",
+    "TicketSLA",
     # "Admin"
 ]

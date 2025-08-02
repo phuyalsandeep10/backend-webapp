@@ -3,6 +3,7 @@ from passlib.context import CryptContext
 import httpx
 
 
+
 def generate_numeric_token(length: int = 6) -> str:
     if length < 4:
         raise ValueError("Token length must be at least 1")

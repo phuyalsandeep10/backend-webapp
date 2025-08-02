@@ -42,6 +42,18 @@ class BaseModel(SQLModel):
         async with async_session() as session:
             return await session.get(cls, id)
 
+        
+    @classmethod
+    async def first(cls: Type[T], where: Optional[dict] = None) -> Optional[T]:
+        async with async_session() as session:
+            statement = select(cls)
+            if where is not None:
+                if "deleted_at" in inspect(cls).columns:  # type:ignore
+                    where.setdefault("deleted_at", None)
+            statement = query_statement(cls, where=where)
+            result = await session.execute(statement)
+            return result.scalars().first() if result else None
+
     @classmethod
     async def get_all(
         cls: Type[T],
