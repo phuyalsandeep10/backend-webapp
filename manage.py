@@ -88,7 +88,7 @@ def main():
 
     
 
-    subparsers.add_parser("run", help="Start FastAPI server")
+    subparsers.add_parser("runserver", help="Start FastAPI server")
     subparsers.add_parser("celery", help="Start Celery worker")
     subparsers.add_parser("test", help="Run tests")
     subparsers.add_parser("seed", help="Run seeder script")
@@ -102,8 +102,9 @@ def main():
     args = parser.parse_args()
 
     match args.command:
-        case "run":
+        case "runserver":
             run_fastapi()
+            
         case "celery":
             run_celery()
         case "test":
