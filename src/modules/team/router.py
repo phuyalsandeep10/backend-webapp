@@ -26,8 +26,7 @@ async def create_team(body: TeamSchema, user=Depends(get_current_user)):
         name=body.name, description=body.description, organization_id=organization_id
     )
 
-
-    return cr.success(data=team.to_dict())
+    return cr.success(data=team.to_json())
 
 
 @router.get("")
@@ -38,7 +37,8 @@ async def get_teams(user=Depends(get_current_user)):
 
     teams = await Team.filter(where={"organization_id": organizationId})
 
-    return cr.success(data=teams)
+    # return cr.success(data=teams)
+    return cr.success(data=[team.to_json() for team in teams])
 
 
 @router.put("/{team_id}")
@@ -64,7 +64,7 @@ async def update_data(team_id: int, body: TeamSchema, user=Depends(get_current_u
     if record and record.id != team.id:
         raise HTTPException(400, "Duplicate record")
 
-    team =  await Team.update(
+    team = await Team.update(
         team_id,
         name=body.name,
         description=body.description,
@@ -114,9 +114,9 @@ async def assign_team_member(
         )
 
         if not member:
-            raise HTTPException(404,"Not found")
+            raise HTTPException(404, "Not found")
         if member:
-           await TeamMember.soft_delete(member.id)
+            await TeamMember.soft_delete(member.id)
 
     return cr.success(data={"message": "Team members updated successfully"})
 
@@ -125,10 +125,16 @@ async def assign_team_member(
 async def get_team_members(team_id: int):
 
     members = await TeamMember.filter(
-        where={"team_id": team_id}, options=[selectinload(TeamMember.user)] #type:ignore
+        where={"team_id": team_id},
+        options=[selectinload(TeamMember.user)],  # type:ignore
     )
 
-    return cr.success(data=[
-        {**member.model_dump(), "user": member.user.model_dump() if member.user else None}
-        for member in members
-    ])
+    return cr.success(
+        data=[
+            {
+                **member.model_dump(),
+                "user": member.user.model_dump() if member.user else None,
+            }
+            for member in members
+        ]
+    )
