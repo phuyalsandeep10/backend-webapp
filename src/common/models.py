@@ -141,7 +141,7 @@ class BaseModel(SQLModel):
     @classmethod
     async def filter(
         cls: Type[T],
-        where: Optional[dict] = None,
+        where: dict = {},
         skip: int = 0,
         limit: Optional[int] = None,
         joins: Optional[list[Any]] = None,
@@ -324,7 +324,7 @@ class TenantModel(CommonModel):
     @classmethod
     async def filter(
         cls: Type[T],
-        where: Optional[dict] = None,
+        where: dict = {},
         skip: int = 0,
         limit: Optional[int] = None,
         joins: Optional[list[Any]] = None,
@@ -332,7 +332,7 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ):
         organization_id = TenantContext.get()
-        if where is not None:
+        if organization_id:
             where.setdefault("organization_id", organization_id)
 
         return await super().filter(where, skip, limit, joins, options, related_items)

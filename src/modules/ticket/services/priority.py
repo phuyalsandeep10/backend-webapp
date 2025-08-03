@@ -13,10 +13,8 @@ class TicketPriorityService:
         List all the priorites on the basis of the organization
         """
         try:
-            organization_id: int = user.attributes.get("organization_id")
-            priorities = await TicketPriority.filter(
-                where={"organization_id": organization_id}
-            )
+            # organization_id: int = user.attributes.get("organization_id")
+            priorities = await TicketPriority.filter()
 
             # if there is none of them, then list the default ones
             if len(priorities) == 0:
