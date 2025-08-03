@@ -305,15 +305,13 @@ class Permission(BaseModel, table=True):
         table_name = "sys_permissions"
 
 
-class TenantModel(CommonModel, table=True):
+class TenantModel(CommonModel):
     """
     A simple tenant base model for operations related to the organization/tenant
     """
 
-    organization_id: int = Field(
-        sa_column=Column(
-            ForeignKey("sys_organizations.id", ondelete="CASCADE"), nullable=True
-        ),
+    organization_id: Optional[int] = Field(
+        default=None, foreign_key="sys_organizations.id"
     )
 
     @classmethod

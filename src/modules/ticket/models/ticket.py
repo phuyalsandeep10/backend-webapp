@@ -38,7 +38,7 @@ class TicketAlert(BaseModel, table=True):
     alert_type: TicketAlertTypeEnum
     warning_level: WarningLevelEnum
     sent_at: datetime = Field(default_factory=datetime.utcnow)
-    # ticket: Optional["Ticket"] = Relationship(back_populates="alerts")
+    ticket: Optional["Ticket"] = Relationship(back_populates="alerts")
 
 
 class Ticket(TenantModel, table=True):
