@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from src.modules.chat.models.conversation import Conversation
     from src.modules.chat.models.message import Message
     from src.modules.organizations.models import Organization
-    from src.modules.ticket.models.ticket import Ticket
+    from src.modules.ticket.models import Ticket
 
 
 class Customer(CommonModel, table=True):

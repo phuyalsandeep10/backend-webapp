@@ -8,7 +8,7 @@ test:
 	@echo "Starting testing"
 	pytest -v
 seed:
-	PYTHONPATH=./src python src/seed.py
+	PYTHONPATH=./src python -m  src.seed.script
 migration:
 	@echo "Creating migration"
 	MIGRATION_NAME=$(name) alembic revision -m "$(msg)" --rev-id $(shell date -u +%Y%m%d_%H%M%S)

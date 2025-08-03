@@ -1,16 +1,16 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
-from pydantic import EmailStr, ValidationError, model_validator
+from pydantic import EmailStr
 from sqlalchemy import Column, ForeignKey
-from sqlmodel import Field, PrimaryKeyConstraint, Relationship
+from sqlmodel import Field, Relationship
 
-from src.common.models import BaseModel, CommonModel
-from src.modules.chat.models.customer import Customer
+from src.common.models import BaseModel, TenantModel
 from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
 
 if TYPE_CHECKING:
     from src.modules.auth.models import User
+    from src.modules.chat.models.customer import Customer
     from src.modules.organizations.models import Organization
     from src.modules.team.models import Team
     from src.modules.ticket.models import TicketSLA
@@ -38,10 +38,14 @@ class TicketAlert(BaseModel, table=True):
     alert_type: TicketAlertTypeEnum
     warning_level: WarningLevelEnum
     sent_at: datetime = Field(default_factory=datetime.utcnow)
-    ticket: Optional["Ticket"] = Relationship(back_populates="alerts")
+    # ticket: Optional["Ticket"] = Relationship(back_populates="alerts")
 
 
-class Ticket(CommonModel, table=True):
+class Ticket(TenantModel, table=True):
+    """
+    Ticket model
+    """
+
     __tablename__ = "org_tickets"  # type:ignore
 
     title: str
@@ -49,9 +53,6 @@ class Ticket(CommonModel, table=True):
     attachment: Optional[str] = None
     sender_domain: EmailStr
     notes: Optional[str] = None
-    organization_id: int = Field(
-        sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
-    )
     priority_id: int = Field(
         sa_column=Column(ForeignKey("ticket_priority.id", ondelete="SET NULL"))
     )
@@ -64,7 +65,6 @@ class Ticket(CommonModel, table=True):
     sla_id: int = Field(
         sa_column=Column(ForeignKey("ticket_sla.id", ondelete="SET NULL"))
     )
-    created_at: datetime = Field(default_factory=datetime.utcnow)
     customer_id: int = Field(
         sa_column=Column(
             ForeignKey("org_customers.id", ondelete="SET NULL"), nullable=True
@@ -97,6 +97,9 @@ class Ticket(CommonModel, table=True):
     )
 
     def to_dict(self):
+        """
+        Returns model value in dict
+        """
         payload = {
             "id": self.id,
             "title": self.title,

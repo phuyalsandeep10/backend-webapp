@@ -10,10 +10,10 @@ from src.modules.chat.models.conversation import Conversation, ConversationMembe
 
 # Import chat models
 from src.modules.chat.models.customer import Customer
-from src.modules.chat.models.message import Message,MessageAttachment
+from src.modules.chat.models.message import Message, MessageAttachment
 
 # Import organization models
-from src.modules.organizations.models import     (
+from src.modules.organizations.models import (
     Organization,
     OrganizationInvitation,
     OrganizationMember,
@@ -24,9 +24,9 @@ from src.modules.organizations.models import     (
 # Import team models
 from src.modules.team.models import Team, TeamMember
 from src.modules.ticket.models.priority import TicketPriority
+from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket, TicketAlert, TicketAssigneesLink
-from src.modules.ticket.models.sla import TicketSLA
 
 # Import admin models
 # from src.modules.admin.models import Admin
