@@ -27,7 +27,7 @@ async def create_team(body: TeamSchema, user=Depends(get_current_user)):
     )
 
 
-    return cr.success(data=team.to_dict())
+    return cr.success(data=team)
 
 
 @router.get("")
