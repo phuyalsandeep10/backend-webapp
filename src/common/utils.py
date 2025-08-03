@@ -1,6 +1,13 @@
 import random
 from passlib.context import CryptContext
 import httpx
+import secrets
+
+
+def random_unique_key(length: int = 12) -> str:
+    
+    random_bytes = secrets.token_bytes(length)
+    return random_bytes.hex()
 
 
 def generate_numeric_token(length: int = 6) -> str:

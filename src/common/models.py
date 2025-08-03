@@ -6,6 +6,7 @@ from sqlalchemy import and_, inspect, or_
 from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlmodel import Field, SQLModel, select
+import json
 
 from src.db.config import async_session
 
@@ -37,10 +38,32 @@ class BaseModel(SQLModel):
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
+    def to_json(self):
+        try:
+            return json.loads(self.model_dump_json())
+        except Exception as e:
+            raise e
+    
+    
+    
+        
+
     @classmethod
     async def get(cls: Type[T], id: int) -> Optional[T]:
         async with async_session() as session:
             return await session.get(cls, id)
+
+        
+    @classmethod
+    async def first(cls: Type[T], where: Optional[dict] = None) -> Optional[T]:
+        async with async_session() as session:
+            statement = select(cls)
+            if where is not None:
+                if "deleted_at" in inspect(cls).columns:  # type:ignore
+                    where.setdefault("deleted_at", None)
+            statement = query_statement(cls, where=where)
+            result = await session.execute(statement)
+            return result.scalars().first() if result else None
 
     @classmethod
     async def get_all(

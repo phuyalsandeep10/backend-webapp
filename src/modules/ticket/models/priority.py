@@ -36,5 +36,5 @@ class TicketPriority(CommonModel, table=True):
             "name": self.name,
             "level": self.level,
             "bg_color": self.bg_color,
-            "fg_color": self.bg_color,
+            "fg_color": self.fg_color,
         }

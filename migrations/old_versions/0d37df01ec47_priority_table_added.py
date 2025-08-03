@@ -36,7 +36,6 @@ def upgrade() -> None:
         sa.UniqueConstraint(
             "organization_id", "name", "level", name="uniq_org_name_level"
         ),
-        sa.PrimaryKeyConstraint("id"),
     )
 
     ticket_priority_table = sa.table(

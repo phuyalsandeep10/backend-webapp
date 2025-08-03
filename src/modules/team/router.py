@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
-from .dto import TeamDto, TeamMemberDto
+from .schema import TeamSchema, TeamMemberSchema
 from .models import Team, TeamMember
 from src.common.permissions import get_current_user
 from sqlalchemy.orm import selectinload
+from src.utils.response import CustomResponse as cr
 
 router = APIRouter()
 
 
 @router.post("")
-async def create_team(body: TeamDto, user=Depends(get_current_user)):
+async def create_team(body: TeamSchema, user=Depends(get_current_user)):
     organization_id = user.attributes.get("organization_id")
 
     if not organization_id:
@@ -21,9 +22,12 @@ async def create_team(body: TeamDto, user=Depends(get_current_user)):
     if record:
         raise HTTPException(400, "Duplicate record")
 
-    return await Team.create(
+    team = await Team.create(
         name=body.name, description=body.description, organization_id=organization_id
     )
+
+
+    return cr.success(data=team)
 
 
 @router.get("")
@@ -32,11 +36,13 @@ async def get_teams(user=Depends(get_current_user)):
     if not organizationId:
         raise HTTPException(403, "Not authorized")
 
-    return await Team.filter(where={"organization_id": organizationId})
+    teams = await Team.filter(where={"organization_id": organizationId})
+
+    return cr.success(data=teams)
 
 
 @router.put("/{team_id}")
-async def update_data(team_id: int, body: TeamDto, user=Depends(get_current_user)):
+async def update_data(team_id: int, body: TeamSchema, user=Depends(get_current_user)):
     # user update data
     organizationId = user.attributes.get("organization_id")
 
@@ -58,12 +64,14 @@ async def update_data(team_id: int, body: TeamDto, user=Depends(get_current_user
     if record and record.id != team.id:
         raise HTTPException(400, "Duplicate record")
 
-    return await Team.update(
+    team =  await Team.update(
         team_id,
         name=body.name,
         description=body.description,
         organization_id=organizationId,
     )
+
+    return cr.success(data=team)
 
 
 @router.delete("/{team_id}")
@@ -71,12 +79,14 @@ async def delete_team(team_id: int, user=Depends(get_current_user)):
     organizationId = user.attributes.get("organization_id")
     if not organizationId:
         raise HTTPException(403, "Not authorized")
-    return await Team.delete(team_id)
+    team = await Team.soft_delete(team_id)
+
+    return cr.success(data=team)
 
 
 @router.put("/{team_id}/assign-member")
 async def assign_team_member(
-    team_id: int, body: TeamMemberDto, user=Depends(get_current_user)
+    team_id: int, body: TeamMemberSchema, user=Depends(get_current_user)
 ):
     team = await Team.get(team_id)
     if not team:
@@ -106,9 +116,9 @@ async def assign_team_member(
         if not member:
             raise HTTPException(404,"Not found")
         if member:
-           await TeamMember.delete(team_id)
+           await TeamMember.soft_delete(member.id)
 
-    return {"message": "Team members updated successfully"}
+    return cr.success(data={"message": "Team members updated successfully"})
 
 
 @router.get("/{team_id}/team-members")
@@ -118,7 +128,7 @@ async def get_team_members(team_id: int):
         where={"team_id": team_id}, options=[selectinload(TeamMember.user)] #type:ignore
     )
 
-    return [
-        {**member.dict(), "user": member.user.dict() if member.user else None}
+    return cr.success(data=[
+        {**member.model_dump(), "user": member.user.model_dump() if member.user else None}
         for member in members
-    ]
+    ])

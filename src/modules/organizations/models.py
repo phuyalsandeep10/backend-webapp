@@ -23,8 +23,9 @@ class Organization(CommonModel, table=True):
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     slug: str = Field(default=None, max_length=255, nullable=False, index=True)
+    identifier:str = Field(default=None,max_length=255)
+    domain:str = Field(default=None,max_length=255)
     logo: str = Field(default=None, max_length=255, nullable=True)
-    website: str = Field(default=None, max_length=255, nullable=True)
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
@@ -32,6 +33,15 @@ class Organization(CommonModel, table=True):
     ticket_status: List["TicketStatus"] = Relationship(back_populates="organizations")
     tickets: List["Ticket"] = Relationship(back_populates="organization")
     purpose: str = Field(default=None, max_length=250, nullable=True)
+
+    owner_id:int =  Field(foreign_key="sys_users.id", nullable=False)
+    owner: Optional["User"] = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "[Organization.owner_id]"
+        }
+    )
+
+
 
     @classmethod
     async def get_orgs_by_user_id(cls, user_id: int):
@@ -42,11 +52,11 @@ class Organization(CommonModel, table=True):
                 .where(OrganizationMember.user_id == user_id)
             )
             result = await session.execute(statement)
-            return result.scalars().all()
+            return list(result.scalars().all())
 
 
 class OrganizationRole(CommonModel, table=True):
-    __tablename__ = "sys_organization_roles"  # type:ignore
+    __tablename__ = "org_roles"  # type:ignore
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     identifier: str = Field(default=None, max_length=500, nullable=False, index=True)
@@ -57,11 +67,10 @@ class OrganizationRole(CommonModel, table=True):
 
 
 class OrganizationMember(CommonModel, table=True):
-    __tablename__ = "sys_organization_members"  # type:ignore
+    __tablename__ = "org_members"  # type:ignore
     user_id: int = Field(foreign_key="sys_users.id", nullable=False)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
-
-    is_owner: bool = Field(default=False)
+ 
     organization: Optional[Organization] = Relationship(back_populates="members")
     user: Optional["User"] = Relationship(
         back_populates="members",
@@ -72,18 +81,16 @@ class OrganizationMember(CommonModel, table=True):
 
 
 class OrganizationMemberRole(CommonModel, table=True):
-    __tablename__ = "sys_organization_member_roles"  # type:ignore
-    member_id: int = Field(foreign_key="sys_organization_members.id", nullable=False)
-    role_id: int = Field(foreign_key="sys_organization_roles.id", nullable=False)
+    __tablename__ = "org_member_roles"  # type:ignore
+    member_id: int = Field(foreign_key="org_members.id", nullable=False)
+    role_id: int = Field(foreign_key="org_roles.id", nullable=False)
     member: Optional[OrganizationMember] = Relationship(back_populates="member_roles")
     role: Optional[OrganizationRole] = Relationship(back_populates="member_roles")
 
-    class Config:
-        table_name = "sys_organization_member_roles"
 
 
 class OrganizationInvitation(CommonModel, table=True):
-    __tablename__ = "sys_organization_invitations"  # type:ignore
+    __tablename__ = "org_invitations"  # type:ignore
     email: str = Field(max_length=255, index=True)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
 
