@@ -6,8 +6,9 @@ Create Date: 2025-08-01 14:42:05.815483
 
 """
 
-from migrations.base import BaseMigration
 from typing import Sequence, Union
+
+from migrations.base import BaseMigration
 
 revision: str = "20250801_085704"
 down_revision: Union[str, Sequence[str], None] = "20250801_085215"
