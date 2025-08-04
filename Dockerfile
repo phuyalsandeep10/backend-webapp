@@ -4,13 +4,12 @@ WORKDIR /code
 
 COPY pyproject.toml .
 COPY uv.lock .
+COPY . .
 
-RUN pip install uv 
+RUN pip install uv
 RUN uv pip install --system .
 
 COPY ./src ./src
-COPY ./src/main.py ./src/main.py
 
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-CMD ["/bin/sh", "/start.sh"]
+
+CMD ["/bin/sh", "./start.sh"]
