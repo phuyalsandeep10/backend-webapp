@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Any, List, Optional, Type, TypeVar, Union
 
@@ -5,9 +6,9 @@ import sqlalchemy as sa
 from sqlalchemy import and_, inspect, or_
 from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
-from sqlmodel import Field, SQLModel, select
-import json
+from sqlmodel import Column, Field, ForeignKey, SQLModel, select
 
+from src.common.context import TenantContext
 from src.db.config import async_session
 
 T = TypeVar("T")
@@ -43,17 +44,12 @@ class BaseModel(SQLModel):
             return json.loads(self.model_dump_json())
         except Exception as e:
             raise e
-    
-    
-    
-        
 
     @classmethod
     async def get(cls: Type[T], id: int) -> Optional[T]:
         async with async_session() as session:
             return await session.get(cls, id)
 
-        
     @classmethod
     async def first(cls: Type[T], where: Optional[dict] = None) -> Optional[T]:
         async with async_session() as session:
@@ -145,7 +141,7 @@ class BaseModel(SQLModel):
     @classmethod
     async def filter(
         cls: Type[T],
-        where: Optional[dict] = None,
+        where: dict = {},
         skip: int = 0,
         limit: Optional[int] = None,
         joins: Optional[list[Any]] = None,
@@ -307,3 +303,36 @@ class Permission(BaseModel, table=True):
 
     class Config:
         table_name = "sys_permissions"
+
+
+class TenantModel(CommonModel):
+    """
+    A simple tenant base model for operations related to the organization/tenant
+    """
+
+    organization_id: Optional[int] = Field(
+        default=None, foreign_key="sys_organizations.id"
+    )
+
+    @classmethod
+    async def create(cls: Type[T], **kwargs) -> T:
+        organization_id = TenantContext.get()
+        kwargs.setdefault("organization_id", organization_id)
+        obj = await super().create(**kwargs)
+        return obj
+
+    @classmethod
+    async def filter(
+        cls: Type[T],
+        where: dict = {},
+        skip: int = 0,
+        limit: Optional[int] = None,
+        joins: Optional[list[Any]] = None,
+        options: Optional[list[Any]] = None,
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
+    ):
+        organization_id = TenantContext.get()
+        if organization_id:
+            where.setdefault("organization_id", organization_id)
+
+        return await super().filter(where, skip, limit, joins, options, related_items)

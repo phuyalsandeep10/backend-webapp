@@ -70,6 +70,14 @@ class BaseMigration:
         self.fields.append(co)
         return co
 
+    def biginteger(self, name: str, **kwargs):
+        """
+        Returns the SQLALchemy BigInteger column
+        """
+        co = sa.Column(name, sa.BigInteger(), **kwargs)
+        self.fields.append(co)
+        return co
+
     def string(self, name: str, length=255, nullable=True, default=None, **kwargs):
         """
         Returns the SQLALchemy String column
@@ -114,7 +122,6 @@ class BaseMigration:
             name,
             sa.Integer(),
             sa.ForeignKey(table, ondelete=ondelete),
-       
             **kwargs,
         )
         self.fields.append(co)
@@ -128,11 +135,12 @@ class BaseMigration:
         self.fields.append(co)
         return co
 
-    def unique_constraint(self, *columns, name: str):
+    def unique_constraint(self, *columns):
         """
         Returns the unique constraint
         """
-        co = sa.UniqueConstraint(*columns, name)
+
+        co = sa.UniqueConstraint(*columns)
         self.fields.append(co)
         return co
 
@@ -151,6 +159,13 @@ class BaseMigration:
             )
         )
 
+    def base_columns(self):
+        """
+        Return basic model columns
+        """
+        self.fields.append(self.primary_key(name="id"))
+        self.timestamp_columns()
+
     def common_columns(self):
         """
         Returns the common columns used in CommonModel
@@ -158,13 +173,22 @@ class BaseMigration:
         self.fields.append(self.primary_key(name="id"))
         self.fields.append(self.boolean(name="active", default=True, nullable=False))
         self.fields.append(
-            self.foreign(name="created_by_id", table="sys_users",key='created_by_id')
+            self.foreign(name="created_by_id", table="sys_users", key="created_by_id")
         )
         self.fields.append(
-            self.foreign(name="updated_by_id", table="sys_users",key='updated_by_id')
+            self.foreign(name="updated_by_id", table="sys_users", key="updated_by_id")
         )
         self.fields.append(self.date_time(name="deleted_at", nullable=True))
         self.timestamp_columns()
+
+    def tenant_columns(self):
+        """
+        Returns the tenant columns used in TenantModel
+        """
+        self.common_columns()
+        self.fields.append(
+            self.foreign(name="organization_id", table="sys_organizations")
+        )
 
     def bulk_insert_data(self, rows: List[dict]):
         """

@@ -1,4 +1,5 @@
-from src.models import Organization,OrganizationMember, User
+from src.models import Organization, OrganizationMember, TicketPriority, User
+
 
 async def organization_seed_dummy():
 
@@ -22,7 +23,7 @@ async def organization_seed_dummy():
             website="test.com",
             owner_id=user.id,
             domain="https://test.com",
-            identifier="test1"
+            identifier="test1",
         )
 
         print("Organization 1 created")
@@ -38,8 +39,7 @@ async def organization_seed_dummy():
             website="test2.com",
             owner_id=user.id,
             domain="https://test2.com",
-            identifier="test2"
-
+            identifier="test2",
         )
 
         print("Organization 2 created")
@@ -56,4 +56,3 @@ async def organization_user_seed_dummy():
         print("User added to organization 1")
     else:
         print("User already added or there is not user with 1 id")
-
