@@ -1,40 +1,43 @@
-"""Add Permission_group table
+"""Add PermissionGroup table
 
-Revision ID: 20250803_104545
+Revision ID: 20250804_055139
 Revises: 20250801_091606
-Create Date: 2025-08-03 16:30:45.444342
+Create Date: 2025-08-04 11:36:40.263350
 
 """
 
 from migrations.base import BaseMigration
 from typing import Sequence, Union
 
-revision: str = "20250803_104545"
+revision: str = "20250804_055139"
 down_revision: Union[str, Sequence[str], None] = "20250801_091606"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-class Permission_groupMigration(BaseMigration):
+class PermissionGroupMigration(BaseMigration):
 
-    table_name = "permission_groups"
+    table_name = "sys_permission_groups"
 
     def __init__(self):
-        super().__init__(revision="20250803_104545", down_revision="20250801_091606")
+        super().__init__(revision="20250804_055139", down_revision="20250801_091606")
         self.create_whole_table = True
-        self.common_columns()
+        self.base_columns()
         self.string("name")
+        
+        
+        # describe your schemas here
 
 
 def upgrade() -> None:
     """
     Function to create a table
     """
-    Permission_groupMigration().upgrade()
+    PermissionGroupMigration().upgrade()
 
 
 def downgrade() -> None:
     """
     Function to drop a table
     """
-    Permission_groupMigration().downgrade()
+    PermissionGroupMigration().downgrade()

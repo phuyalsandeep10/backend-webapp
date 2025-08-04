@@ -1,4 +1,3 @@
-# src/modules/staff_management/models/permission.py
 from typing import Optional
 from sqlmodel import Field, Relationship
 from src.common.models import BaseModel
@@ -10,5 +9,5 @@ class Permission(BaseModel, table=True):
 
     name: str = Field(max_length=255, index=True, unique=True)
 
-    group_id: int = Field(foreign_key="sys_permission_groups.id")
+    group_id: int = Field(foreign_key="sys_permission_group.id")
     group: Optional[PermissionGroup] = Relationship(back_populates="permissions")

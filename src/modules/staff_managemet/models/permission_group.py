@@ -1,4 +1,3 @@
-# src/modules/staff_management/models/permission_group.py
 from typing import List, Optional
 from sqlmodel import Field, Relationship
 from src.common.models import BaseModel

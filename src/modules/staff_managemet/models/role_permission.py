@@ -1,14 +1,30 @@
-# src/modules/staff_management/models/role_permission.py
 from sqlmodel import Field
-from typing import Optional
-from src.common.models import BaseModel
+from typing import TYPE_CHECKING
+from src.common.models import CommonModel
 
 
-class RolePermission(BaseModel, table=True):
+if TYPE_CHECKING:
+    from src.modules.staff_managemet.models.permissions import Permission
+    from src.modules.organizations.models import OrganizationRole
+
+
+class RolePermission(CommonModel, table=True):
     __tablename__ = "sys_role_permissions"
 
-    permission_category_id: int = Field(foreign_key="sys_permission_groups.id")
-    permission_id: int = Field(foreign_key="sys_permissions.id") 
-    is_changeable: bool = Field(default=True, nullable=False)
-    is_active: bool = Field(default=True, nullable=False)
-    is_viewable: bool = Field(default=True, nullable=False)
+    permission_id: int = Field(
+        foreign_key="permissions.id",
+        index=True,
+        nullable=False,
+    )
+
+    role_id: int = Field(
+        foreign_key="org_roles.id",
+        index=True,
+        nullable=False,
+    )
+
+    role_id: int = Field()
+
+    is_changeable: bool = Field(default=False)
+    is_deletable: bool = Field(default=False)
+    is_viewable: bool = Field(default=False)
