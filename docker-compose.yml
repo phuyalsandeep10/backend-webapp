@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   db:
     image: postgres:16-alpine
@@ -21,27 +19,31 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
-
-  backend:
-    build: .
-    container_name: chatboq_backend
-    command: sh start.sh
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    # environment:
-    #   - REDIS_URL=redis://redis:6379
-    #   - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
-    #   - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
-    #   - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-    depends_on:
-      - db
-      - redis
-      # - kafka
     networks:
       - mynetwork
+    command: redis-server --appendonly yes
+
+  # backend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: chatboq_backend
+  #   # command: [ "sh", "./start.sh" ]
+  #   ports:
+  #     - "8000:8000"
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - REDIS_URL=redis://redis:6379
+  #     - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
+  #     - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
+  #     - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+  #   depends_on:
+  #     - db
+  #     - redis
+  #     # - kafka
+  #   networks:
+  #     - mynetwork
 
   celery_worker:
     build: .
@@ -49,6 +51,7 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
+      - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - redis
@@ -62,19 +65,21 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
+      - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
     depends_on:
       - redis
       - db
-
-  flower:
-    image: mher/flower:latest
-    command: [ "celery", "flower", "--broker=redis://redis:6379", "--port=5555" ]
-    ports:
-      - "5555:5555"
-    depends_on:
-      - redis
     networks:
       - mynetwork
+  # flower:
+  #   image: mher/flower:latest
+  #   command: [ "celery", "flower", "--broker=redis://redis:6379", "--port=5555" ]
+  #   ports:
+  #     - "5555:5555"
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - mynetwork
   # kafka:
   #   image: confluentinc/cp-kafka:7.5.0
   #   depends_on:
@@ -96,6 +101,8 @@ services:
   #     interval: 30s
   #     timeout: 10s
   #     retries: 3
+  #   networks:
+  #     - mynetwork
 
   # zookeeper:
   #   image: confluentinc/cp-zookeeper:7.5.0
@@ -104,6 +111,8 @@ services:
   #   environment:
   #     ZOOKEEPER_CLIENT_PORT: 2181
   #     ZOOKEEPER_TICK_TIME: 2000
+  #   networks:
+  #     - mynetwork
 
   # kafka-ui:
   #   image: provectuslabs/kafka-ui:latest
@@ -120,6 +129,8 @@ services:
   #     interval: 30s
   #     timeout: 10s
   #     retries: 3
+  #   networks:
+  #     - mynetwork
 
 volumes:
   postgres_data:
