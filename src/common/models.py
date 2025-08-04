@@ -3,12 +3,13 @@ from datetime import datetime
 from typing import Any, List, Optional, Type, TypeVar, Union
 
 import sqlalchemy as sa
+from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import and_, inspect, or_
 from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlmodel import Column, Field, ForeignKey, SQLModel, select
 
-from src.common.context import TenantContext
+from src.common.context import TenantContext, UserContext
 from src.db.config import async_session
 
 T = TypeVar("T")
@@ -39,8 +40,11 @@ class BaseModel(SQLModel):
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
-    def to_json(self):
+    def to_json(self, schema: Optional[Type[PydanticBaseModel]] = None) -> dict:
         try:
+            if schema:
+                field_names = set(schema.model_fields.keys())  # Pydantic v2
+                return json.loads(self.model_dump_json(include=field_names))
             return json.loads(self.model_dump_json())
         except Exception as e:
             raise e
@@ -113,11 +117,8 @@ class BaseModel(SQLModel):
             result = await session.execute(statement)
             obj = result.scalars().first()
             if obj:
-                obj.deleted_at = datetime.now()
-                session.add(obj)
-
+                await session.delete(obj)
                 await session.commit()
-                await session.refresh(obj)
 
     @classmethod
     async def soft_delete(cls: Type[T], where: Optional[dict] = None) -> None:
@@ -148,9 +149,8 @@ class BaseModel(SQLModel):
         options: Optional[list[Any]] = None,
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> List[T]:
-        if where is not None:
-            if "deleted_at" in inspect(cls).columns:  # type:ignore
-                where.setdefault("deleted_at", None)
+        if "deleted_at" in inspect(cls).columns:  # type:ignore
+            where.setdefault("deleted_at", None)
         statement = query_statement(cls, where=where, joins=joins, options=options)
         if skip:
             statement = statement.offset(skip)
@@ -170,7 +170,7 @@ class BaseModel(SQLModel):
     @classmethod
     async def find_one(
         cls: Type[T],
-        where: Optional[dict] = None,
+        where: dict = {},
         joins: Optional[list[Any]] = None,
         options: Optional[list[Any]] = None,
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
@@ -317,7 +317,10 @@ class TenantModel(CommonModel):
     @classmethod
     async def create(cls: Type[T], **kwargs) -> T:
         organization_id = TenantContext.get()
+        user_id = UserContext.get()
         kwargs.setdefault("organization_id", organization_id)
+        kwargs.setdefault("created_by_id", user_id)
+
         obj = await super().create(**kwargs)
         return obj
 
@@ -335,4 +338,28 @@ class TenantModel(CommonModel):
         if organization_id:
             where.setdefault("organization_id", organization_id)
 
+        print("Here is", where)
+
         return await super().filter(where, skip, limit, joins, options, related_items)
+
+    @classmethod
+    async def find_one(
+        cls: Type[T],
+        where: dict = {},
+        joins: Optional[list[Any]] = None,
+        options: Optional[list[Any]] = None,
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
+    ) -> Optional[T]:
+        organization_id = TenantContext.get()
+        if organization_id:
+            where.setdefault("organization_id", organization_id)
+
+        return await super().find_one(where, joins, options, related_items)
+
+    @classmethod
+    async def update(cls: Type[T], id: int, **kwargs) -> Optional[T]:
+        organization_id = TenantContext.get()
+        user_id = UserContext.get()
+        kwargs.setdefault("organization_id", organization_id)
+        kwargs.setdefault("updated_by_id", user_id)
+        return await super().update(id, **kwargs)
