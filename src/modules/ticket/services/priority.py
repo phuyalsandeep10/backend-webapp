@@ -64,18 +64,15 @@ class TicketPriorityService:
         List particular priority of the organization
         """
         try:
-            organization_id: int = user.attributes.get("organization_id")
-            priority = await TicketPriority.find_one(
-                where={"organization_id": organization_id, "id": priority_id}
-            )
+            priority = await TicketPriority.find_one(where={"id": priority_id})
             if priority is None:
                 return cr.error(message="Not found")
             return cr.success(
                 message="Successfully listed priority",
-                data=priority.to_dict() if priority else None,
+                data=priority.to_json(PriorityOut) if priority else None,
             )
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(message="Error while listing priority")
 
     async def delete_priority(self, priority_id: int, user):
@@ -83,13 +80,10 @@ class TicketPriorityService:
         soft delete particular priority of the organization
         """
         try:
-            organization_id: int = user.attributes.get("organization_id")
-            await TicketPriority.delete(
-                where={"organization_id": organization_id, "id": priority_id}
-            )
+            await TicketPriority.delete(where={"id": priority_id})
             return cr.success(message="Successfully deleted priority", data=None)
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(message="Error while deleting priority")
 
     async def edit_priority(
@@ -120,7 +114,7 @@ class TicketPriorityService:
                 ),
             )
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(message="Error while editing priority", data=str(e))
 
     async def list_default_priorities(self):
