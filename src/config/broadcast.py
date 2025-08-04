@@ -1,3 +1,3 @@
 from broadcaster import Broadcast
 
-broadcast = Broadcast("redis://localhost:6379")
+broadcast = Broadcast("redis://redis:6379")
