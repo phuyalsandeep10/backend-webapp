@@ -17,7 +17,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 class PermissionGroupMigration(BaseMigration):
 
-    table_name = "sys_permission_groups"
+    table_name = "sys_permissions_groups"
 
     def __init__(self):
         super().__init__(revision="20250804_055139", down_revision="20250801_091606")

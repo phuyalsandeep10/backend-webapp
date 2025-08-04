@@ -27,7 +27,7 @@ class PermissionMigration(BaseMigration):
 
         self.foreign(
             "group_id",
-            "sys_permission_groups",
+            "sys_permissions_groups",
         )
         # describe your schemas here
 
