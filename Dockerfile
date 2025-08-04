@@ -12,4 +12,5 @@ RUN uv pip install --system .
 COPY ./src ./src
 
 
-CMD ["/bin/sh", "./start.sh"]
+CMD ["uvicorn", "src.main:socket_app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+

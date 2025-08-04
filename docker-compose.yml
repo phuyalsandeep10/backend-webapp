@@ -28,7 +28,17 @@ services:
   #     context: .
   #     dockerfile: Dockerfile
   #   container_name: chatboq_backend
-  #   # command: [ "sh", "./start.sh" ]
+
+  #   command:
+  #     [
+  #       "uvicorn",
+  #       "src.main:socket_app",
+  #       "--host",
+  #       "0.0.0.0",
+  #       "--port",
+  #       "8000",
+  #       "--reload",
+  #     ]
   #   ports:
   #     - "8000:8000"
   #   env_file:
@@ -136,7 +146,6 @@ volumes:
   postgres_data:
   redis_data:
     # kafka_data:
-
 
 networks:
   mynetwork:

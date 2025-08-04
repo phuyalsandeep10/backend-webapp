@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     APPLE_CLIENT_SECRET: str = "your-apple-client-secret"
 
     FRONTEND_URL: str = ""
-    CELEREY_BROKER_URL: str = "redis://redis:6379"
+    CELEREY_BROKER_URL: str = "redis://localhost:6379"
 
     CLOUDINARY_CLOUD_NAME: str = ""
     CLOUDINARY_API_KEY: str = ""
