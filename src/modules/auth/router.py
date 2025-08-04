@@ -364,12 +364,14 @@ async def oauth_callback(request: Request, provider: ProviderEnum):
 
 @router.post("/2fa-otp/generate")
 async def generate_2fa_otp(user=Depends(get_current_user)):
-    otp_secrete = pyotp.random_base32()
-    print(f"user {user.email}")
-
-    otp_auth_url = pyotp.totp.TOTP(otp_secrete).provisioning_uri(
-        name=user.email, issuer_name=settings.PROJECT_NAME
-    )
+    if user.two_fa_secret and user.two_fa_auth_url :
+        otp_secrete = user.two_fa_secret
+        otp_auth_url = user.two_fa_auth_url
+    else:
+        otp_secrete = pyotp.random_base32()
+        otp_auth_url = pyotp.totp.TOTP(otp_secrete).provisioning_uri(
+            name=user.email, issuer_name=settings.PROJECT_NAME
+        )
 
     await User.update(
         user.id,
