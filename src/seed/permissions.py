@@ -1,4 +1,4 @@
-from src.modules.staff_managemet.models.permissions import Permissions
+from src.models import Permissions
 
 
 async def permission_seed_dummy():
