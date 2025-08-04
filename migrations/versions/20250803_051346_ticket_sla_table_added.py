@@ -28,7 +28,8 @@ class TicketSLAMigration(BaseMigration):
         self.string(name="name")
         self.biginteger(name="response_time")
         self.biginteger(name="resolution_time")
-        self.boolean(name="is_default")
+        self.foreign(name="priority_id", table="ticket_priority")
+        self.unique_constraint("organization_id", "name", "priority_id")
 
 
 def upgrade() -> None:

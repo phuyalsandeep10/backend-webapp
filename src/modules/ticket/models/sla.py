@@ -1,7 +1,7 @@
 from typing import List
 
 from sqlalchemy import Column
-from sqlmodel import BigInteger, Field, Relationship
+from sqlmodel import BigInteger, Field, ForeignKey, Relationship
 
 from src.common.models import TenantModel
 
@@ -18,6 +18,11 @@ class TicketSLA(TenantModel, table=True):
     name: str = Field(nullable=True, unique=True)
     response_time: int = Field(sa_column=Column(BigInteger, nullable=False))
     resolution_time: int = Field(sa_column=Column(BigInteger, nullable=False))
+    priority_id: int = Field(
+        sa_column=(
+            Column(ForeignKey("ticket_priority.id", ondelete="CASCADE"), nullable=False)
+        )
+    )
     tickets: List[Ticket] = Relationship(back_populates="sla", passive_deletes=True)
 
     def __str__(self):
