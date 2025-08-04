@@ -27,16 +27,5 @@ class TicketStatus(TenantModel, table=True):
     tickets: List["Ticket"] = Relationship(back_populates="status")
     organizations: List["Organization"] = Relationship(back_populates="ticket_status")
 
-    def to_dict(self):
-        """
-        Returns the model value in dict
-        """
-        return {
-            "id": self.id,
-            "name": self.name,
-            "bg_color": self.bg_color,
-            "fg_color": self.fg_color,
-        }
-
     def __str__(self):
         return f"{self.name}-{self.organization_id}"
