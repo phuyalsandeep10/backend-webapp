@@ -24,11 +24,11 @@ class CustomerMigration(BaseMigration):
         # describe your schemas here
         self.common_columns()
         self.foreign("organization_id", "sys_organizations")
-        self.string("name", nullable=False)
-        self.string("email", nullable=False)
+        self.string("name", nullable=True)
+        self.string("email", nullable=True)
         self.string("phone", nullable=True)
         self.string("address", nullable=True)
-        self.string("ip_address", nullable=True)
+        self.string("ip_address", nullable=False)
 
 
 def upgrade() -> None:
