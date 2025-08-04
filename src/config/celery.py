@@ -3,7 +3,7 @@ import os
 from celery.app import Celery
 from celery.schedules import crontab
 
-redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+redis_url = os.getenv("REDIS_URL", "redis://redis:6379")
 
 celery_app = Celery(
     __name__, broker=redis_url, backend=redis_url, include=["src.tasks"]
