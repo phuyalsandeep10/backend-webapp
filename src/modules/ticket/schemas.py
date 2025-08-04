@@ -90,7 +90,7 @@ class CreatePrioriySchema(BaseModel):
 
 class EditTicketPrioritySchema(BaseModel):
     name: Optional[str] = None
-    level: Optional[str] = None
+    level: Optional[int] = None
     color: Optional[str] = None
 
 

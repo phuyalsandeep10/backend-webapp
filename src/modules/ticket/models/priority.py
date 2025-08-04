@@ -30,17 +30,5 @@ class TicketPriority(TenantModel, table=True):
     tickets: List["Ticket"] = Relationship(back_populates="priority")
     organization: "Organization" = Relationship(back_populates="ticket_priorities")
 
-    def to_dict(self):
-        """
-        Returns the model values in dictionary
-        """
-        return {
-            "id": self.id,
-            "name": self.name,
-            "level": self.level,
-            "bg_color": self.bg_color,
-            "fg_color": self.fg_color,
-        }
-
     def __str__(self):
         return f"{self.name}-{self.organization_id}"

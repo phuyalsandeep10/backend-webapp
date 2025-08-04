@@ -131,12 +131,4 @@ async def get_team_members(team_id: int):
         options=[selectinload(TeamMember.user)],  # type:ignore
     )
 
-    return cr.success(
-        data=[
-            {
-                **member.model_dump(),
-                "user": member.user.model_dump() if member.user else None,
-            }
-            for member in members
-        ]
-    )
+    return cr.success(data=[member.to_dict() for member in members])

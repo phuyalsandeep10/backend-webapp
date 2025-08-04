@@ -1,9 +1,16 @@
+import json
+import logging
+
 from kombu import message
+from pydantic.json import pydantic_encoder
+from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from src.modules.ticket.models import TicketPriority
-from src.modules.ticket.schemas import EditTicketPrioritySchema
+from src.modules.ticket.schemas import EditTicketPrioritySchema, PriorityOut
 from src.utils.response import CustomResponse as cr
+
+logger = logging.getLogger(__name__)
 
 
 class TicketPriorityService:
@@ -13,46 +20,44 @@ class TicketPriorityService:
         List all the priorites on the basis of the organization
         """
         try:
-            # organization_id: int = user.attributes.get("organization_id")
+
             priorities = await TicketPriority.filter()
+
+            print("The prioritieis", priorities)
 
             # if there is none of them, then list the default ones
             if len(priorities) == 0:
-                default_priorities = await TicketPriority.filter(
-                    where={"organization_id": None}
-                )
-                payload = [priority.to_dict() for priority in default_priorities]
+                payload = await self.list_default_priorities()
                 return cr.success(
                     message="Successfully listed priorities", data=payload
                 )
 
-            payload = [priority.to_dict() for priority in priorities]
+            payload = [priority.to_json(PriorityOut) for priority in priorities]
             return cr.success(message="Successfully listed priorities", data=payload)
         except Exception as e:
-            print(e)
-            return cr.error(message="Error while listing priorities")
+            logger.exception(e)
+            return cr.error(message="Error while listing priorities", data=str(e))
 
     async def create_priorities(self, payload, user):
         """
         create single priority or list of priorities at the same time
         """
         try:
-            organization_id: int = user.attributes.get("organization_id")
             for d in payload:
                 data = d.model_dump()
-                record = await TicketPriority.find_one(
-                    where={"name": data["name"], "organization_id": organization_id}
-                )
+                record = await TicketPriority.find_one(where={"name": data["name"]})
                 if not record:
-                    data["organization_id"] = organization_id
                     await TicketPriority.create(**data)
 
             return cr.success(
                 message="Successfully created priorities", status_code=201
             )
+        except IntegrityError as e:
+            logger.exception(e)
+            return cr.error(message="Priority with this name and level already exists")
         except Exception as e:
-            print(e)
-            return cr.error(message="Error while creating priorities")
+            logger.exception(e)
+            return cr.error(message="Error while creating priorities", data=str(e))
 
     async def get_priority(self, priority_id: int, user):
         """
@@ -97,7 +102,6 @@ class TicketPriorityService:
             priority = await TicketPriority.find_one(
                 where={
                     "id": priority_id,
-                    "organization_id": user.attributes.get("organization_id"),
                 }
             )
             if priority is None:
@@ -111,11 +115,23 @@ class TicketPriorityService:
 
             return cr.success(
                 message="Successfully updated  prioirty",
-                data=(updated_priority.to_dict() if updated_priority else None),
+                data=(
+                    updated_priority.to_json(PriorityOut) if updated_priority else None
+                ),
             )
         except Exception as e:
             print(e)
             return cr.error(message="Error while editing priority", data=str(e))
+
+    async def list_default_priorities(self):
+        """
+        Lists all the default priorities
+        """
+        default_priorities = await TicketPriority.filter(
+            where={"organization_id": None}
+        )
+        payload = [priority.to_json(PriorityOut) for priority in default_priorities]
+        return payload
 
 
 priority_service = TicketPriorityService()
