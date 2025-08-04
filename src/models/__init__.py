@@ -21,11 +21,9 @@ from src.modules.organizations.models import (
     OrganizationRole,
 )
 
-from src.modules.staff_managemet.models import (
-    permission_group,
-    permissions,
-    role_permission,
-)
+from src.modules.staff_managemet.models.permissions import Permissions
+from src.modules.staff_managemet.models.permission_group import PermissionGroup
+from src.modules.staff_managemet.models.role_permission import RolePermission
 
 # Import team models
 from src.modules.team.models import Team, TeamMember
@@ -60,7 +58,7 @@ __all__ = [
     "TicketPriority",
     "TicketSLA",
     # "Admin",
-    permission_group,
-    permissions,
-    role_permission,
+    Permissions,
+    PermissionGroup, 
+    RolePermission,
 ]

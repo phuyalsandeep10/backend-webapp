@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from src.modules.chat.models.customer import Customer
     from src.modules.ticket.models.priority import TicketPriority
     from src.modules.ticket.models.status import TicketStatus
+    from src.modules.staff_managemet.models.role_permission import RolePermission
 
 
 class Organization(CommonModel, table=True):
@@ -54,14 +55,15 @@ class Organization(CommonModel, table=True):
             result = await session.execute(statement)
             return list(result.scalars().all())
 
-
 class OrganizationRole(CommonModel, table=True):
-    __tablename__ = "org_roles"  # type:ignore
+    __tablename__ = "org_roles"  # type: ignore
+
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     identifier: str = Field(default=None, max_length=500, nullable=False, index=True)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
-    permissions: list[str] = Field(default=[], sa_column=sa.Column(sa.JSON))
+
+    role_permissions: list["RolePermission"] = Relationship(back_populates="org_role")
 
     member_roles: list["OrganizationMemberRole"] = Relationship(back_populates="role")
 

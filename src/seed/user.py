@@ -1,7 +1,7 @@
-
 from src.models import User
 from src.common.utils import hash_password
 from datetime import datetime
+
 
 async def user_seed_dummy():
     # checking if test user exists or not

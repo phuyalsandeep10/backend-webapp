@@ -1,5 +1,5 @@
-from sqlmodel import Field
-from typing import TYPE_CHECKING
+from sqlmodel import Field, Relationship
+from typing import TYPE_CHECKING, Optional
 from src.common.models import CommonModel
 
 
@@ -12,7 +12,7 @@ class RolePermission(CommonModel, table=True):
     __tablename__ = "sys_role_permissions"
 
     permission_id: int = Field(
-        foreign_key="permissions.id",
+        foreign_key="sys_permissions.id",
         index=True,
         nullable=False,
     )
@@ -23,8 +23,8 @@ class RolePermission(CommonModel, table=True):
         nullable=False,
     )
 
-    role_id: int = Field()
-
     is_changeable: bool = Field(default=False)
     is_deletable: bool = Field(default=False)
     is_viewable: bool = Field(default=False)
+
+    org_role: "OrganizationRole" = Relationship(back_populates="role_permissions")

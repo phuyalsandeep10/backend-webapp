@@ -7,7 +7,7 @@ class OrganizationSchema(BaseModel):
     description: str | None = Field(
         None, max_length=500, description="Description of the organization"
     )
-    domain:str = Field(..., max_length=255, description="Domain of the organization")
+    domain: str = Field(..., max_length=255, description="Domain of the organization")
     # slug: str = Field(..., max_length=255, description="Unique slug for the organization")
     logo: str | None = Field(
         None, max_length=255, description="Logo URL for the organization"
@@ -22,7 +22,7 @@ class OrganizationRoleSchema(BaseModel):
     description: str | None = Field(
         None, max_length=500, description="Description of the role"
     )
-    permissions: list[str] = Field([])
+    # permissions: list[str] = Field([])
 
 
 class PermissionSchema(BaseModel):

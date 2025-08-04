@@ -19,8 +19,15 @@ from src.models import (
 from src.tasks import send_invitation_email
 from src.common.utils import random_unique_key
 from src.utils.response import CustomResponse as cr
+from src.modules.staff_managemet.models.role_permission import RolePermission
+from src.modules.staff_managemet.models.permissions import Permissions
 
-from .schema import OrganizationSchema , OrganizationInviteSchema, OrganizationRoleSchema,AssignRoleSchema
+from .schema import (
+    OrganizationSchema,
+    OrganizationInviteSchema,
+    OrganizationRoleSchema,
+    AssignRoleSchema,
+)
 
 router = APIRouter()
 
@@ -30,7 +37,7 @@ async def get_organizations(user=Depends(get_current_user)):
     """
     Get the list of organizations the user belongs to.
     """
-    records =  await Organization.get_orgs_by_user_id(user_id=user.id)
+    records = await Organization.get_orgs_by_user_id(user_id=user.id)
     data = [item.to_json() for item in records]
     return cr.success(data=data)
 
@@ -63,7 +70,7 @@ async def create_organization(
         domain=body.domain,
         purpose=body.purpose,
         identifier=f"{slug}-{random_unique_key()}",
-        owner_id=user.id
+        owner_id=user.id,
     )
 
     await OrganizationMember.create(
@@ -84,10 +91,8 @@ async def create_organization(
             raise HTTPException(404, "Not found User")
 
         update_user_cache(token, user)
-   
-    
-    return cr.success(data=organization.to_json())
 
+    return cr.success(data=organization.to_json())
 
 
 @router.get("/{organization_id}/members")
@@ -200,17 +205,23 @@ async def create_role(body: OrganizationRoleSchema, user=Depends(get_current_use
     if record:
         raise HTTPException(400, "Duplicate record")
 
-    permissions = []
-    if body.permissions:
-        permissions = list(set(body.permissions))
+    # permissions = []
+    # if body.permissions:
+    #     permissions = list(set(body.permissions))
+    all_permissions = await permissions.all()
 
     role = await OrganizationRole.create(
         name=body.name,
         organization_id=organization_id,
         identifier=body.name.lower().replace(" ", "-"),
         description=body.description,
-        permissions=permissions,
     )
+
+    role_permission_entries = [
+        role_permissions(role_id=role.id, permission_id=perm.id, value=False)
+        for perm in all_permissions
+    ]
+    await role_permissions.bulk_create(role_permission_entries)
     return cr.success(data=role)
 
 
@@ -261,9 +272,8 @@ async def get_roles(user=Depends(get_current_user)):
 
     organization_id = user.attributes.get("organization_id")
 
-    roles =  await OrganizationRole.filter(where={"organization_id": organization_id})
+    roles = await OrganizationRole.filter(where={"organization_id": organization_id})
     return cr.success(data=roles)
-
 
 
 @router.delete("/{role_id}/roles")
