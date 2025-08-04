@@ -1,10 +1,8 @@
 import logging
 from typing import List
 
-from kombu import message
 from starlette.status import HTTP_400_BAD_REQUEST
 
-from src.modules.auth.models import User
 from src.modules.ticket.models import TicketStatus
 from src.modules.ticket.schemas import (
     CreateTicketStatusSchema,
