@@ -2,8 +2,9 @@ import os
 
 from celery.app import Celery
 from celery.schedules import crontab
+from src.config.settings import settings
 
-redis_url = os.getenv("REDIS_URL", "redis://redis:6379")
+redis_url = settings.CELEREY_BROKER_URL
 
 celery_app = Celery(
     __name__, broker=redis_url, backend=redis_url, include=["src.tasks"]
