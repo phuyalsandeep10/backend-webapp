@@ -6,7 +6,6 @@ celery -A your_project worker -l DEBUG -P solo
 celery -A src.config.celery worker -l DEBUG -P solo
 
 
-
 alembic revision --autogenerate -m "create users table"
 
 

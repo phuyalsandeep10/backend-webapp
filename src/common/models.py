@@ -197,8 +197,6 @@ class CommonModel(BaseModel):
     updated_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
     deleted_at: Optional[datetime] = None
 
-    # arbitrary_types_allowed = True
-
 
 def query_statement(
     cls: Type[T],
