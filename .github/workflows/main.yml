@@ -46,4 +46,4 @@ jobs:
             docker load -i chatboq-back.tar
             docker-compose down
             docker-compose up -d --build
-            rm chatboq-back.tar
+            
