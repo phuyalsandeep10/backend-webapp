@@ -14,16 +14,17 @@ from fastapi import Depends
 from src.common.dependencies import create_access_token
 from src.enums import ProviderEnum
 import pyotp
-from .dto import (
-    LoginDto,
-    RegisterDto,
-    VerifyEmailTokenDto,
-    ForgotPasswordVerifyDto,
-    VerifyEmailDto,
-    ResetPasswordDto,
-    RefreshTokenDto,
-    VerifyTwoFAOtpDto,
+from .schema import (
+    LoginSchema,
+    RegisterSchema,
+    VerifyEmailTokenSchema,
+    ForgotPasswordVerifySchema,
+    VerifyEmailSchema,
+    ResetPasswordSchema,
+    RefreshTokenSchema,
+    VerifyTwoFAOtpSchema,
     UserSchema,
+    ValidateEmailSchema
 )
 from src.utils.response import CustomResponse as cr
 
@@ -43,20 +44,12 @@ from src.config.settings import settings
 from src.modules.organizations.models import OrganizationInvitation
 from src.tasks import send_forgot_password_email, send_verification_email
 
-from .dto import (
-    ForgotPasswordVerifyDto,
-    LoginDto,
-    RefreshTokenDto,
-    RegisterDto,
-    ResetPasswordDto,
-    VerifyEmailDto,
-    VerifyEmailTokenDto,
-)
+
 from .models import EmailVerification, RefreshToken, User
 from .social_auth import oauth
 from jose.exceptions import JWTError
 from fastapi.encoders import jsonable_encoder
-from .dto import ValidateEmail
+
 
 router = APIRouter()
 
@@ -77,19 +70,19 @@ async def create_token(user):
 
 
 @router.post("/login")
-async def user_login(request: LoginDto):
+async def user_login(request: LoginSchema):
 
     user = await User.find_one(where={"email": request.email})
 
     # Check if user exists
     if not user:
-        raise HTTPException(status_code=401, detail="Email not found")
+        return cr.error(data={"success": False,"errors":{"email":["Email not found"]}},message="Email not found")
 
     if not user.password:
-        raise HTTPException(status_code=401, detail="Invalid Password")
+        return cr.error(data={"success": False,"errors":{"password":["Invalid Password"]}},message="Invalid Password")
 
     if not compare_password(user.password, request.password):
-        raise HTTPException(status_code=401, detail="Invalid password")
+        return cr.error(data={"success": False,"errors":{"password":["Invalid Password"]}},message="Invalid Password")
 
     data = await create_token(user)
     # return data
@@ -108,22 +101,22 @@ async def logout(user=Depends(get_current_user)):
     token_data = await RefreshToken.find_one(where={"user_id": user.id, "active": True})
 
     if not token_data:
-        raise HTTPException(status_code=404, detail="No active refresh token found")
+        return cr.error(data={"success": False,errors:{"token":["No active refresh token found"]}},message="No active refresh token found")
     # Mark the token as inactive
     await RefreshToken.update(token_data.id, active=False)
 
-    return {"message": "Logged out successfully"}
+    return cr.success(data={"message": "Logged out successfully"})
 
 
 @router.post("/refresh-token")
-async def refresh_token(body: RefreshTokenDto):
+async def refresh_token(body: RefreshTokenSchema):
     # Validate the refresh token
     token_data = await RefreshToken.find_one(
         where={"token": body.token, "active": True}
     )
 
     if not token_data:
-        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+        return cr.error(data={"success": False,"errors":{"token":["Invalid or expired refresh token"]}},message="Invalid or expired refresh token")
 
     # Check if the refresh token has expired
     expires_at = token_data.expires_at
@@ -132,37 +125,38 @@ async def refresh_token(body: RefreshTokenDto):
 
     # If the token has expired, raise an error
     if expires_at < datetime.utcnow():
-        raise HTTPException(status_code=401, detail="Refresh token has expired")
+        return cr.error(data={"success": False,"errors":{"token":["Refresh token has expired"]}},message="Refresh token has expired")
 
     # Create a new access token
     try:
         user = await User.get(token_data.user_id)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            return cr.error(data={"success":False},message="User not found")
         access_token = create_access_token(data={"sub": user.email})
 
-        return {"access_token": access_token}
+        return cr.success(data={"access_token": access_token})
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        return cr.error(data={"success":False},message="Invalid token")
 
 
 @router.post("/validate-email")
-async def validateEmail(body: ValidateEmail):
+async def validateEmail(body: ValidateEmailSchema):
     user = await User.find_one({"email": body.email})
     if user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return {"success": True}
+        return cr.error(data={"success": False,"errors":{"email":["Email already registered"]}},message='Email already registered')
+       
+    return cr.success(data={"success": True})
 
 
 @router.post("/register")
-async def register(request: RegisterDto):
+async def register(request: RegisterSchema):
 
     user = await User.find_one({"email": request.email})
 
     # Check if user already exists
 
     if user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        return cr.error(data={"success": False},message='Email already registered') 
 
     hashed_password = hash_password(request.password)
     user = await User.create(
@@ -182,7 +176,7 @@ async def register(request: RegisterDto):
 
     send_verification_email.delay(email=request.email, token=token)
 
-    return {"message": "User registered successfully"}
+    return cr.success(data={"message": "User registered successfully"})
 
 
 @router.get("/me")
@@ -191,7 +185,7 @@ async def get_auth_user(user=Depends(get_current_user)):
         userDb = await User.get(user.id)
 
         if not userDb:
-            raise HTTPException(status_code=404, detail="Not found")
+            return cr.error(data={"success": False},message='User not found')
         # Remove password from the response
         user_schema = UserSchema.model_validate(userDb, from_attributes=True)
         return cr.success(
@@ -203,53 +197,52 @@ async def get_auth_user(user=Depends(get_current_user)):
             )
         )
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        return cr.error(data={"success": False},message="Invalid token")
 
 
 @router.post("/verify-email")
-async def verify_email_token(body: VerifyEmailTokenDto):
+async def verify_email_token(body: VerifyEmailTokenSchema):
 
     user = await User.find_one({"email": body.email})
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        return cr.error(data={"success": False},message='User not found')
 
     verification = await EmailVerification.find_one(
         {"token": body.token, "is_used": False, "user_id": user.id}
     )
 
     if not verification:
-        raise HTTPException(
-            status_code=400, detail="Invalid or expired verification token"
-        )
+        return cr.error(data={"success": False},message='Invalid or expired verification token')
+      
 
     expires_at = verification.expires_at
     if isinstance(expires_at, str):
         expires_at = datetime.fromisoformat(expires_at)
 
     if expires_at < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="Verification token has expired")
+        return cr.error(data={"success": False},message="Verification token has expired")
     # Mark the token as used
     await EmailVerification.update(verification.id, is_used=True)
     # Here you would typically update the user's email verification status
     user = await User.update(user.id, email_verified_at=datetime.utcnow())
     tokens = await create_token(user)
 
-    return {"message": "Email verified successfully", **tokens}
+    return cr.success(data={"message": "Email verified successfully", **tokens})
 
 
 @router.post("/reset-password")
-async def reset_password(body: ResetPasswordDto, user=Depends(get_current_user)):
+async def reset_password(body: ResetPasswordSchema, user=Depends(get_current_user)):
 
     user = await User.find_one({"email": user.email})
 
     if not user:
-        raise HTTPException(status_code=404, detail="Email not found")
+        return cr.error(data={"success": False},message='Email not found')
 
     # Generate a reset token (in a real application, you would send this to the user's email)
     password = user.password
     if not compare_password(password, body.old_password):
-        raise HTTPException(status_code=400, detail="Old password is incorrect")
+        return cr.error(data={"success": False},message='Old password is incorrect')
 
     # Update the user's password
     new_hashed_password = hash_password(body.new_password)
@@ -257,16 +250,16 @@ async def reset_password(body: ResetPasswordDto, user=Depends(get_current_user))
     await User.update(user.id, password=new_hashed_password)
 
     # Here you would typically send a reset link to the user's email
-    return {"message": "Password reset successfully"}
+    return cr.success(data={"message": "Password reset successfully"})
 
 
 @router.post("/forgot-password-request")
-async def forgot_password_request(body: VerifyEmailDto):
+async def forgot_password_request(body: VerifyEmailSchema):
     user = await User.find_one({"email": body.email})
 
     # Check if user exists
     if not user:
-        raise HTTPException(status_code=404, detail="Email not found")
+        return cr.error(data={"success": False},message='Email not found')
     # Generate a reset token (in a real application, you would send this to the user's email)
     token = generate_numeric_token(6)
 
@@ -280,25 +273,24 @@ async def forgot_password_request(body: VerifyEmailDto):
 
     send_forgot_password_email.delay(email=body.email, token=token)
 
-    return {"message": "Password reset link sent to your email"}
+    return cr.success(data={"message": "Password reset link sent to your email"})
 
 
 @router.post("/forgot-password-verify")
-async def forgot_password_verify(body: ForgotPasswordVerifyDto):
+async def forgot_password_verify(body: ForgotPasswordVerifySchema):
 
     user = await User.find_one({"email": body.email})
 
     if not user:
-        raise HTTPException(status_code=404, detail="Email not found")
+        return cr.error(data={"success": False},message='Email not found')
 
     verification = await EmailVerification.find_one(
         {"token": body.token, "is_used": False, "user_id": user.id}
     )
 
     if not verification:
-        raise HTTPException(
-            status_code=400, detail="Invalid or expired verification token"
-        )
+        return cr.error(data={"success": False},message='Invalid or expired verification token')
+      
 
     expires_at = verification.expires_at
     if isinstance(expires_at, str):
@@ -306,25 +298,27 @@ async def forgot_password_verify(body: ForgotPasswordVerifyDto):
 
     # Check if the token has expired
     if expires_at < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="Verification token has expired")
+        return cr.error(data={"success": False},message='Verification token has expired')
 
     # Mark the token as used
     await EmailVerification.update(verification.id, is_used=True)
     # Update the user's password
 
     await User.update(user.id, password=hash_password(body.new_password))
-    return {"message": "Password reset successfully"}
+    return cr.success(data={"message": "Password reset successfully"})
 
 
 @router.get("/invitations")
 async def get_invitations(user=Depends(get_current_user)):
-    return await OrganizationInvitation.filter(where={"email": user.email})
+    
+    data = await OrganizationInvitation.filter(where={"email": user.email})
+    return cr.success(data=data)
 
 
 @router.get("/oauth/{provider}")
 async def oauth_login(request: Request, provider: str):
     if provider not in ["google", "apple"]:
-        raise HTTPException(status_code=400, detail="Unsupported provider")
+        return cr.error(data={"success": False},message='Unsupported provider')
     redirect_uri = request.url_for("oauth_callback", provider=provider)
     return await getattr(oauth, provider).authorize_redirect(request, redirect_uri)
 
@@ -332,7 +326,7 @@ async def oauth_login(request: Request, provider: str):
 @router.get("/oauth/{provider}/callback")
 async def oauth_callback(request: Request, provider: ProviderEnum):
     if provider not in ["google", "apple"]:
-        raise HTTPException(status_code=400, detail="Unsupported provider")
+        return cr.error(data={"success": False},message='Unsupported provider')
     client = getattr(oauth, provider)
 
     token = await client.authorize_access_token(request)
@@ -369,13 +363,15 @@ async def oauth_callback(request: Request, provider: ProviderEnum):
 
 
 @router.post("/2fa-otp/generate")
-async def geerate_two_fa_otp(user=Depends(get_current_user)):
-    otp_secrete = pyotp.random_base32()
-    print(f"user {user.email}")
-
-    otp_auth_url = pyotp.totp.TOTP(otp_secrete).provisioning_uri(
-        name=user.email, issuer_name=settings.PROJECT_NAME
-    )
+async def generate_2fa_otp(user=Depends(get_current_user)):
+    if user.two_fa_secret and user.two_fa_auth_url :
+        otp_secrete = user.two_fa_secret
+        otp_auth_url = user.two_fa_auth_url
+    else:
+        otp_secrete = pyotp.random_base32()
+        otp_auth_url = pyotp.totp.TOTP(otp_secrete).provisioning_uri(
+            name=user.email, issuer_name=settings.PROJECT_NAME
+        )
 
     await User.update(
         user.id,
@@ -384,18 +380,18 @@ async def geerate_two_fa_otp(user=Depends(get_current_user)):
         two_fa_enabled=True,
     )
 
-    return {"2fa_secrete": otp_secrete, "2fa_otp_auth_url": otp_auth_url}
+    return cr.success(data={"otp_secret": otp_secrete, "otp_auth_url": otp_auth_url})
 
 
-@router.post("/2fa-verfiy")
+@router.post("/2fa-verify")
 async def verify_two_fa(
-    body: VerifyTwoFAOtpDto,
+    body: VerifyTwoFAOtpSchema,
     user=Depends(get_current_user),
     token: str = Depends(get_bearer_token),
 ):
     userDb = await User.get(user.id)
     if not userDb:
-        return {}
+        return cr.error(message="User not found")
 
     two_fa_secrete = userDb.two_fa_secret
     totp = pyotp.TOTP(two_fa_secrete)
@@ -404,10 +400,10 @@ async def verify_two_fa(
 
     if not totp.verify(body.token):
         return cr.error(message=message)
-    user.is_2fa_verified = True
+    await User.update(user.id, is_2fa_verified=True)
     update_user_cache(token, user)
 
-    return cr.success()
+    return cr.success(data={"message": "2FA verified successfully"})
 
 
 @router.post("/2fa-disabled")
@@ -415,4 +411,4 @@ async def disable_two_fa(user=Depends(get_current_user)):
 
     await User.update(user.id, two_fa_enabled=False)
 
-    return cr.success()
+    return cr.success(data={"message": "2FA disabled successfully"})

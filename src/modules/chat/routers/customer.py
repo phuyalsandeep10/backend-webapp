@@ -74,4 +74,4 @@ async def get_customers(organizationId: int, user=Depends(get_current_user)):
 
     customers = await Customer.filter(where={"organization_id": organizationId})
 
-    return customers
+    return cr.success(data=customers)

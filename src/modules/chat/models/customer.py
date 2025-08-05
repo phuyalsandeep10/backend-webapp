@@ -11,13 +11,12 @@ if TYPE_CHECKING:
     from src.modules.chat.models.conversation import Conversation
     from src.modules.chat.models.message import Message
     from src.modules.organizations.models import Organization
-    from src.modules.ticket.models.ticket import Ticket
+    from src.modules.ticket.models import Ticket
 
 
 class Customer(CommonModel, table=True):
     __tablename__ = "org_customers"  # type:ignore
-    name: str = Field(max_length=255, index=True, nullable=True)
-    description: str = Field(default=None, max_length=500, nullable=True)
+    name: str = Field(max_length=255, index=True, nullable=True) 
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
     organization: Optional["Organization"] = Relationship(back_populates="customers")
     conversations: List["Conversation"] = Relationship(back_populates="customer")

@@ -9,7 +9,7 @@ from src.modules.auth.models import User
 from src.modules.chat.models.conversation import Conversation, ConversationMember
 
 # Import chat models
-from src.modules.chat.models.customer import Customer, CustomerVisitLogs
+from src.modules.chat.models.customer import Customer,CustomerVisitLogs
 from src.modules.chat.models.message import Message, MessageAttachment
 
 # Import organization models
@@ -24,6 +24,7 @@ from src.modules.organizations.models import (
 # Import team models
 from src.modules.team.models import Team, TeamMember
 from src.modules.ticket.models.priority import TicketPriority
+from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket, TicketAlert, TicketAssigneesLink
 
@@ -51,5 +52,7 @@ __all__ = [
     "TicketAssigneesLink",
     "TicketAlert",
     "TicketPriority",
+    "TicketSLA",
+    "CustomerVisitLogs",
     # "Admin"
 ]

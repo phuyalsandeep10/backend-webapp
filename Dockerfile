@@ -4,11 +4,13 @@ WORKDIR /code
 
 COPY pyproject.toml .
 COPY uv.lock .
+COPY . .
 
-RUN pip install uv 
+RUN pip install uv
 RUN uv pip install --system .
 
 COPY ./src ./src
-COPY ./src/main.py ./src/main.py
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+CMD ["uvicorn", "src.main:socket_app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+

@@ -1,34 +1,46 @@
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Column
-from sqlmodel import Field, ForeignKey, Relationship, UniqueConstraint
+from sqlmodel import Relationship, UniqueConstraint
 
-from src.common.models import BaseModel, CommonModel
+from src.common.models import TenantModel
 
 if TYPE_CHECKING:
     from src.modules.organizations.models import Organization
     from src.modules.ticket.models.ticket import Ticket
 
 
-class TicketPriority(CommonModel, table=True):
+class TicketPriority(TenantModel, table=True):
+    """
+    Ticket Priority model
+    """
+
     __tablename__ = "ticket_priority"  # type:ignore
     __table_args__ = (
-        UniqueConstraint("organization_id", "name", name="uniq_org_name"),
+        UniqueConstraint(
+            "organization_id",
+            "name",
+            "level",
+            name="uniq_org_ticket_priority_name_level",
+        ),
     )
-
     name: str
     level: int
-    color: str
-    organization_id: int = Field(
-        sa_column=Column(ForeignKey("sys_organizations.id", ondelete="CASCADE"))
-    )
+    bg_color: str
+    fg_color: str
     tickets: List["Ticket"] = Relationship(back_populates="priority")
-    organizations: List["Organization"] = Relationship(back_populates="priorities")
+    organization: "Organization" = Relationship(back_populates="ticket_priorities")
 
     def to_dict(self):
+        """
+        Returns the model values in dictionary
+        """
         return {
             "id": self.id,
             "name": self.name,
             "level": self.level,
-            "color": self.color,
+            "bg_color": self.bg_color,
+            "fg_color": self.fg_color,
         }
+
+    def __str__(self):
+        return f"{self.name}-{self.organization_id}"

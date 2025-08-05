@@ -13,10 +13,18 @@ class TicketPriorityService:
         List all the priorites on the basis of the organization
         """
         try:
-            organization_id: int = user.attributes.get("organization_id")
-            priorities = await TicketPriority.filter(
-                where={"organization_id": organization_id}
-            )
+            # organization_id: int = user.attributes.get("organization_id")
+            priorities = await TicketPriority.filter()
+
+            # if there is none of them, then list the default ones
+            if len(priorities) == 0:
+                default_priorities = await TicketPriority.filter(
+                    where={"organization_id": None}
+                )
+                payload = [priority.to_dict() for priority in default_priorities]
+                return cr.success(
+                    message="Successfully listed priorities", data=payload
+                )
 
             payload = [priority.to_dict() for priority in priorities]
             return cr.success(message="Successfully listed priorities", data=payload)
@@ -30,13 +38,14 @@ class TicketPriorityService:
         """
         try:
             organization_id: int = user.attributes.get("organization_id")
-            for data in payload:
+            for d in payload:
+                data = d.model_dump()
                 record = await TicketPriority.find_one(
-                    where={"name": data.name, "organization_id": organization_id}
+                    where={"name": data["name"], "organization_id": organization_id}
                 )
                 if not record:
                     data["organization_id"] = organization_id
-                    await TicketPriority.create(**dict(data))
+                    await TicketPriority.create(**data)
 
             return cr.success(
                 message="Successfully created priorities", status_code=201
