@@ -29,15 +29,19 @@ class Organization(CommonModel, table=True):
 
     identifier: str = Field(default=None, max_length=255, nullable=True)
 
-    twitter_username: str = Field(default=None, max_length=255, nullable=True)
     contact_phone: str = Field(default=None, max_length=10, nullable=True)
     contact_email: str = Field(
         default=None,
     )
 
-    contact_dial_code: str = Field(default=None, max_length=10, nullable=True)
+    twitter_username: Optional[str] = Field(default=None, max_length=255, nullable=True)
+    facebook_username: Optional[str] = Field(default=None, max_length=255)
+    whatsapp_username: Optional[str] = Field(default=None, max_length=255)
+    telegram_username: Optional[str] = Field(default=None, max_length=255)
 
-    address: str = Field(default=None, max_length=255)
+    contact_dial_code: Optional[str] = Field(default=None, max_length=10, nullable=True)
+
+    address: Optional[str] = Field(default=None, max_length=255)
 
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
@@ -46,10 +50,6 @@ class Organization(CommonModel, table=True):
     ticket_priorities: List["TicketPriority"] = Relationship(
         back_populates="organization"
     )
-
-    facebook_username = Field(default=None, max_length=255)
-    whatsapp_username = Field(default=None, max_length=255)
-    telegram_usernmae = Field(default=None, max_length=255)
 
     ticket_status: List["TicketStatus"] = Relationship(back_populates="organizations")
     tickets: List["Ticket"] = Relationship(back_populates="organization")
