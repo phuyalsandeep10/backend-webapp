@@ -13,7 +13,11 @@ if TYPE_CHECKING:
 
 class Conversation(CommonModel, table=True):
     __tablename__ = "org_conversations"  # type:ignore
+<<<<<<< HEAD
     name: str = Field(max_length=255, index=True, nullable=True)
+=======
+    name: str = Field(max_length=255, index=True, nullable=True) 
+>>>>>>> be1cf02 (customer seed added)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
     customer_id: int = Field(foreign_key="org_customers.id", nullable=False)
     organization: Optional["Organization"] = Relationship(
@@ -21,7 +25,10 @@ class Conversation(CommonModel, table=True):
     )
     customer: Optional["Customer"] = Relationship(back_populates="conversations")
     members: List["ConversationMember"] = Relationship(back_populates="conversation")
+<<<<<<< HEAD
 
+=======
+>>>>>>> be1cf02 (customer seed added)
 
 class ConversationMember(CommonModel, table=True):
     __tablename__ = "org_conversation_members"  # type:ignore

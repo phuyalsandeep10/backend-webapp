@@ -35,10 +35,6 @@ class Customer(CommonModel, table=True):
 class CustomerVisitLogs(CommonModel, table=True):
     __tablename__ = "org_customer_visit_logs"  # type:ignore
     ip_address: str = Field(max_length=255, index=True, nullable=True)
-    latitude: float = Field(nullable=True)
-    longitude: float = Field(nullable=True)
-    city: str = Field(max_length=255, nullable=True)
-    country: str = Field(max_length=255, nullable=True)
 
     location: str = Field(max_length=300, nullable=True)
     customer_id: int = Field(foreign_key="org_customers.id", nullable=False)
