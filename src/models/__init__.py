@@ -9,11 +9,9 @@ from src.modules.auth.models import User
 from src.modules.chat.models.conversation import Conversation, ConversationMember
 
 # Import chat models
-<<<<<<< HEAD
-from src.modules.chat.models.customer import Customer
-=======
+
 from src.modules.chat.models.customer import Customer, CustomerVisitLogs
->>>>>>> ebab2db (fixed issue)
+
 from src.modules.chat.models.message import Message, MessageAttachment
 
 # Import organization models
@@ -57,5 +55,6 @@ __all__ = [
     "TicketAlert",
     "TicketPriority",
     "TicketSLA",
+    "CustomerVisitLogs",
     # "Admin"
 ]

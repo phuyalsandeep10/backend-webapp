@@ -22,6 +22,7 @@ class Conversation(CommonModel, table=True):
     customer: Optional["Customer"] = Relationship(back_populates="conversations")
     members: List["ConversationMember"] = Relationship(back_populates="conversation")
 
+
 class ConversationMember(CommonModel, table=True):
     __tablename__ = "org_conversation_members"  # type:ignore
     user_id: int = Field(foreign_key="sys_users.id", nullable=False)

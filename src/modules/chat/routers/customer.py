@@ -36,10 +36,7 @@ async def create_customer(organizationId: int, request: Request):
     print(f"Customer count: {customer_count}")
 
     customer = await Customer.create(
-        name=f"{ip}-customer",
-        ip_address=ip,
-        organization_id=organizationId,
-        email="rajivmahato@customer.com",
+        name=f"guest-{customer_count}", ip_address=ip, organization_id=organizationId
     )
 
     conversation = await Conversation.create(
@@ -121,4 +118,4 @@ async def get_customers(organizationId: int, user=Depends(get_current_user)):
     customers = await Customer.filter(where={"organization_id": organizationId})
     new_customers = [cus.to_json() for cus in customers]
 
-    return cr.success(data=[cus.to_json() for cus in customers])
+    return cr.success(data=new_customers)

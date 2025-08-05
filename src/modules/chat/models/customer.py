@@ -1,10 +1,13 @@
 from typing import TYPE_CHECKING, List, Optional
 
 from sqlmodel import Field, Relationship
-
+from typing import Optional, TYPE_CHECKING, List
+from datetime import datetime
 from src.common.models import CommonModel
 from typing import Optional, TYPE_CHECKING, List
 import datetime
+from sqlalchemy import Column, JSON
+
 
 if TYPE_CHECKING:
     from src.modules.chat.models.conversation import Conversation
@@ -30,13 +33,17 @@ class Customer(CommonModel, table=True):
     visit_logs: List["CustomerVisitLogs"] = Relationship(back_populates="customer")
 
     is_online: bool = Field(default=False)
+    tickets: List["Ticket"] = Relationship(back_populates="customer")
 
 
 class CustomerVisitLogs(CommonModel, table=True):
     __tablename__ = "org_customer_logs"  # type:ignore
     ip_address: str = Field(max_length=255, index=True, nullable=True)
-
-    location: str = Field(max_length=300, nullable=True)
+    latitude: str = Field(nullable=True)
+    longitude: str = Field(nullable=True)
+    city: str = Field(max_length=255, nullable=True)
+    country: str = Field(max_length=255, nullable=True)
+    # location: str = Field(max_length=300, nullable=True)
     customer_id: int = Field(foreign_key="org_customers.id", nullable=False)
     customer: Optional["Customer"] = Relationship(back_populates="visit_logs")
 

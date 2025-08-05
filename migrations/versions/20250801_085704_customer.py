@@ -30,8 +30,8 @@ class CustomerMigration(BaseMigration):
         self.string("phone", nullable=True)
         self.string("address", nullable=True)
         self.string("ip_address", nullable=False)
-        self.boolean('is_online', nullable=False, default=False)
-        self.json('attributes',default={},nullable=True)
+        self.boolean("is_online", nullable=False, default=False)
+        self.json("attributes", default={}, nullable=True)
 
 
 def upgrade() -> None:
