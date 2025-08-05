@@ -540,13 +540,13 @@ class BaseModel(SQLModel):
         options: Optional[list[Any]] = None,
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> Optional[T]:
-    
+
         if where is not None:
             if "deleted_at" in inspect(cls).columns:  # type:ignore
                 where.setdefault("deleted_at", None)
         statement = query_statement(cls, where=where, joins=joins, options=options)
+
         if related_items:
-            # related_items can be a single selectinload() or a list of them
             if isinstance(related_items, list):
                 for item in related_items:
                     statement = statement.options(item)
@@ -555,26 +555,21 @@ class BaseModel(SQLModel):
         async with async_session() as session:
             result = await session.execute(statement)
             return result.scalars().first() if result else None
-    
+
     @classmethod
-    async def sql(cls: Type[T], sql:str) -> int:
-        
+    async def sql(cls: Type[T], sql: str) -> int:
+
         async with async_session() as session:
-          
+
             result = await session.execute(sa.text(sql))
             return result.scalar()
-        
-            
-
-
-    
 
 
 class CommonModel(BaseModel):
     active: bool = Field(default=True)
-    created_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
-    updated_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
-    deleted_at: Optional[datetime] = None
+    created_by_id: int = Field(foreign_key="sys_users.id", nullable=True)
+    updated_by_id: int = Field(foreign_key="sys_users.id", nullable=True)
+    deleted_at: Optional[datetime] = Field(default=None, nullable=True)
 
     # arbitrary_types_allowed = True
 

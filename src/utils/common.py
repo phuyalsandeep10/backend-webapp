@@ -1,7 +1,10 @@
 import os
 import httpx
+
+
 def is_production_env():
     return os.getenv("ENV", "development") == "production"
+
 
 async def get_location(ip: str):
     """retrieve location data from ip-api.com"""
@@ -11,10 +14,10 @@ async def get_location(ip: str):
         if data.get("status") != "success":
             return {
                 "ip": ip,
-                "latitude": None,
-                "longitude": None,
-                "city": None,
-                "country": None,
+                "latitude": "",
+                "longitude": "",
+                "city": "",
+                "country": "",
             }
         return {
             "ip": ip,
@@ -29,4 +32,3 @@ async def get_location(ip: str):
             "as": data.get("as"),
             "query": data.get("query"),
         }
-  
