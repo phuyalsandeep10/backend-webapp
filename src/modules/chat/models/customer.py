@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 class Customer(CommonModel, table=True):
     __tablename__ = "org_customers"  # type:ignore
-    name: str = Field(max_length=255, index=True, nullable=True) 
+    name: str = Field(max_length=255, index=True, nullable=True)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
     organization: Optional["Organization"] = Relationship(back_populates="customers")
     conversations: List["Conversation"] = Relationship(back_populates="customer")
@@ -37,8 +37,8 @@ class Customer(CommonModel, table=True):
 class CustomerVisitLogs(CommonModel, table=True):
     __tablename__ = "org_customer_logs"  # type:ignore
     ip_address: str = Field(max_length=255, index=True, nullable=True)
-    latitude: float = Field(nullable=True)
-    longitude: float = Field(nullable=True)
+    latitude: str = Field(nullable=True)
+    longitude: str = Field(nullable=True)
     city: str = Field(max_length=255, nullable=True)
     country: str = Field(max_length=255, nullable=True)
     # location: str = Field(max_length=300, nullable=True)
@@ -59,8 +59,6 @@ class CustomerVisitLogs(CommonModel, table=True):
 
     join_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     left_at: Optional[datetime] = Field(default=None, nullable=True)
-    city: str = Field(max_length=255, index=True, nullable=True)
-    country: str = Field(max_length=255, index=True, nullable=True)
 
     def to_dict(self):
         return {
