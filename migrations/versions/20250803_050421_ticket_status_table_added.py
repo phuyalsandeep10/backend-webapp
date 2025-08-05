@@ -30,7 +30,7 @@ class TicketStatusMigration(BaseMigration):
         self.string(name="name")
         self.string(name="bg_color")
         self.string(name="fg_color")
-        self.boolean(name="is_default")
+        self.boolean(name="is_default", default=False)
         self.string(name="status_category")
         self.unique_constraint(
             "organization_id",
@@ -51,6 +51,7 @@ def upgrade() -> None:
             "fg_color": "#ffffff",
             "organization_id": None,
             "status_category": "pending",
+            "is_default": True,
         },
         {
             "id": 2,
@@ -59,6 +60,7 @@ def upgrade() -> None:
             "fg_color": "#ffffff",
             "organization_id": None,
             "status_category": "open",
+            "is_default": False,
         },
         {
             "id": 3,
@@ -67,6 +69,7 @@ def upgrade() -> None:
             "fg_color": "#ffffff",
             "organization_id": None,
             "status_category": "closed",
+            "is_default": False,
         },
         {
             "id": 4,
@@ -75,6 +78,7 @@ def upgrade() -> None:
             "fg_color": "#ffffff",
             "organization_id": None,
             "status_category": "open",
+            "is_default": False,
         },
     ]
     TicketStatusMigration().bulk_insert_data(rows=default_ticket_status)
