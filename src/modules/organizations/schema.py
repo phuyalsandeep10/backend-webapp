@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr
 from typing import List
+from typing import Optional
 
 
 class OrganizationSchema(BaseModel):
@@ -8,7 +9,7 @@ class OrganizationSchema(BaseModel):
         None, max_length=500, description="Description of the organization"
     )
     domain: str = Field(..., max_length=255, description="Domain of the organization")
-    # slug: str = Field(..., max_length=255, description="Unique slug for the organization")
+
     logo: str | None = Field(
         None, max_length=255, description="Logo URL for the organization"
     )
@@ -22,6 +23,8 @@ class OrganizationRoleSchema(BaseModel):
     description: str | None = Field(
         None, max_length=500, description="Description of the role"
     )
+    # permissions: List[UpdateRoleInSchema] = []
+
     # permissions: list[str] = Field([])
 
 
@@ -53,6 +56,35 @@ class RolePermissionInSchema(BaseModel):
     role_id: int
     permission_id: int
     value: bool = False
+
+
+class CreateRoleOutSchema(BaseModel):
+    role_id: int
+    role_name: str
+    description: str
+    org_name: str
+
+
+class UpdateRoleInSchema(BaseModel):
+    permission_id: int
+    is_changeable: bool = False
+    is_deletable: bool = False
+    is_viewable: bool = False
+
+
+class UpdateRoleInfoSchema(BaseModel):
+    role_name: str = Field(..., max_length=100, description="Name of the role")
+    description: str | None = Field(
+        None, max_length=500, description="Description of the role"
+    )
+    permissions: List[UpdateRoleInSchema] = []
+
+
+class CreateRoleSchema(BaseModel):
+    name: str = Field(..., max_length=100)
+    description: str = Field(..., max_length=500)
+    permissions: List[UpdateRoleInSchema] = []
+
 
 class CreateRoleOutSchema(BaseModel):
     role_id: int
