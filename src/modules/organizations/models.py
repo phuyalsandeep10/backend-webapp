@@ -36,7 +36,7 @@ class Organization(CommonModel, table=True):
 
     twitter_username: Optional[str] = Field(default=None, max_length=255, nullable=True)
     facebook_username: Optional[str] = Field(default=None, max_length=255)
-    whatsapp_username: Optional[str] = Field(default=None, max_length=255)
+    whatsapp_number: Optional[str] = Field(default=None, max_length=255)
     telegram_username: Optional[str] = Field(default=None, max_length=255)
 
     contact_dial_code: Optional[str] = Field(default=None, max_length=10, nullable=True)
