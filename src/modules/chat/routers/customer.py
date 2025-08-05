@@ -121,8 +121,4 @@ async def get_customers(organizationId: int, user=Depends(get_current_user)):
     customers = await Customer.filter(where={"organization_id": organizationId})
     new_customers = [cus.to_json() for cus in customers]
 
-<<<<<<< HEAD
     return cr.success(data=[cus.to_json() for cus in customers])
-=======
-    return cr.success(data=new_customers)
->>>>>>> 441df7e (customer logs added fix)

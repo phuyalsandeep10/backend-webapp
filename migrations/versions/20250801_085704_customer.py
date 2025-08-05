@@ -6,12 +6,6 @@ Create Date: 2025-08-01 14:42:05.815483
 
 """
 
-<<<<<<< HEAD
-=======
-from httpx._transports import default
-from sqlmodel import null
-from migrations.base import BaseMigration
->>>>>>> 8c04d2f (customer logs added)
 from typing import Sequence, Union
 
 from migrations.base import BaseMigration
