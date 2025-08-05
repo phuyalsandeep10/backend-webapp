@@ -3,6 +3,7 @@ from src.models import Customer,Conversation, Organization
 
 
 async def create_customer_seed():
+    print('Creating customer seed')
     customer = {
         'ip_address':'203.0.113.1',
         'email':'customer@chatboq.com',

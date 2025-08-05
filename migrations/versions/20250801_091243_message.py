@@ -28,6 +28,8 @@ class MessageMigration(BaseMigration):
         self.string("content", nullable=False)
         self.foreign("customer_id", "org_customers")
         self.string("feedback", nullable=True)
+        self.boolean("seen", nullable=False, default=False)
+        self.foreign("reply_to_id", "org_messages", nullable=True)
         # describe your schemas here
 
 

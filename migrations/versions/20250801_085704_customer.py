@@ -6,6 +6,12 @@ Create Date: 2025-08-01 14:42:05.815483
 
 """
 
+<<<<<<< HEAD
+=======
+from httpx._transports import default
+from sqlmodel import null
+from migrations.base import BaseMigration
+>>>>>>> 8c04d2f (customer logs added)
 from typing import Sequence, Union
 
 from migrations.base import BaseMigration
@@ -30,6 +36,8 @@ class CustomerMigration(BaseMigration):
         self.string("phone", nullable=True)
         self.string("address", nullable=True)
         self.string("ip_address", nullable=False)
+        self.boolean('is_online', nullable=False, default=False)
+        self.json('attributes',default={},nullable=True)
 
 
 def upgrade() -> None:

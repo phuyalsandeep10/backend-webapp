@@ -27,7 +27,7 @@ from .schema import (
     ValidateEmailSchema
 )
 from src.utils.response import CustomResponse as cr
-
+from src.utils.common import get_location
 from .models import User, EmailVerification, RefreshToken
 
 
@@ -58,6 +58,7 @@ async def create_token(user):
     token = create_access_token(data={"sub": user.email})
     refresh_token = generate_refresh_token()
 
+
     await RefreshToken.create(
         user_id=user.id,
         token=refresh_token,
@@ -70,9 +71,11 @@ async def create_token(user):
 
 
 @router.post("/login")
-async def user_login(request: LoginSchema):
+async def user_login(schema: LoginSchema):
+   
 
-    user = await User.find_one(where={"email": request.email})
+    user = await User.find_one(where={"email": schema.email})
+    await User.count("select count(*) from sys_users")
 
     # Check if user exists
     if not user:
@@ -81,7 +84,7 @@ async def user_login(request: LoginSchema):
     if not user.password:
         return cr.error(data={"success": False,"errors":{"password":["Invalid Password"]}},message="Invalid Password")
 
-    if not compare_password(user.password, request.password):
+    if not compare_password(user.password, schema.password):
         return cr.error(data={"success": False,"errors":{"password":["Invalid Password"]}},message="Invalid Password")
 
     data = await create_token(user)

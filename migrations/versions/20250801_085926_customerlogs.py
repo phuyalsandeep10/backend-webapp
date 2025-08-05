@@ -28,6 +28,8 @@ class CustomerlogsMigration(BaseMigration):
         self.string("latitude")
         self.string("longitude")
         self.string("country")
+    
+    
         self.string("city")
         self.string("device")
         self.string("browser")
