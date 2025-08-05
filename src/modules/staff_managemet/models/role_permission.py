@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class RolePermission(CommonModel, table=True):
-    __tablename__ = "sys_role_permissions"
+    __tablename__ = "role_permissions"
 
     permission_id: int = Field(
         foreign_key="sys_permissions.id",

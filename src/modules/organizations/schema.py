@@ -47,3 +47,15 @@ class AssignRoleSchema(BaseModel):
 
 class AssignPermissionSchema(BaseModel):
     permission_ids: List[int]
+
+
+class RolePermissionInSchema(BaseModel):
+    role_id: int
+    permission_id: int
+    value: bool = False
+
+class CreateRoleOutSchema(BaseModel):
+    role_id: int
+    role_name: str
+    description: str
+    org_name: str

@@ -156,3 +156,4 @@ class PriorityOut(CreatePrioriySchema):
 
 class TicketStatusOut(CreateTicketStatusSchema):
     id: int
+

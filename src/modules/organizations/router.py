@@ -16,17 +16,22 @@ from src.models import (
     User,
 )
 
+from src.db.config import async_session
+from sqlmodel import select
 from src.tasks import send_invitation_email
 from src.common.utils import random_unique_key
 from src.utils.response import CustomResponse as cr
-from src.modules.staff_managemet.models.role_permission import RolePermission
-from src.modules.staff_managemet.models.permissions import Permissions
+from src.modules.staff_managemet.models import RolePermission
+from src.modules.staff_managemet.models import Permissions
+from src.modules.staff_managemet.models import PermissionGroup
 
 from .schema import (
     OrganizationSchema,
     OrganizationInviteSchema,
     OrganizationRoleSchema,
     AssignRoleSchema,
+    RolePermissionInSchema,
+    CreateRoleOutSchema,
 )
 
 router = APIRouter()
@@ -188,28 +193,70 @@ async def set_organization(
     return cr.success(data={"message": "Organization set successfully"})
 
 
+# @router.post("/roles")
+# async def create_role(body: OrganizationRoleSchema, user=Depends(get_current_user)):
+#     organization_id = user.attributes.get("organization_id")
+
+#     record = await OrganizationRole.find_one(
+#         where={
+#             "name": {"mode": "insensitive", "value": body.name},
+#             "organization_id": organization_id,
+#         }
+#     )
+
+#     if record:
+#         raise HTTPException(400, "Duplicate record")
+
+#     async with async_session() as session:
+#         result = await session.execute(select(Permissions))
+#         all_permissions = result.scalars().all()
+
+#     role = await OrganizationRole.create(
+#         name=body.name,
+#         organization_id=organization_id,
+#         identifier=body.name.lower().replace(" ", "-"),
+#         description=body.description,
+#     )
+
+#     role_permission_entries = [
+#         RolePermission(
+#             **RolePermissionInSchema(
+#                 role_id=role.id, permission_id=perm.id, value=False
+#             ).dict()
+#         )
+#         for perm in all_permissions
+#     ]
+
+#     async with async_session() as session:
+#         session.add_all(role_permission_entries)
+#         await session.commit()
+
+#     print("Role object:", role)
+#     print("Role dict:", role.__dict__)
+
+#     return cr.success(data=role)
+
+
 @router.post("/roles")
 async def create_role(body: OrganizationRoleSchema, user=Depends(get_current_user)):
-    """
-    Create a new role for an organization.
-    """
-
     organization_id = user.attributes.get("organization_id")
+
+    # Check for duplicate
     record = await OrganizationRole.find_one(
         where={
             "name": {"mode": "insensitive", "value": body.name},
             "organization_id": organization_id,
         }
     )
-
     if record:
         raise HTTPException(400, "Duplicate record")
 
-    # permissions = []
-    # if body.permissions:
-    #     permissions = list(set(body.permissions))
-    all_permissions = await permissions.all()
+    # Get all permissions
+    async with async_session() as session:
+        result = await session.execute(select(Permissions))
+        all_permissions = result.scalars().all()
 
+    # Create new role
     role = await OrganizationRole.create(
         name=body.name,
         organization_id=organization_id,
@@ -217,12 +264,32 @@ async def create_role(body: OrganizationRoleSchema, user=Depends(get_current_use
         description=body.description,
     )
 
+    # Create role-permissions
     role_permission_entries = [
-        role_permissions(role_id=role.id, permission_id=perm.id, value=False)
+        RolePermission(
+            **RolePermissionInSchema(
+                role_id=role.id, permission_id=perm.id, value=False
+            ).dict()
+        )
         for perm in all_permissions
     ]
-    await role_permissions.bulk_create(role_permission_entries)
-    return cr.success(data=role)
+
+    async with async_session() as session:
+        session.add_all(role_permission_entries)
+        await session.commit()
+
+    # Get organization name
+    org = await Organization.get(organization_id)
+
+    # Construct response
+    response = CreateRoleOutSchema(
+        role_id=role.id,
+        role_name=role.name,
+        description=role.description,
+        org_name=org.name,
+    )
+
+    return cr.success(data=response.model_dump())
 
 
 @router.put("/roles/{role_id}")
