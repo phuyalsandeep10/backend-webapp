@@ -20,7 +20,6 @@ async def organization_seed_dummy():
             description="test description",
             slug="test".lower().replace(" ", "-"),  # Simple slug generation
             logo="test",
-            website="test.com",
             owner_id=user.id,
             domain="https://test.com",
             identifier="test1",
@@ -36,7 +35,6 @@ async def organization_seed_dummy():
             description="test2 description",
             slug="test2".lower().replace(" ", "-"),  # Simple slug generation
             logo="test2",
-            website="test2.com",
             owner_id=user.id,
             domain="https://test2.com",
             identifier="test2",

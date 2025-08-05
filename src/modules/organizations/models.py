@@ -26,7 +26,6 @@ class Organization(CommonModel, table=True):
     identifier: str = Field(default=None, max_length=255)
     domain: str = Field(default=None, max_length=255)
     logo: str = Field(default=None, max_length=255, nullable=True)
-    website: str = Field(default=None, max_length=255, nullable=True)
 
     identifier: str = Field(default=None, max_length=255, nullable=True)
 
