@@ -5,7 +5,6 @@ from typing import Optional, TYPE_CHECKING, List
 from datetime import datetime
 from src.common.models import CommonModel
 from typing import Optional, TYPE_CHECKING, List
-import datetime
 from sqlalchemy import Column, JSON
 
 
