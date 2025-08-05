@@ -11,4 +11,4 @@ RUN uv pip install --system .
 COPY ./src ./src
 COPY ./src/main.py ./src/main.py
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.main:socket_app", "--host", "0.0.0.0", "--port", "8000"] && ["celery", "-A", "src.config.celery", "worker", "--loglevel=INFO"]
