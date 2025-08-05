@@ -39,7 +39,6 @@ class OrganizationMigration(BaseMigration):
         self.string("telegram_username")
         self.string("facebook_username")
         self.string("whatsapp_number")
-        
 
 
 def upgrade() -> None:

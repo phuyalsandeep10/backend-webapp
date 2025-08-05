@@ -23,23 +23,34 @@ class Organization(CommonModel, table=True):
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     slug: str = Field(default=None, max_length=255, nullable=False, index=True)
-    identifier: str = Field(default=None, max_length=255)
+
     domain: str = Field(default=None, max_length=255)
     logo: str = Field(default=None, max_length=255, nullable=True)
 
     identifier: str = Field(default=None, max_length=255, nullable=True)
 
-    instagram: str = Field(default=None, max_length=255, nullable=True)
     twitter_username: str = Field(default=None, max_length=255, nullable=True)
-    phone: str = Field(default=None, max_length=10, nullable=True)
-    dial_code: str = Field(default=None, max_length=10, nullable=True)
+    contact_phone: str = Field(default=None, max_length=10, nullable=True)
+    contact_email: str = Field(
+        default=None,
+    )
+
+    contact_dial_code: str = Field(default=None, max_length=10, nullable=True)
+
+    address: str = Field(default=None, max_length=255)
 
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
+
     ticket_priorities: List["TicketPriority"] = Relationship(
         back_populates="organization"
     )
+
+    facebook_username = Field(default=None, max_length=255)
+    whatsapp_username = Field(default=None, max_length=255)
+    telegram_usernmae = Field(default=None, max_length=255)
+
     ticket_status: List["TicketStatus"] = Relationship(back_populates="organizations")
     tickets: List["Ticket"] = Relationship(back_populates="organization")
     purpose: str = Field(default=None, max_length=250, nullable=True)
