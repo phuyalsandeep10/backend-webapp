@@ -4,12 +4,12 @@ from typing import Any, List, Optional, Type, TypeVar, Union
 
 import sqlalchemy as sa
 from sqlalchemy import and_, inspect, or_
-from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
-from sqlmodel import Column, Field, ForeignKey, SQLModel, select
+from sqlmodel import Field, SQLModel, select
 
 from src.common.context import TenantContext
 from src.db.config import async_session
+
 
 T = TypeVar("T")
 
@@ -175,6 +175,7 @@ class BaseModel(SQLModel):
         options: Optional[list[Any]] = None,
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> Optional[T]:
+    
         if where is not None:
             if "deleted_at" in inspect(cls).columns:  # type:ignore
                 where.setdefault("deleted_at", None)
@@ -189,6 +190,19 @@ class BaseModel(SQLModel):
         async with async_session() as session:
             result = await session.execute(statement)
             return result.scalars().first() if result else None
+    
+    @classmethod
+    async def sql(cls: Type[T], sql:str) -> int:
+        
+        async with async_session() as session:
+          
+            result = await session.execute(sa.text(sql))
+            return result.scalar()
+        
+            
+
+
+    
 
 
 class CommonModel(BaseModel):

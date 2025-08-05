@@ -1,9 +1,10 @@
 from fastapi import APIRouter
-from fastapi import FastAPI, Request, Header, Depends
-import httpx
+from fastapi import Request, Header, Depends
+ 
 from src.common.dependencies import get_current_user
 from src.models import Conversation, Customer, CustomerVisitLogs
 from src.utils.response import CustomResponse as cr
+from src.utils.common import get_location
 
 router = APIRouter()
 
@@ -11,15 +12,19 @@ router = APIRouter()
 @router.post("/{organizationId}")
 async def create_customer(organizationId: int, request: Request):
     header = request.headers.get("X-Forwarded-For")
+    
 
     ip = header.split(",")[0].strip() if header else request.client.host
+    customer_count = await Customer.sql(f"select count(*) from org_customers where organization_id={organizationId}")
+    customer_count += 1
+    print(f"Customer count: {customer_count}")
 
     customer = await Customer.create(
-        name=f"{ip}-customer", ip_address=ip, organization_id=organizationId
+        name=f"guest-{customer_count}", ip_address=ip, organization_id=organizationId
     )
 
     conversation = await Conversation.create(
-        name=f"{ip}-Conversation",
+        name=f"guest-{customer_count}",
         customer_id=customer.id,
         ip_address=ip,
         organization_id=organizationId,
@@ -30,11 +35,13 @@ async def create_customer(organizationId: int, request: Request):
     return {"customer": customer, "conversation": conversation}
 
 
+
+
 async def save_log(ip: str, customer_id: int, request):
     data = {}
-    async with httpx.AsyncClient(timeout=3.0) as client:
-        resp = await client.get(f"http://ip-api.com/json/{ip}")
-        data = resp.json()
+
+    data = await get_location(ip)
+    print(f"Location data: {data}") 
 
     city = data.get("city")
     country = data.get("country")
@@ -49,7 +56,7 @@ async def save_log(ip: str, customer_id: int, request):
         latitude=latitude,
         longitude=longitude,
         device=request.headers.get("User-Agent", ""),
-        referral_from=request.headers.get("Referer") or None,
+        # referral_from=request.headers.get("Referer") or None,
     )
 
     return log
