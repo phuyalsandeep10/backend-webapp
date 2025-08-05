@@ -34,7 +34,7 @@ jobs:
           source: "chatboq-back.tar"
           target: "/var/www/chatboq_portal/test_api"
 
-      #4. now lets load and run teh container on the server
+      #4. now let's load and run teh container on the server
       - name: Deploy with docker-compose
         uses: appleboy/ssh-action@master
         with:
