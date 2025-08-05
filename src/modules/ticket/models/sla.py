@@ -18,14 +18,11 @@ class TicketSLA(TenantModel, table=True):
     name: str = Field(nullable=True, unique=True)
     response_time: int = Field(sa_column=Column(BigInteger, nullable=False))
     resolution_time: int = Field(sa_column=Column(BigInteger, nullable=False))
-<<<<<<< HEAD
     priority_id: int = Field(
         sa_column=(
             Column(ForeignKey("ticket_priority.id", ondelete="CASCADE"), nullable=False)
         )
     )
-=======
->>>>>>> 9f3397e (chore : fixed merge conflict)
     tickets: List[Ticket] = Relationship(back_populates="sla", passive_deletes=True)
 
     def __str__(self):
