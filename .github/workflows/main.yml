@@ -32,7 +32,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "chatboq-back.tar"
-          target: "/var/www/chatboq_portal/test_api"
+          target: "/var/www/chatboq_portal/chatboq_service"
 
       #4. now let's load and run teh container on the server
       - name: Deploy with docker-compose
@@ -42,7 +42,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/chatboq_portal/test_api
+            cd /var/www/chatboq_portal/chatboq_service
             docker load -i chatboq-back.tar
             docker-compose down
             docker-compose up -d --build
