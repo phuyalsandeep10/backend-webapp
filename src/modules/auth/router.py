@@ -208,13 +208,13 @@ async def register(request: RegisterSchema):
         from src.config.mail import mail_sender
         mail_sender.send(
         subject="Email Verification",
-        recipients=[email],
+        recipients=[request.email],
         body_html=f"<p>Email Verification Token: {token}</p>",
         body_text="This is a test email.",
         )
-        print(f"Email sent to {email}")
+        print(f"Email sent to {request.email}")
     except  Exception as e:
-        print(f"Email not sent to {email}")
+        print(f"Email not sent to {request.email}")
         print('error', e)
 
     # send_verification_email.delay(email=request.email, token=token)
