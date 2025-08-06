@@ -44,7 +44,7 @@ async def receiver(websocket: WebSocket, room: str):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"Hello": "Hello Chatboq World"}
 
 
 @app.get("/chat")
