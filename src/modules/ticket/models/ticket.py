@@ -7,6 +7,7 @@ from sqlmodel import Field, Relationship
 
 from src.common.models import BaseModel, TenantModel
 from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
+from src.modules.ticket.schemas import PriorityOut, SLAOut, TicketStatusOut
 
 if TYPE_CHECKING:
     from src.modules.auth.models import User
@@ -105,9 +106,9 @@ class Ticket(TenantModel, table=True):
             "title": self.title,
             "description": self.description,
             "attachment": self.attachment,
-            "priority": self.priority.to_dict(),
-            "status": self.status.to_dict(),
-            "sla": self.sla.to_dict(),
+            "priority": self.priority.to_json(PriorityOut),
+            "status": self.status.to_json(TicketStatusOut),
+            "sla": self.sla.to_json(SLAOut),
             "department": self.department.to_dict(),
             "created_by": self.created_by.to_dict(),
             "assignees": [assignee.to_dict() for assignee in self.assignees],
@@ -121,7 +122,7 @@ class Ticket(TenantModel, table=True):
             payload["customer_phone"] = (self.customer_phone,)
             payload["customer_location"] = (self.customer_location,)
         else:
-            payload["customer"] = self.customer.to_dict()
+            payload["customer"] = self.customer.to_json()
 
         return payload
 

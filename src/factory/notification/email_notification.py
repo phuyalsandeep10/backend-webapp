@@ -1,6 +1,6 @@
 import logging
 
-from src.factory.notification import NotificationInterface
+from src.factory.notification.interface import NotificationInterface
 from src.tasks import send_email
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class EmailNotification(NotificationInterface):
         body_text: str = "",
     ):
         try:
-            send_email(
+            send_email.delay(
                 subject=subject,
                 recipients=recipients,
                 body_html=body_html,

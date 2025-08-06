@@ -4,13 +4,6 @@ from typing import Any
 from src.factory.notification.email_notification import EmailNotification
 
 
-class NotificationInterface:
-
-    @abstractmethod
-    def send(self):
-        pass
-
-
 class NotificationFactory:
 
     @staticmethod
