@@ -25,10 +25,13 @@ from .schema import (
     VerifyTwoFAOtpSchema,
     UserSchema,
     ValidateEmailSchema,
+    VerifyEmailEnum,
+    ResendVerificationSchema
 )
 from src.utils.response import CustomResponse as cr
 from src.utils.common import get_location
 from .models import User, EmailVerification, RefreshToken
+from src.utils.common import is_production_env 
 
 
 from src.common.utils import (
@@ -113,7 +116,7 @@ async def logout(user=Depends(get_current_user)):
         return cr.error(
             data={
                 "success": False,
-                errors: {"token": ["No active refresh token found"]},
+                "errors": {"token": ["No active refresh token found"]},
             },
             message="No active refresh token found",
         )
@@ -193,12 +196,13 @@ async def register(request: RegisterSchema):
     token = generate_numeric_token(6)
     # Here you would typically send a verification email
 
+
     await EmailVerification.create(
         user_id=user.id,
         token=token,
         is_used=False,
         expires_at=datetime.utcnow() + timedelta(days=1),
-        type="email_verification",
+        type=VerifyEmailEnum.EmailVerification.value,
     )
 
     send_verification_email.delay(email=request.email, token=token)
@@ -258,7 +262,7 @@ async def verify_email_token(body: VerifyEmailTokenSchema):
     user = await User.update(user.id, email_verified_at=datetime.utcnow())
     tokens = await create_token(user)
 
-    return cr.success(data={"message": "Email verified successfully", **tokens})
+    return cr.success(data={"message": "Email verified successfully", **tokens,"user":user.to_json()})
 
 
 @router.post("/reset-password")
@@ -268,6 +272,8 @@ async def reset_password(body: ResetPasswordSchema, user=Depends(get_current_use
 
     if not user:
         return cr.error(data={"success": False}, message="Email not found")
+
+    
 
     # Generate a reset token (in a real application, you would send this to the user's email)
     password = user.password
@@ -284,8 +290,10 @@ async def reset_password(body: ResetPasswordSchema, user=Depends(get_current_use
 
 
 @router.post("/forgot-password-request")
-async def forgot_password_request(body: VerifyEmailSchema):
+async def forgot_password_request(body: VerifyEmailSchema,request: Request):
     user = await User.find_one({"email": body.email})
+    origin = request.headers.get("origin")
+    
 
     # Check if user exists
     if not user:
@@ -298,13 +306,44 @@ async def forgot_password_request(body: VerifyEmailSchema):
         token=token,
         is_used=False,
         expires_at=(datetime.utcnow() + timedelta(hours=1)),
-        type="forgot_password",
+        type=VerifyEmailEnum.ForgotPassword.value,  # Use the enum for type
     )
 
-    send_forgot_password_email.delay(email=body.email, token=token)
+    send_forgot_password_email.delay(email=body.email, token=token, frontend_url=origin)
 
     return cr.success(data={"message": "Password reset link sent to your email"})
 
+@router.post('/resend-verification-token')
+async def resend_verification_token(body:ResendVerificationSchema,request:Request):
+    user = await User.find_one({"email": body.email})
+    origin = request.headers.get("origin")
+     
+    if not user:
+        return cr.error(data={"success": False}, message="Email not found")
+    # Generate a new verification token
+    if body.type not in VerifyEmailEnum:
+        return cr.error(data={"success": False}, message="Invalid verification type")
+    
+    token = generate_numeric_token(6)
+
+    # Create or update the email verification record
+
+    
+    await EmailVerification.create(
+            user_id=user.id,
+            token=token,
+            is_used=False,
+            expires_at=datetime.utcnow() + timedelta(days=1),
+            type=VerifyEmailEnum.EmailVerification.value,
+    )
+    if body.type == VerifyEmailEnum.EmailVerification:
+        # Send verification email
+        send_verification_email.delay(email=user.email, token=token)
+    elif body.type == VerifyEmailEnum.ForgotPassword:
+        # Send forgot password email
+        send_forgot_password_email.delay(email=user.email, token=token, frontend_url=origin)
+
+    return cr.success(data={"message": "Verification token resent successfully"})
 
 @router.post("/forgot-password-verify")
 async def forgot_password_verify(body: ForgotPasswordVerifySchema):
@@ -350,14 +389,28 @@ async def get_invitations(user=Depends(get_current_user)):
 
 @router.get("/oauth/{provider}")
 async def oauth_login(request: Request, provider: str):
+    origin = request.headers.get("origin")
+    print(f"Origin: {origin}")
+    
     if provider not in ["google", "apple"]:
         return cr.error(data={"success": False}, message="Unsupported provider")
+    
     redirect_uri = request.url_for("oauth_callback", provider=provider)
+    is_production =  is_production_env()
+    # Ensure the redirect URI uses HTTPS in production
+    print(f"Is production environment: {is_production}")
+    if is_production:
+        redirect_uri = redirect_uri.replace("http://", "https://")
+    
+    # redirect_uri = f"{redirect_uri}?frontend_url={origin}" if origin else redirect_uri
+    
+   
     return await getattr(oauth, provider).authorize_redirect(request, redirect_uri)
 
 
 @router.get("/oauth/{provider}/callback")
 async def oauth_callback(request: Request, provider: ProviderEnum):
+    
     if provider not in ["google", "apple"]:
         return cr.error(data={"success": False}, message="Unsupported provider")
     client = getattr(oauth, provider)
