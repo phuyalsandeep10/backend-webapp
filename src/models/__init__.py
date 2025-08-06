@@ -9,13 +9,9 @@ from src.modules.auth.models import User
 from src.modules.chat.models.conversation import Conversation, ConversationMember
 
 # Import chat models
-<<<<<<< HEAD
-from src.modules.chat.models.customer import Customer
-=======
 
 from src.modules.chat.models.customer import Customer, CustomerVisitLogs
 
->>>>>>> 1a107ebf6153bf73854e8a942397333a9cffe4f6
 from src.modules.chat.models.message import Message, MessageAttachment
 
 # Import organization models
@@ -65,13 +61,10 @@ __all__ = [
     "TicketAlert",
     "TicketPriority",
     "TicketSLA",
-<<<<<<< HEAD
     # "Admin",
     Permissions,
     PermissionGroup,
     RolePermission,
-=======
     "CustomerVisitLogs",
     # "Admin"
->>>>>>> 1a107ebf6153bf73854e8a942397333a9cffe4f6
 ]
