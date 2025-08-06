@@ -1,1 +1,28 @@
+name: Chatboq total CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/chatboq_portal/chatboq-service
+            git pull origin main
+            docker-compose down
+            docker-compose up -d --build
+            docker exec -T chatboq-service-backend-1 python manage.py migrate
 
