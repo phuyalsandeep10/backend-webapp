@@ -1,3 +1,4 @@
+import logging
 import secrets
 from datetime import datetime
 
@@ -20,6 +21,8 @@ from src.modules.ticket.schemas import CreateTicketSchema, EditTicketSchema
 from src.utils.exceptions.ticket import TicketNotFound
 from src.utils.response import CustomResponse as cr
 from src.utils.validations import TenantEntityValidator
+
+logger = logging.getLogger(__name__)
 
 
 class TicketServices:
@@ -57,7 +60,7 @@ class TicketServices:
                 message="Successfully created a ticket",
             )
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while creating a ticket",
@@ -87,7 +90,7 @@ class TicketServices:
                 data=tickets,
             )
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while listing  tickets",
@@ -119,7 +122,7 @@ class TicketServices:
                 data=ticket.to_dict() if ticket else [],
             )
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while listing ticket",
@@ -127,10 +130,9 @@ class TicketServices:
 
     async def delete_ticket(self, ticket_id: int, user):
         try:
-            await Ticket.delete(
+            await Ticket.soft_delete(
                 where={
                     "id": ticket_id,
-                    "organization_id": user.attributes.get("organization_id"),
                 }
             )
             return cr.success(
@@ -138,7 +140,7 @@ class TicketServices:
                 message="Successfully deleted the ticket",
             )
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while deleting the tickets",
@@ -150,7 +152,7 @@ class TicketServices:
                 where={"id": ticket_id, "confirmation_token": token}
             )
             if ticket is None:
-                return cr.error(message="Invalid credentials")
+                raise TicketNotFound("Invalid credentials")
             # to find which is the open status category status defined the organization it could be in-progress, or open,ongoing
             open_status_category = await TicketStatus.find_one(
                 where={
@@ -172,7 +174,7 @@ class TicketServices:
             )
 
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(message="Invalid confirmation token")
 
     async def edit_ticket(self, ticket_id: int, payload: EditTicketSchema, user):

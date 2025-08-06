@@ -108,7 +108,7 @@ class BaseModel(SQLModel):
             return obj
 
     @classmethod
-    async def delete(cls: Type[T], where: Optional[dict] = None) -> None:
+    async def delete(cls: Type[T], where: dict = {}) -> None:
         async with async_session() as session:
             statement = query_statement(
                 cls,
@@ -121,7 +121,7 @@ class BaseModel(SQLModel):
                 await session.commit()
 
     @classmethod
-    async def soft_delete(cls: Type[T], where: Optional[dict] = None) -> None:
+    async def soft_delete(cls: Type[T], where: dict = {}) -> None:
         """
         This function is used for soft delete by setting the current time at deleted_at field
         """
@@ -361,3 +361,21 @@ class TenantModel(CommonModel):
         kwargs.setdefault("organization_id", organization_id)
         kwargs.setdefault("updated_by_id", user_id)
         return await super().update(id, **kwargs)
+
+    @classmethod
+    async def delete(cls: Type[T], where: dict = {}) -> None:
+        organization_id = TenantContext.get()
+        user_id = UserContext.get()
+        where.setdefault("organization_id", organization_id)
+        where.setdefault("updated_by_id", user_id)
+        return await super().delete(where)
+
+    @classmethod
+    async def soft_delete(cls: Type[T], where: dict = {}) -> None:
+        """
+        This function is used for soft delete by setting the current time at deleted_at field
+        """
+        organization_id = TenantContext.get()
+        user_id = UserContext.get()
+        where.setdefault("organization_id", organization_id)
+        return await super().soft_delete(where)
