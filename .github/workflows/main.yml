@@ -15,23 +15,23 @@ jobs:
 
       - name: Build backend Docker image
         run: |
-          docker build -t chatboq-back:latest -f Dockerfile.backend .
+          docker build -t chatboq-back:latest .
           docker save chatboq-back:latest -o chatboq-back.tar
           chmod 664 chatboq-back.tar
 
       - name: Build celery_worker Docker image
         run: |
-          docker build -t chatboq-celery-worker:latest -f Dockerfile.celery_worker .
+          docker build -t chatboq-celery-worker:latest .
           docker save chatboq-celery-worker:latest -o chatboq-celery-worker.tar
           chmod 664 chatboq-celery-worker.tar
 
       - name: Build celery_beat Docker image
         run: |
-          docker build -t chatboq-celery-beat:latest -f Dockerfile.celery_beat .
+          docker build -t chatboq-celery-beat:latest .
           docker save chatboq-celery-beat:latest -o chatboq-celery-beat.tar
           chmod 664 chatboq-celery-beat.tar
 
-      - name: Show files in workspace for debugging
+      - name: List files for debug
         run: ls -la
 
       - name: Copy all images to the server
