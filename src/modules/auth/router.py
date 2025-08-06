@@ -206,13 +206,14 @@ async def register(request: RegisterSchema):
     )
     try:
         from src.config.mail import mail_sender
-        mail_sender.send(
+        response = await mail_sender.send(
         subject="Email Verification",
         recipients=[request.email],
         body_html=f"<p>Email Verification Token: {token}</p>",
         body_text="This is a test email.",
         )
         print(f"Email sent to {request.email}")
+        print('response', response)
     except  Exception as e:
         print(f"Email not sent to {request.email}")
         print('error', e)
