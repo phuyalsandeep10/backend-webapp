@@ -127,3 +127,25 @@ class Ticket(TenantModel, table=True):
 
     def __str__(self):
         return self.title
+
+
+class TicketLog(TenantModel, table=True):
+    """
+    The model to audit logs of ticket
+    """
+
+    __tablename__ = "org_tickets_logs"  # type:ignore
+
+    actor_id: int = Field(
+        sa_column=Column(ForeignKey("sys_users.id", ondelete="SET NULL"))
+    )
+    ticket_id: int = Field(
+        sa_column=Column(ForeignKey("org_tickets.id", ondelete="SET NULL"))
+    )
+    action: str = Field(nullable=False)
+    description: str = Field(nullable=True)
+    previous_value: str = Field(nullable=True)
+    new_value: str = Field(nullable=True)
+
+    def __str__(self):
+        return self.action

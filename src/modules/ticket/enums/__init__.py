@@ -30,3 +30,13 @@ class WarningLevelEnum(str, Enum):
 class TicketAlertTypeEnum(str, Enum):
     RESPONSE = "response"
     RESOLUTION = "resolution"
+
+
+class TicketLogActionEnum(str, Enum):
+    TICKET_CREATED = "ticket_created"
+    TICKET_UPDATED = "ticket_created"
+    TICKET_DELETED = "ticket_created"
+    STATUS_CHANGED = "ticket_created"
+    ASSIGNEE_CHANGED = "ticket_created"
+    PRIORITY_CHANGED = "ticket_created"
+    CONFIRMATION_EMAIL_SENT = "confirmation_email_sent"
