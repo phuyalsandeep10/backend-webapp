@@ -1,42 +1,50 @@
 name: Chatboq total CI/CD
 
-#first lets define when
 on:
   push:
     branches:
       - main
   workflow_dispatch:
 
-#then lets define jobs
 jobs:
   build_deploy:
     runs-on: ubuntu-latest
     steps:
-      #1. first we pull the code to the temporary vm
       - name: Checkout code
         uses: actions/checkout@v2
 
-      #2. then lets build the image
-      - name: Build Docker image
-        # here we convert the image to a tarball
+      - name: Build backend Docker image
         run: |
-          docker build -t chatboq-back:latest .
-          docker save chatboq-back:latest -o chatboq-back.tar 
+          docker build -t chatboq-back:latest -f Dockerfile.backend .
+          docker save chatboq-back:latest -o chatboq-back.tar
           chmod 664 chatboq-back.tar
 
-      #3. Then lets copy the tarball to the server
-      - name: Copy the image to the server
-        uses: appleboy/scp-action@master
+      - name: Build celery_worker Docker image
+        run: |
+          docker build -t chatboq-celery-worker:latest -f Dockerfile.celery_worker .
+          docker save chatboq-celery-worker:latest -o chatboq-celery-worker.tar
+          chmod 664 chatboq-celery-worker.tar
+
+      - name: Build celery_beat Docker image
+        run: |
+          docker build -t chatboq-celery-beat:latest -f Dockerfile.celery_beat .
+          docker save chatboq-celery-beat:latest -o chatboq-celery-beat.tar
+          chmod 664 chatboq-celery-beat.tar
+
+      - name: Copy all images to the server
+        uses: appleboy/scp-action@v0.1.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "chatboq-back.tar"
-          target: "/var/www/chatboq_portal/chatboq-service"
+          source: |
+            chatboq-back.tar
+            chatboq-celery-worker.tar
+            chatboq-celery-beat.tar
+          target: /var/www/chatboq_portal/chatboq-service
 
-      #4. now let's load and run teh container on the server
       - name: Deploy with docker-compose
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v0.1.9
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -44,6 +52,7 @@ jobs:
           script: |
             cd /var/www/chatboq_portal/chatboq-service
             docker load -i chatboq-back.tar
+            docker load -i chatboq-celery-worker.tar
+            docker load -i chatboq-celery-beat.tar
             docker-compose down
-            docker-compose up -d --build
-            
+            docker-compose up -d
