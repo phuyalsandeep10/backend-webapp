@@ -4,6 +4,7 @@ from cachetools import TTLCache
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
+from typing import Optional
 
 from src.common.context import TenantContext, UserContext
 from src.config.settings import settings
@@ -34,10 +35,13 @@ async def get_user_by_token(token: str):
         return None
 
 
-async def get_current_user(
+async def validate_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    isEmailVerifyCheck: Optional[bool] = True,
+    isTwoFaVerifyCheck: Optional[bool] = True,
 ):
     """Get current authenticated user"""
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -62,11 +66,16 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        if not user.email_verified_at:
+        if isEmailVerifyCheck and not user.email_verified_at:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Email not verified",
                 headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if isTwoFaVerifyCheck and user.two_fa_enabled and not user.is_2fa_verified:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Email "
             )
 
         user_cache[token] = user  # Cache the user object
@@ -84,6 +93,27 @@ async def get_current_user(
     except JWTError as e:
         print("JWTError:", e)
         raise credentials_exception
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    return await validate_user(credentials=credentials)
+
+
+def get_current_user_factory(
+    isEmailVerifyCheck: bool = False, isTwoFaVerifyCheck: bool = False
+):
+    async def current_user(
+        credentials: HTTPAuthorizationCredentials = Depends(security),
+    ):
+        return await validate_user(
+            credentials=credentials,
+            isEmailVerifyCheck=isEmailVerifyCheck,
+            isTwoFaVerifyCheck=isTwoFaVerifyCheck,
+        )
+
+    return current_user
 
 
 def get_bearer_token(
