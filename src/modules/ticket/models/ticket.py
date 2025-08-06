@@ -117,10 +117,10 @@ class Ticket(TenantModel, table=True):
             "is_spam": self.is_spam,
         }
         if self.customer_id is None:
-            payload["customer_name"] = (self.customer_name,)
-            payload["customer_email"] = (self.customer_email,)
-            payload["customer_phone"] = (self.customer_phone,)
-            payload["customer_location"] = (self.customer_location,)
+            payload["customer_name"] = self.customer_name
+            payload["customer_email"] = self.customer_email
+            payload["customer_phone"] = self.customer_phone
+            payload["customer_location"] = self.customer_location
         else:
             payload["customer"] = self.customer.to_json()
 

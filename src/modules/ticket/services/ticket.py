@@ -70,7 +70,6 @@ class TicketServices:
         """
         try:
             all_tickets = await Ticket.filter(
-                where={"organization_id": user.attributes.get("organization_id")},
                 related_items=[
                     selectinload(Ticket.sla),
                     selectinload(Ticket.assignees),
