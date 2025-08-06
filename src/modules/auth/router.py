@@ -204,8 +204,20 @@ async def register(request: RegisterSchema):
         expires_at=datetime.utcnow() + timedelta(days=1),
         type=VerifyEmailEnum.EmailVerification.value,
     )
+    try:
+        from src.config.mail import mail_sender
+        mail_sender.send(
+        subject="Email Verification",
+        recipients=[email],
+        body_html=f"<p>Email Verification Token: {token}</p>",
+        body_text="This is a test email.",
+        )
+        print(f"Email sent to {email}")
+    except  Exception as e:
+        print(f"Email not sent to {email}")
+        print('error', e)
 
-    send_verification_email.delay(email=request.email, token=token)
+    # send_verification_email.delay(email=request.email, token=token)
 
     return cr.success(data={"message": "User registered successfully"})
 
