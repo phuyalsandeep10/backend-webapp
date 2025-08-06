@@ -3,7 +3,7 @@ from typing import List
 import pytest
 from httpx import AsyncClient
 
-from tests.common import get_login_token
+from ..common import get_login_token
 
 
 @pytest.mark.asyncio
