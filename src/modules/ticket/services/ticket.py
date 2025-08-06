@@ -18,6 +18,7 @@ from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import CreateTicketSchema, EditTicketSchema
+from src.modules.ticket.services.status import ticket_status_service
 from src.utils.exceptions.ticket import TicketNotFound
 from src.utils.response import CustomResponse as cr
 from src.utils.validations import TenantEntityValidator
@@ -154,16 +155,9 @@ class TicketServices:
             if ticket is None:
                 raise TicketNotFound("Invalid credentials")
             # to find which is the open status category status defined the organization it could be in-progress, or open,ongoing
-            open_status_category = await TicketStatus.find_one(
-                where={
-                    "organization_id": ticket.organization_id,
-                    "status_category": {"mode": "insensitive", "value": "open"},
-                }
+            open_status_category = (
+                await ticket_status_service.get_status_category_by_name("open")
             )
-            if open_status_category is None:
-                return cr.error(
-                    message="Open status category is not set in the ticket status"
-                )
             await Ticket.update(
                 id=ticket.id,
                 status_id=open_status_category.id,

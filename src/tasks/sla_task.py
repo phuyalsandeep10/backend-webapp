@@ -1,23 +1,44 @@
 import logging
 
-from celery import shared_task
-from redis.asyncio import Redis
+from asgiref.sync import async_to_sync
+from sqlalchemy.orm import selectinload
 
+from src.config.celery import celery_app
 from src.modules.ticket.models.ticket import Ticket
+from src.modules.ticket.services.sla import sla_service
+from src.modules.ticket.services.status import ticket_status_service
 
 logger = logging.getLogger(__name__)
 
-r = Redis()
 
-
-@shared_task
-def check_sla_percentage():
+async def check_sla_breach():
     """
-    Check the sla percentage from the sla services, check_ticket_sla_status
-    after that if the percentage is 75% then send a warning and set the ticket_alert value so that we
-    can know later that it has been sent
-    for websocket first publish to redis then redish sends data or message to the websocket
-    also maybe sending email is also a fall back for socket
-
+    Checks the sla breach of every tickets
     """
-    r.publish("sla_channel", "Checking the sla percentage")
+    # getting the default ticket status with close_status set by organization
+    closed_ticket_status = await ticket_status_service.get_status_category_by_name(
+        name="closed"
+    )
+    tickets = await Ticket.filter(
+        where={"status_id": {"ne": closed_ticket_status.id}},
+        related_items=[selectinload(Ticket.sla)],
+    )
+    logger.info("Arey hudai chha")
+    if not tickets:
+        return
+    for ticket in tickets:
+        if not ticket.opened_at:
+            return
+        response_remaining_time = sla_service.calculate_sla_response_time_percentage(
+            ticket.sla.response_time, int(ticket.opened_at.timestamp())
+        )
+        resolution_remaining_time = (
+            sla_service.calculate_sla_resolution_time_percentage(
+                ticket.sla.resolution_time, int(ticket.opened_at.timestamp())
+            )
+        )
+        logger.info(f"The response time {response_remaining_time}")
+        logger.info(f"The resolution time {resolution_remaining_time}")
+        await sla_service.sla_breach_notification(
+            ticket, response_remaining_time, resolution_remaining_time
+        )

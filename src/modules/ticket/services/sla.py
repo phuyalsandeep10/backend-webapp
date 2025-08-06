@@ -1,11 +1,13 @@
 import logging
 from datetime import datetime
+from time import time
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_403_FORBIDDEN
 
 from src.modules.auth.models import User
+from src.modules.ticket.enums import WarningLevelEnum
 from src.modules.ticket.models import TicketSLA
 from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import CreateSLASchema, SLAOut
@@ -102,30 +104,69 @@ class TicketSLAServices:
             )
 
     def calculate_sla_response_time_percentage(
-        self, response_time: int, created_at: datetime
+        self, response_time: int, opened_at: int
     ) -> int:
-        percentage = ((response_time - created_at.timestamp()) * 100) / response_time
+        """
+        Opened at time must be sent in timestamp format in terms of second
+        """
+        due_time = opened_at + response_time
+        percentage = ((due_time - int(time())) * 100) / due_time
+        logger.info(f"The due_time {due_time}")
+        logger.info(f"The opened_at {opened_at}")
+        logger.info(f"The now {int(time())}")
+        logger.info(f"The percentage {percentage}")
 
         return int(percentage)
 
     def calculate_sla_resolution_time_percentage(
-        self, resolution_time: int, created_at: datetime
+        self, resolution_time: int, opened_at: int
     ) -> int:
-        percentage = (
-            resolution_time - (created_at.timestamp()) * 100
-        ) / resolution_time
+        """
+        Opened at time must be sent in timestamp format in terms of second
+        """
+        due_time = opened_at + resolution_time
+        percentage = ((due_time - int(time())) * 100) / due_time
 
         return int(percentage)
 
-    def check_ticket_sla_status(self, ticket: Ticket):
-        response_time = self.calculate_sla_response_time_percentage(
-            ticket.sla.response_time, ticket.created_at
-        )
-        resolution_time = self.calculate_sla_resolution_time_percentage(
-            ticket.sla.resolution_time, ticket.created_at
-        )
+    def get_enum_from_range(self, value: int) -> WarningLevelEnum:
+        if 75 <= value < 90:
+            return WarningLevelEnum.WARNING_75
+        elif 90 <= value < 100:
+            return WarningLevelEnum.WARNING_90
+        elif value >= 100:
+            return WarningLevelEnum.WARNING_100
+        else:
+            raise ValueError("Value is below the minimum range")
 
-        return response_time, resolution_time
+    async def sla_breach_notification(self, ticket, response_time, resolution_time):
+        """
+        IT will send the notification if there is any sla breach
+        """
+        pass
+
+    async def sla_response_breach_notification(
+        self, ticket, response_time, resolution_time
+    ):
+        is_response_time_breached = await self.check_response_time_breach(response_time)
+        if not is_response_time_breached:
+            return  # because we don't need to look at resolution time if even is_response_time is not breached yet
+        await self.handle_sla_response_breach(response_time)
+
+    async def handle_sla_response_breach(self, response_time):
+        response_breach = self.get_enum_from_range(response_time)
+        if response_breach is WarningLevelEnum.WARNING_75:
+            logger.info("Response time reached 75")
+        if response_breach is WarningLevelEnum.WARNING_100:
+            logger.info("Response time reached 100")
+
+    async def check_response_time_breach(self, response_time: int) -> bool:
+        """
+        Returns True if response_time has passed over 75%
+        """
+        if response_time < WarningLevelEnum.WARNING_75:
+            return False
+        return True
 
 
 sla_service = TicketSLAServices()

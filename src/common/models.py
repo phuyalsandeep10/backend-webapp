@@ -336,8 +336,6 @@ class TenantModel(CommonModel):
         if organization_id:
             where.setdefault("organization_id", organization_id)
 
-        print("Here is", where)
-
         return await super().filter(where, skip, limit, joins, options, related_items)
 
     @classmethod
