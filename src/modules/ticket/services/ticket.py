@@ -185,7 +185,6 @@ class TicketServices:
             ticket = await Ticket.find_one(
                 where={
                     "id": ticket_id,
-                    "organization_id": user.attributes.get("organization_id"),
                 },
                 related_items=[
                     selectinload(Ticket.sla),
@@ -198,21 +197,22 @@ class TicketServices:
                 ],
             )
             if ticket is None:
-                return cr.error(
-                    message="Ticket with this id doesn't exist",
-                    status_code=HTTP_404_NOT_FOUND,
-                )
+                raise TicketNotFound()
 
             # checking if the foreignkeys don't belong to the other organization
-            tenant = TenantEntityValidator(org_id=user.attributes.get("organization"))
+            tenant = TenantEntityValidator()
             data = dict(payload.model_dump(exclude_none=True))
 
             if "priority_id" in data:
-                await tenant.validate(TicketPriority, data["priority_id"])
+                await tenant.validate(
+                    TicketPriority, data["priority_id"], check_default=True
+                )
             if "status_id" in data:
-                await tenant.validate(TicketStatus, data["status_id"])
+                await tenant.validate(
+                    TicketStatus, data["status_id"], check_default=True
+                )
             if "sla_id" in data:
-                await tenant.validate(TicketSLA, data["sla_id"])
+                await tenant.validate(TicketSLA, data["sla_id"], check_default=True)
             if "department_id" in data:
                 await tenant.validate(Team, data["department_id"])
 
@@ -223,7 +223,7 @@ class TicketServices:
             )
 
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(message="Error while editing the ticket", data=str(e))
 
     async def get_default_ticket_status(self):
