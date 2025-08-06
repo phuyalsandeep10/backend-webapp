@@ -20,6 +20,7 @@ class Team(CommonModel, table=True):
 
     def to_dict(self):
         return {
+            "id": self.id,
             "name": self.name,
             "description": self.description,
         }
@@ -34,3 +35,7 @@ class TeamMember(CommonModel, table=True):
         back_populates="team_members",
         sa_relationship_kwargs={"foreign_keys": "[TeamMember.user_id]"},
     )
+
+    def to_dict(self):
+
+        return {"id": self.id, "user": self.user.to_dict()}

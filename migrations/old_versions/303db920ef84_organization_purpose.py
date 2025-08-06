@@ -13,6 +13,8 @@ import sqlmodel.sql.sqltypes
 from alembic import op
 import sqlalchemy as sa
 
+from migrations.common import common_columns
+
 
 # revision identifiers, used by Alembic.
 revision: str = "303db920ef84"
@@ -23,11 +25,29 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    op.add_column(
-        "sys_organizations", sa.Column("purpose", sa.String(length=255), nullable=True)
+    op.create_table(
+        "org_customer_visit_logs",
+        *common_columns(),
+        sa.Column("ip_address", sa.String(length=255), nullable=True),
+        sa.Column("latitude", sa.Float(), nullable=True),
+        sa.Column("longitude", sa.Float(), nullable=True),
+        sa.Column("city", sa.String(length=255), nullable=True),
+        sa.Column("country", sa.String(length=255), nullable=True),
+        sa.Column("location", sa.String(length=300), nullable=True),
+        sa.Column("device", sa.String(length=300), nullable=True),
+        sa.Column("os", sa.String(length=100), nullable=True),
+        sa.Column("browser", sa.String(length=100), nullable=True),
+        sa.Column("device_type", sa.String(length=50), nullable=True),
+        sa.Column("user_agent", sa.String(length=512), nullable=True),
+        sa.Column("referral_from", sa.String(length=300), nullable=True),
+        sa.Column("join_at", sa.DateTime(), nullable=False),
+        sa.Column("left_at", sa.DateTime(), nullable=True),
+        sa.Column(
+            "customer_id", sa.Integer, sa.ForeignKey("org_customers.id"), nullable=False
+        ),
     )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_column("sys_organizations", "purpose")
+    op.drop_table("org_customer_visit_logs")

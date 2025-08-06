@@ -13,10 +13,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Chatboq Service"
     PROJECT_VERSION: str = "1.0.0"
     PROJECT_DESCRIPTION: str = "Chatboq Service API"
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/chatboq_db"
-    ASYNC_DATABASE_URL: str = (
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/chatboq_db"
-    )
+    DATABASE_URL: str = ""
+    ASYNC_DATABASE_URL: str = ""
     API_PREFIX: str = "/api/v1"
     ALLOWED_HOSTS: List[str] = ["*"]
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
@@ -37,7 +35,7 @@ class Settings(BaseSettings):
     APPLE_CLIENT_ID: str = "your-apple-client-id"
     APPLE_CLIENT_SECRET: str = "your-apple-client-secret"
 
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = ""
     CELEREY_BROKER_URL: str = "redis://localhost:6379"
 
     CLOUDINARY_CLOUD_NAME: str = ""

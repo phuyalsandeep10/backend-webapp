@@ -28,11 +28,15 @@ class CustomerlogsMigration(BaseMigration):
         self.string("latitude")
         self.string("longitude")
         self.string("country")
+
         self.string("city")
         self.string("device")
         self.string("browser")
         self.string("os")
         self.string("device_type")
+        self.string("referral_from")
+        self.date_time("join_at")
+        self.date_time("left_at")
 
 
 def upgrade() -> None:

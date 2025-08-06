@@ -9,7 +9,13 @@ from src.modules.auth.models import User
 from src.modules.chat.models.conversation import Conversation, ConversationMember
 
 # Import chat models
+<<<<<<< HEAD
 from src.modules.chat.models.customer import Customer
+=======
+
+from src.modules.chat.models.customer import Customer, CustomerVisitLogs
+
+>>>>>>> 1a107ebf6153bf73854e8a942397333a9cffe4f6
 from src.modules.chat.models.message import Message, MessageAttachment
 
 # Import organization models
@@ -30,9 +36,9 @@ from src.modules.staff_managemet.models import (
 # Import team models
 from src.modules.team.models import Team, TeamMember
 from src.modules.ticket.models.priority import TicketPriority
+from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket, TicketAlert, TicketAssigneesLink
-from src.modules.ticket.models.sla import TicketSLA
 
 # Import admin models
 # from src.modules.admin.models import Admin
@@ -59,8 +65,13 @@ __all__ = [
     "TicketAlert",
     "TicketPriority",
     "TicketSLA",
+<<<<<<< HEAD
     # "Admin",
     Permissions,
     PermissionGroup,
     RolePermission,
+=======
+    "CustomerVisitLogs",
+    # "Admin"
+>>>>>>> 1a107ebf6153bf73854e8a942397333a9cffe4f6
 ]

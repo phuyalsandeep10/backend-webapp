@@ -1,10 +1,12 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
-from src.config.settings import settings
 from datetime import datetime, timedelta
 
 from cachetools import TTLCache
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+
+from src.common.context import TenantContext, UserContext
+from src.config.settings import settings
 from src.modules.auth.models import User
 
 # Initialize cache with 5-minute TTL and 1000-item capacity
@@ -68,6 +70,14 @@ async def get_current_user(
             )
 
         user_cache[token] = user  # Cache the user object
+
+        # setting the user_id to the user_context
+        UserContext.set(user.id)
+
+        # setting the organization_id to the tenantcontext
+        organization_id = user.attributes.get("organization_id")
+        if organization_id:
+            TenantContext.set(organization_id)
 
         return user
 

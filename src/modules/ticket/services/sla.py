@@ -1,57 +1,41 @@
+import logging
 from datetime import datetime
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_403_FORBIDDEN
 
 from src.modules.auth.models import User
 from src.modules.ticket.models import TicketSLA
 from src.modules.ticket.models.ticket import Ticket
-from src.modules.ticket.schemas import CreateSLASchema
+from src.modules.ticket.schemas import CreateSLASchema, SLAOut
 from src.utils.response import CustomResponse as cr
+
+logger = logging.getLogger(__name__)
 
 
 class TicketSLAServices:
+    """
+    Ticket SLA services methods
+    """
 
     async def register_sla(self, payload: CreateSLASchema, user: User):
+        """
+        Registers the SLA to the organization
+        """
         try:
 
-            user_id = user.id
-            data = dict(payload)
-            data["issued_by"] = user_id
-            data["organization_id"] = user.attributes.get("organization_id")
-
-            # checking if the there is any default sla before
-            is_sla_default = await TicketSLA.find_one(where={"is_default": True})
-
-            if is_sla_default:
-                return cr.error(
-                    message="Default SLA exists before", status_code=HTTP_403_FORBIDDEN
-                )
-
-            sla = await TicketSLA.create(**data)
-
-            if not sla:
-                return cr.error(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    message="Error while registering Service Level Agreement",
-                )
-
+            sla = await TicketSLA.create(**payload.model_dump())
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully registered the Service Level Agreement",
-                data=sla.to_dict(),
+                data=sla.to_json(SLAOut),
             )
-        except IndexError as e:
-            print(e)
+        except IntegrityError as e:
+            logger.exception(e)
             return cr.error(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                message="Token required in standard format",
+                message="Error while creating sla",
             )
-
-        except HTTPException:
-
-            raise
-
         except Exception as e:
             print(e)
             return cr.error(
@@ -60,11 +44,12 @@ class TicketSLAServices:
             )
 
     async def list_slas(self, user):
+        """
+        List all the SLA of the organization
+        """
         try:
-            sla_list = await TicketSLA.filter(
-                where={"organization_id": user.attributes.get("organization_id")}
-            )
-            slas = [s.to_dict() for s in sla_list]
+            sla_list = await TicketSLA.filter()
+            slas = [s.to_json(SLAOut) for s in sla_list]
 
             return cr.success(
                 status_code=status.HTTP_200_OK,
@@ -80,13 +65,16 @@ class TicketSLAServices:
             )
 
     async def get_sla(self, sla_id: int):
+        """
+        Get sla by id
+        """
         try:
             sla = await TicketSLA.find_one(where={"id": sla_id})
 
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully fetched the sla",
-                data=sla.to_dict(),
+                data=sla.to_json(SLAOut),
             )
 
         except Exception as e:
@@ -97,8 +85,11 @@ class TicketSLAServices:
             )
 
     async def delete_sla(self, sla_id: int):
+        """
+        Soft delete the sla
+        """
         try:
-            await TicketSLA.delete(id=sla_id)
+            await TicketSLA.delete(where={"id": sla_id})
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully deleted the SLA",

@@ -90,7 +90,7 @@ class CreatePrioriySchema(BaseModel):
 
 class EditTicketPrioritySchema(BaseModel):
     name: Optional[str] = None
-    level: Optional[str] = None
+    level: Optional[int] = None
     color: Optional[str] = None
 
 
@@ -125,7 +125,7 @@ class CreateSLASchema(BaseModel):
     name: str
     response_time: int
     resolution_time: int
-    is_default: Optional[bool] = False
+    priority_id: int
 
     model_config = {"extra": "forbid"}
 

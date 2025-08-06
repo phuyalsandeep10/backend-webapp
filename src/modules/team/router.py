@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
-from .schema import TeamSchema, TeamMemberSchema
-from .models import Team, TeamMember
-from src.common.permissions import get_current_user
 from sqlalchemy.orm import selectinload
+
+from src.common.permissions import get_current_user
 from src.utils.response import CustomResponse as cr
+
+from .models import Team, TeamMember
+from .schema import TeamMemberSchema, TeamSchema
 
 router = APIRouter()
 
@@ -33,12 +35,12 @@ async def create_team(body: TeamSchema, user=Depends(get_current_user)):
 async def get_teams(user=Depends(get_current_user)):
     organizationId = user.attributes.get("organization_id")
     if not organizationId:
-        raise HTTPException(403, "Not authorized")
+        raise HTTPException(403, detail="Not authorized")
 
     teams = await Team.filter(where={"organization_id": organizationId})
+    dict_teams = [team.to_dict() for team in teams]
 
-    # return cr.success(data=teams)
-    return cr.success(data=[team.to_json() for team in teams])
+    return cr.success(data=dict_teams)
 
 
 @router.put("/{team_id}")
@@ -129,12 +131,4 @@ async def get_team_members(team_id: int):
         options=[selectinload(TeamMember.user)],  # type:ignore
     )
 
-    return cr.success(
-        data=[
-            {
-                **member.model_dump(),
-                "user": member.user.model_dump() if member.user else None,
-            }
-            for member in members
-        ]
-    )
+    return cr.success(data=[member.to_dict() for member in members])

@@ -1,14 +1,21 @@
+import logging
+
 from fastapi import Request, WebSocket
 from fastapi.responses import HTMLResponse
 
 from src.app import app
 from src.config.broadcast import broadcast
 from src.routers import add_routers
-from src.utils.exceptions import add_exceptions_handler
 from src.socket_config import socket_app
+from src.utils.exceptions import add_exceptions_handler
 
 # custom exceptions
 add_exceptions_handler(app)
+
+# logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s -%(name)s - %(message)s"
+)
 
 
 # adding routers

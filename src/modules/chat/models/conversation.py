@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 class Conversation(CommonModel, table=True):
     __tablename__ = "org_conversations"  # type:ignore
     name: str = Field(max_length=255, index=True, nullable=True)
-    description: str = Field(default=None, max_length=500, nullable=True)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
     customer_id: int = Field(foreign_key="org_customers.id", nullable=False)
     organization: Optional["Organization"] = Relationship(
@@ -22,7 +21,6 @@ class Conversation(CommonModel, table=True):
     )
     customer: Optional["Customer"] = Relationship(back_populates="conversations")
     members: List["ConversationMember"] = Relationship(back_populates="conversation")
-    ip_address: str = Field(max_length=255, index=True, nullable=True)
 
 
 class ConversationMember(CommonModel, table=True):

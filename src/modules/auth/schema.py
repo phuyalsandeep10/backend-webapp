@@ -1,6 +1,17 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from enum import Enum
+
+class VerifyEmailEnum(str, Enum):
+    ForgotPassword = "forgot_password"
+    EmailVerification = "email_verification"
+  
+
+
+class ResendVerificationSchema(BaseModel):
+    email: EmailStr
+    type: VerifyEmailEnum
 
 
 class LoginSchema(BaseModel):

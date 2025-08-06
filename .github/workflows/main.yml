@@ -1,0 +1,49 @@
+name: Chatboq total CI/CD
+
+#first lets define when
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+#then lets define jobs
+jobs:
+  build_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      #1. first we pull the code to the temporary vm
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      #2. then lets build the image
+      - name: Build Docker image
+        # here we convert the image to a tarball
+        run: |
+          docker build -t chatboq-back:latest .
+          docker save chatboq-back:latest -o chatboq-back.tar 
+          chmod 664 chatboq-back.tar
+
+      #3. Then lets copy the tarball to the server
+      - name: Copy the image to the server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "chatboq-back.tar"
+          target: "/var/www/chatboq_portal/test_api"
+
+      #4. now let's load and run teh container on the server
+      - name: Deploy with docker-compose
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/chatboq_portal/test_api
+            docker load -i chatboq-back.tar
+            docker-compose down
+            docker-compose up -d --build
+            

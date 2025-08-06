@@ -6,8 +6,9 @@ Create Date: 2025-08-01 14:42:05.815483
 
 """
 
-from migrations.base import BaseMigration
 from typing import Sequence, Union
+
+from migrations.base import BaseMigration
 
 revision: str = "20250801_085704"
 down_revision: Union[str, Sequence[str], None] = "20250801_085215"
@@ -24,11 +25,13 @@ class CustomerMigration(BaseMigration):
         # describe your schemas here
         self.common_columns()
         self.foreign("organization_id", "sys_organizations")
-        self.string("name", nullable=False)
-        self.string("email", nullable=False)
+        self.string("name", nullable=True)
+        self.string("email", nullable=True)
         self.string("phone", nullable=True)
         self.string("address", nullable=True)
-        self.string("ip_address", nullable=True)
+        self.string("ip_address", nullable=False)
+        self.boolean("is_online", nullable=False, default=False)
+        self.json("attributes", default={}, nullable=True)
 
 
 def upgrade() -> None:
