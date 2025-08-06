@@ -19,3 +19,4 @@ alembic upgrade head
 alembic downgrade -1
 
 #ahh
+#deploy
