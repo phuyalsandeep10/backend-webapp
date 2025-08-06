@@ -13,24 +13,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Build backend image
       - name: Build backend Docker image
         run: |
-          docker build -t chatboq-back:latest -f Dockerfile.backend .
+          # Use Dockerfile.backend if exists, else fallback to Dockerfile
+          if [ -f Dockerfile.backend ]; then
+            docker build -t chatboq-back:latest -f Dockerfile.backend .
+          else
+            docker build -t chatboq-back:latest .
+          fi
           docker save chatboq-back:latest -o chatboq-back.tar
           chmod 664 chatboq-back.tar
 
+      # Build celery_worker image
       - name: Build celery_worker Docker image
         run: |
-          docker build -t chatboq-celery-worker:latest -f Dockerfile.celery_worker .
+          if [ -f Dockerfile.celery_worker ]; then
+            docker build -t chatboq-celery-worker:latest -f Dockerfile.celery_worker .
+          else
+            echo "Dockerfile.celery_worker not found, building from default Dockerfile"
+            docker build -t chatboq-celery-worker:latest .
+          fi
           docker save chatboq-celery-worker:latest -o chatboq-celery-worker.tar
           chmod 664 chatboq-celery-worker.tar
 
+      # Build celery_beat image
       - name: Build celery_beat Docker image
         run: |
-          docker build -t chatboq-celery-beat:latest -f Dockerfile.celery_beat .
+          if [ -f Dockerfile.celery_beat ]; then
+            docker build -t chatboq-celery-beat:latest -f Dockerfile.celery_beat .
+          else
+            echo "Dockerfile.celery_beat not found, building from default Dockerfile"
+            docker build -t chatboq-celery-beat:latest .
+          fi
           docker save chatboq-celery-beat:latest -o chatboq-celery-beat.tar
           chmod 664 chatboq-celery-beat.tar
 
+      # Copy images to server
       - name: Copy all images to the server
         uses: appleboy/scp-action@v0.1.3
         with:
@@ -43,6 +62,7 @@ jobs:
             chatboq-celery-beat.tar
           target: /var/www/chatboq_portal/chatboq-service
 
+      # Deploy on server
       - name: Deploy with docker-compose
         uses: appleboy/ssh-action@v0.1.9
         with:
