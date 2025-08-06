@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import update, select
 
 from src.common.dependencies import (
     get_bearer_token,
@@ -28,11 +27,8 @@ from src.modules.staff_managemet.models import Permissions
 from .schema import (
     OrganizationSchema,
     OrganizationInviteSchema,
-    OrganizationRoleSchema,
     AssignRoleSchema,
-    RolePermissionInSchema,
     CreateRoleOutSchema,
-    UpdateRoleInSchema,
     UpdateRoleInfoSchema,
     CreateRoleSchema,
 )
@@ -196,78 +192,47 @@ async def set_organization(
     return cr.success(data={"message": "Organization set successfully"})
 
 
+# create Role
 @router.post("/roles")
 async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
     """
     Create a New Role for an organization.
     """
-    organization_id = user.attributes.get("organization_id")
 
-    record = await OrganizationRole.find_one(
-        where={
-            "name": {"mode": "insensitive", "value": body.name},
-            "organization_id": organization_id,
-        }
+    existing_role = await OrganizationRole.find_one(
+        where={"name": {"mode": "insensitive", "value": body.name}}
     )
-    if record:
+
+    if existing_role:
         raise HTTPException(status_code=400, detail="Role name already exists")
 
-    # Create the role record
     role = await OrganizationRole.create(
-        name=body.name,
-        organization_id=organization_id,
+        **body.model_dump(exclude={"permissions"}),
         identifier=body.name.lower().replace(" ", "-"),
-        description=body.description,
     )
 
-    # manually permission entry for all
-    default_permission_ids = range(1, 8)
-    default_permissions = [
-        RolePermission(
+    for perm in body.permissions:
+        await RolePermission.create(
             role_id=role.id,
-            permission_id=pid,
-            is_changeable=False,
-            is_deletable=False,
-            is_viewable=False,
+            permission_id=perm.permission_id,
+            is_changeable=perm.is_changeable,
+            is_deletable=perm.is_deletable,
+            is_viewable=perm.is_viewable,
         )
-        for pid in default_permission_ids
-    ]
 
-    async with async_session() as session:
-        session.add_all(default_permissions)
-        await session.commit()
-
-        # Step 2: Update only the permissions provided in the request body
-        for perm in body.permissions:
-            role_value = (
-                update(RolePermission)
-                .where(
-                    RolePermission.role_id == role.id,
-                    RolePermission.permission_id == perm.permission_id,
-                )
-                .values(
-                    is_changeable=perm.is_changeable,
-                    is_deletable=perm.is_deletable,
-                    is_viewable=perm.is_viewable,
-                )
-            )
-            await session.execute(role_value)
-
-        await session.commit()
-
-    org = await Organization.get(organization_id)
+    org = await Organization.find_one(where={"id": role.organization_id})
 
     response = CreateRoleOutSchema(
         role_id=role.id,
         role_name=role.name,
         description=role.description,
         org_name=org.name,
-    )
+    ).model_dump()
 
-    return cr.success(data=response.model_dump())
+    return cr.success(data=response)
 
 
-# # Update Organization Role
+# UPadate role
 @router.put("/roles/{role_id}")
 async def update_role(
     role_id: int, body: UpdateRoleInfoSchema, user=Depends(get_current_user)
@@ -275,92 +240,70 @@ async def update_role(
     """
     Update an existing role for an organization.
     """
-    organization_id = user.attributes.get("organization_id")
-
     role = await OrganizationRole.get(role_id)
-    if not role or role.organization_id != organization_id:
-        raise HTTPException(
-            status_code=404, detail="Role not found in your organization"
-        )
 
     record = await OrganizationRole.find_one(
-        where={"name": {"value": body.role_name, "mode": "insensitive"}}
+        where={"name": {"value": body.name, "mode": "insensitive"}}
     )
     if record and record.id != role.id:
         raise HTTPException(status_code=400, detail="Role name already exists")
 
     await OrganizationRole.update(
         role_id,
-        name=body.role_name,
-        description=body.description,
+        **body.model_dump(exclude={"permissions"}),
+        identifier=body.name.lower().replace(" ", "-"),
     )
 
-    async with async_session() as session:
-        for perm in body.permissions:
-            stmt = (
-                update(RolePermission)
-                .where(
-                    RolePermission.role_id == role_id,
-                    RolePermission.permission_id == perm.permission_id,
-                )
-                .values(
-                    is_changeable=perm.is_changeable,
-                    is_deletable=perm.is_deletable,
-                    is_viewable=perm.is_viewable,
-                )
-            )
-            await session.execute(stmt)
-        await session.commit()
+    for perm in body.permissions:
+        await RolePermission.update(
+            where={"role_id": role.id, "permission_id": perm.permission_id},
+            values={
+                "is_changeable": perm.is_changeable,
+                "is_deletable": perm.is_deletable,
+                "is_viewable": perm.is_viewable,
+            },
+        )
 
-    roles = {
-        "role_name": body.role_name,
-        "description": body.description,
-        "permissions": [perm.model_dump() for perm in body.permissions],
-    }
+    org = await Organization.find_one(where={"id": role.organization_id})
 
-    return cr.success(data=roles, message="Role updated successfully")
+    response = CreateRoleOutSchema(
+        role_id=role.id,
+        role_name=body.name,
+        description=body.description,
+        org_name=org.name,
+    ).model_dump()
+
+    return cr.success(data=response)
 
 
 # Get All Roles
 @router.get("/roles")
 async def get_roles(user=Depends(get_current_user)):
     """
-    Get all roles for the user's organization.
+    Retrieve all the roles for the organization
     """
-    organization_id = user.attributes.get("organization_id")
-
-    roles = await OrganizationRole.filter(where={"organization_id": organization_id})
+    roles = await OrganizationRole.filter()
 
     results = []
     for role in roles:
         org = await Organization.get(role.organization_id)
-        results.append(
-            CreateRoleOutSchema(
-                role_id=role.id,
-                role_name=role.name,
-                description=role.description,
-                org_name=org.name,
-            )
-        )
+        data = {
+            "role_id": role.id,
+            "role_name": role.name,
+            "description": role.description,
+            "org_name": org.name,
+            "created_at": role.created_at.isoformat(),
+        }
+        results.append(CreateRoleOutSchema(**data))
 
     return cr.success(data=[r.model_dump() for r in results])
 
 
-# Delete spec rle
-@router.delete("/{role_id}/roles")
+@router.delete("/roles/{role_id}")
 async def delete_role(role_id: int, user=Depends(get_current_user)):
     """
-    Delete a role from the organization.
+    Soft delete a role from the organization (tenant-aware).
     """
-    organization_id = user.attributes.get("organization_id")
-
-    role = await OrganizationRole.get(role_id)
-
-    if not role or role.organization_id != organization_id:
-        raise HTTPException(
-            status_code=404, detail="Role not found in your organization"
-        )
-
     await OrganizationRole.soft_delete(where={"id": role_id})
 
     return cr.success(data={"message": "Role deletion successful"})

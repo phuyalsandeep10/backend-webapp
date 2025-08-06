@@ -73,7 +73,7 @@ class UpdateRoleInSchema(BaseModel):
 
 
 class UpdateRoleInfoSchema(BaseModel):
-    role_name: str = Field(..., max_length=100, description="Name of the role")
+    name: str = Field(..., max_length=100, description="Name of the role")
     description: str | None = Field(
         None, max_length=500, description="Description of the role"
     )
@@ -91,3 +91,4 @@ class CreateRoleOutSchema(BaseModel):
     role_name: str
     description: str
     org_name: str
+    created_at: str

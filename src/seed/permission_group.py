@@ -1,5 +1,6 @@
 from src.models import PermissionGroup
 
+
 async def permission_group_seed_dummy():
     group_names = [
         "Setting",
@@ -15,6 +16,6 @@ async def permission_group_seed_dummy():
         )
         if not existing:
             await PermissionGroup.create(name=name)
-            print(f"Permission group '{name}' created") 
+            print(f"Permission group '{name}' created")
         else:
             print(f"Permission group '{name}' already exists")

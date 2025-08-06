@@ -8,6 +8,8 @@ from src.seed.ticket import priority_seed, sla_seed_dummy, status_seed
 from src.seed.user import user_seed_dummy
 from src.seed.customer import create_customer_seed
 from src.seed.customer import create_customer_logs_seed
+from src.seed.permissions import permission_seed_dummy
+from src.seed.permission_group import permission_group_seed_dummy
 
 
 async def seed_func():
@@ -16,6 +18,8 @@ async def seed_func():
     await organization_seed_dummy()
     await organization_user_seed_dummy()
     await department_team_seed_dummy()
+    await permission_seed_dummy()
+    await permission_group_seed_dummy()
     # await create_customer_seed()
     await create_customer_logs_seed()
     # await priority_seed()

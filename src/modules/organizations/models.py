@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, List, Optional
 import sqlalchemy as sa
 from sqlmodel import Field, Relationship, Session, SQLModel, select
 
-from src.common.models import CommonModel
+from src.common.models import CommonModel, TenantModel
 from src.db.config import async_session
 
 # from src.modules.auth.models import User
@@ -72,13 +72,13 @@ class Organization(CommonModel, table=True):
             result = await session.execute(statement)
             return list(result.scalars().all())
 
-class OrganizationRole(CommonModel, table=True):
+
+class OrganizationRole(TenantModel, table=True):
     __tablename__ = "org_roles"  # type: ignore
 
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     identifier: str = Field(default=None, max_length=500, nullable=False, index=True)
-    organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
 
     role_permissions: list["RolePermission"] = Relationship(back_populates="org_role")
 
