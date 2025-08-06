@@ -78,6 +78,7 @@ class Ticket(TenantModel, table=True):
     customer_location: str = Field(nullable=True)
     confirmation_token: Optional[str] = None
     opened_at: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None
 
     # Relationships
     sla: "TicketSLA" = Relationship(back_populates="tickets")

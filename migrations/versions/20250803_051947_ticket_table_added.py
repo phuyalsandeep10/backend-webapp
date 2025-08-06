@@ -47,6 +47,7 @@ class TicketMigration(BaseMigration):
         self.string(name="customer_location", nullable=True)
         self.string(name="confirmation_token", nullable=True)
         self.date_time(name="opened_at", nullable=True)
+        self.date_time(name="resolved_at", nullable=True)
 
 
 def upgrade() -> None:
