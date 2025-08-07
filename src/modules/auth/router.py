@@ -47,10 +47,7 @@ from .social_auth import oauth
 from src.config.settings import settings
 from src.modules.organizations.models import OrganizationInvitation
 from src.tasks import send_forgot_password_email, send_verification_email
-
-
 from .models import EmailVerification, RefreshToken, User
-from .social_auth import oauth
 from jose.exceptions import JWTError
 from fastapi.encoders import jsonable_encoder
 
@@ -478,10 +475,11 @@ async def generate_2fa_otp(user=Depends(get_current_user)):
 @router.post("/2fa-verify")
 async def verify_two_fa(
     body: VerifyTwoFAOtpSchema,
-    user=Depends(get_current_user),
+    user=Depends(get_current_user_factory()),
     token: str = Depends(get_bearer_token),
 ):
     userDb = await User.get(user.id)
+
     if not userDb:
         return cr.error(message="User not found")
 
@@ -492,8 +490,14 @@ async def verify_two_fa(
 
     if not totp.verify(body.token):
         return cr.error(message=message)
+    
     await User.update(user.id, is_2fa_verified=True)
     update_user_cache(token, user)
+
+    # Invalidate the refresh token cache
+
+
+
 
     return cr.success(data={"message": "2FA verified successfully"})
 

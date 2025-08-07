@@ -42,6 +42,8 @@ async def validate_user(
 ):
     """Get current authenticated user"""
 
+    
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -54,10 +56,15 @@ async def validate_user(
             if " " in credentials.credentials
             else credentials.credentials
         )
+        
         user = await get_user_by_token(token)
+
+
 
         if user is None:
             raise credentials_exception
+
+        
 
         if not user.is_active:
             raise HTTPException(
