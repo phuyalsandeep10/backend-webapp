@@ -4,7 +4,7 @@ from src.app import app
 import json
 
 # from src.tasks import save_message_db
-from src.models import Message, Conversation, MessageAttachment
+from src.models import Message, Conversation, MessageAttachment, User, Customer
 from src.common.dependencies import get_user_by_token
 from src.config.broadcast import broadcast
 from fastapi.concurrency import run_until_first_complete
@@ -108,6 +108,7 @@ class ChatNamespace(socketio.AsyncNamespace):
     receive_typing = "typing"
     stop_typing = "stop-typing"
     message_seen = "message_seen"
+    chat_online = "chat_online"
 
     def __init__(self):
         super().__init__("/chat")
@@ -118,10 +119,25 @@ class ChatNamespace(socketio.AsyncNamespace):
         if not auth:
             print("❌ No auth provided")
             return False
+
         token = auth.get("token")
-        user_id = auth.get("user_id")
+
+        # user_id = auth.get("user_id")
+        if token:
+            user = await get_user_by_token(token)
+            await User.update(user.id,attributes={"is_online": True})
+            print(f"User {user.id} is online")
+        
+
+            
         customer_id = auth.get("customer_id")
+        if customer_id:
+            await Customer.update(customer_id,is_online=True)
+            print(f"Customer {customer_id} is online")
+    
         conversation_id = auth.get("conversation_id")
+
+        
 
         if not customer_id or not conversation_id:
             return False
@@ -133,7 +149,32 @@ class ChatNamespace(socketio.AsyncNamespace):
 
         self.rooms[sid] = conversation_id
         conversation["sids"].append(sid)
+
+
         conversation["online"] = True
+
+        for si in conversation["sids"]:
+
+            if si == sid:
+                continue
+
+            print(f"Sending message to {si} from {sid}")
+
+            # save messages
+            await self.emit(
+                self.chat_online,
+                {
+                    "message": None,
+                    "sid": sid,
+                    "mode": "online",
+                },
+                room=si,
+            )
+
+
+
+        
+
 
         print(f"✅ Connected to /chat: {sid} (conversation_id: {conversation_id})")
         return True
