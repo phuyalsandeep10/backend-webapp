@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime, timedelta
 
 from src.common.dependencies import (
     get_bearer_token,
@@ -214,22 +215,12 @@ async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
     for perm in body.permissions:
         await RolePermission.create(
             role_id=role.id,
-            permission_id=perm.permission_id,
-            is_changeable=perm.is_changeable,
-            is_deletable=perm.is_deletable,
-            is_viewable=perm.is_viewable,
+            **perm.model_dump(),
         )
 
     org = await Organization.find_one(where={"id": role.organization_id})
 
-    response = CreateRoleOutSchema(
-        role_id=role.id,
-        role_name=role.name,
-        description=role.description,
-        org_name=org.name,
-    ).model_dump()
-
-    return cr.success(data=response)
+    return cr.success(data=org.to_json(CreateRoleOutSchema))
 
 
 # UPadate role
@@ -238,14 +229,16 @@ async def update_role(
     role_id: int, body: UpdateRoleInfoSchema, user=Depends(get_current_user)
 ):
     """
-    Update an existing role for an organization.
+    Update an existing role within the current tenant's organization.
     """
-    role = await OrganizationRole.get(role_id)
+    role = await OrganizationRole.find_one(where={"id": role_id})
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
 
-    record = await OrganizationRole.find_one(
+    existing = await OrganizationRole.find_one(
         where={"name": {"value": body.name, "mode": "insensitive"}}
     )
-    if record and record.id != role.id:
+    if existing and existing.id != role.id:
         raise HTTPException(status_code=400, detail="Role name already exists")
 
     await OrganizationRole.update(
@@ -254,6 +247,7 @@ async def update_role(
         identifier=body.name.lower().replace(" ", "-"),
     )
 
+    # Update permissions
     for perm in body.permissions:
         await RolePermission.update(
             where={"role_id": role.id, "permission_id": perm.permission_id},
@@ -264,16 +258,9 @@ async def update_role(
             },
         )
 
-    org = await Organization.find_one(where={"id": role.organization_id})
+    updated_role = await OrganizationRole.find_one(where={"id": role_id})
 
-    response = CreateRoleOutSchema(
-        role_id=role.id,
-        role_name=body.name,
-        description=body.description,
-        org_name=org.name,
-    ).model_dump()
-
-    return cr.success(data=response)
+    return cr.success(data=updated_role.to_json(CreateRoleOutSchema))
 
 
 # Get All Roles
@@ -287,14 +274,14 @@ async def get_roles(user=Depends(get_current_user)):
     results = []
     for role in roles:
         org = await Organization.get(role.organization_id)
-        data = {
+        role_data = {
             "role_id": role.id,
             "role_name": role.name,
             "description": role.description,
             "org_name": org.name,
             "created_at": role.created_at.isoformat(),
         }
-        results.append(CreateRoleOutSchema(**data))
+        results.append(CreateRoleOutSchema(**role_data))
 
     return cr.success(data=[r.model_dump() for r in results])
 
@@ -321,7 +308,9 @@ async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_u
         raise HTTPException(400, "Already invitation exist")
 
     if user.email == body.email:
-        raise HTTPException(403, f"you can't invite your self.")
+        raise HTTPException(403, "You can't invite yourself.")
+
+    expires_at = datetime.utcnow() + timedelta(days=7)
 
     record = await OrganizationInvitation.create(
         email=body.email,
@@ -329,10 +318,17 @@ async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_u
         status="pending",
         organization_id=organization_id,
         role_ids=body.role_ids,
+        token="",
+        expires_at=expires_at,
     )
 
     send_invitation_email.delay(email=body.email)
-    return cr.success(data=record)
+
+    return cr.success(
+        data=record.model_dump(
+            exclude={"expires_at", "activity_at", "created_at", "updated_at"}
+        )
+    )
 
 
 @router.get("/invitation")
@@ -344,7 +340,11 @@ async def get_invitations(user=Depends(get_current_user)):
     invitations = await OrganizationInvitation.filter(
         where={"organization_id": organization_id}
     )
-    return cr.success(data=invitations)
+
+    excluded_fields = {"expires_at", "activity_at", "created_at", "updated_at"}
+    return cr.success(
+        data=[inv.model_dump(exclude=excluded_fields) for inv in invitations]
+    )
 
 
 @router.post("/invitation/{invitation_id}/reject")

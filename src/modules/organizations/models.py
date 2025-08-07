@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, List, Optional
+from datetime import datetime
 
 import sqlalchemy as sa
 from sqlmodel import Field, Relationship, Session, SQLModel, select
@@ -107,10 +108,9 @@ class OrganizationMemberRole(CommonModel, table=True):
     role: Optional[OrganizationRole] = Relationship(back_populates="member_roles")
 
 
-class OrganizationInvitation(CommonModel, table=True):
+class OrganizationInvitation(TenantModel, table=True):
     __tablename__ = "org_invitations"  # type:ignore
     email: str = Field(max_length=255, index=True)
-    organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
 
     invited_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
     status: str = Field(default=InvitationStatus.PENDING, max_length=50, nullable=False)
@@ -122,3 +122,7 @@ class OrganizationInvitation(CommonModel, table=True):
             "foreign_keys": "[OrganizationInvitation.invited_by_id]"
         }
     )
+    
+    expires_at: datetime = Field(nullable=True)
+    activity_at: Optional[datetime] = Field(default=None, nullable=True)
+    token: str = Field(max_length=255, nullable=False)

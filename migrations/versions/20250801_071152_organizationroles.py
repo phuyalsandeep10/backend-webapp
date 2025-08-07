@@ -21,7 +21,7 @@ class OrganizationrolesMigration(BaseMigration):
 
     def __init__(self):
         super().__init__(revision="20250801_071152", down_revision="20250801_070134")
-        self.common_columns()
+        self.tenant_columns()
         self.string("name")
         self.string("description")
         self.string("identifier")
