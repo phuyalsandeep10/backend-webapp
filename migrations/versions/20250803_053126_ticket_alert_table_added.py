@@ -26,6 +26,7 @@ class TicketAlertMigration(BaseMigration):
         self.create_whole_table = True
         # describe your schemas here
         self.base_columns()
+        self.foreign(name="ticket_id", table="org_tickets", ondelete="CASCADE")
         self.string(name="alert_type")
         self.string(name="warning_level")
         self.date_time(name="sent_at", default=datetime.utcnow)

@@ -7,9 +7,9 @@ from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_403_FORBIDDEN
 
 from src.modules.auth.models import User
-from src.modules.ticket.enums import WarningLevelEnum
+from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
 from src.modules.ticket.models import TicketSLA
-from src.modules.ticket.models.ticket import Ticket
+from src.modules.ticket.models.ticket import Ticket, TicketAlert
 from src.modules.ticket.schemas import CreateSLASchema, SLAOut
 from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 from src.socket_config import alert_ns, sio
@@ -169,11 +169,15 @@ class TicketSLAServices:
         response_breach = self.get_enum_from_range(response_time)
         if response_breach is WarningLevelEnum.WARNING_75:
             await self.handle_warning_75(
-                ticket, message="75% of the response time has elapsed"
+                w_type="response",
+                ticket=ticket,
+                message="75% of the response time has elapsed",
             )
         if response_breach is WarningLevelEnum.WARNING_100:
             await self.handle_warning_100(
-                ticket, message="SLA Response time has been breached"
+                w_type="response",
+                ticket=ticket,
+                message="SLA Response time has been breached",
             )
 
     async def sla_resolution_breach_notification(self, ticket, resolution_time):
@@ -186,22 +190,76 @@ class TicketSLAServices:
         resolution_breach = self.get_enum_from_range(resolution_time)
         if resolution_breach is WarningLevelEnum.WARNING_75:
             await self.handle_warning_75(
-                ticket, message="75% of the resolution time has elapsed"
+                w_type="resolution",
+                ticket=ticket,
+                message="75% of the resolution time has elapsed",
             )
         if resolution_breach is WarningLevelEnum.WARNING_100:
-            await self.handle_warning_75(ticket, message="SLA has been breached")
+            await self.handle_warning_75(
+                w_type="resolution", ticket=ticket, message="SLA has been breached"
+            )
 
-    async def handle_warning_75(self, ticket: Ticket, message: str):
+    async def handle_warning_75(self, w_type: str, ticket: Ticket, message: str):
+        """
+        Handles when SLA time has elapsed 75%
+        first it checks if the warning was already sent
+        if none then it sends another one
+        """
+        alert = await TicketAlert.find_one(
+            where={
+                "ticket_id": ticket.id,
+                "alert_type": (
+                    TicketAlertTypeEnum.RESPONSE
+                    if w_type == "response"
+                    else TicketAlertTypeEnum.RESOLUTION
+                ),
+                "warning_level": WarningLevelEnum.WARNING_75,
+            }
+        )
+        if not alert:
+            await self.send_alert_broadcast(ticket, message)
+            # saving in the ticketalert table
+            data = {
+                "ticket_id": ticket.id,
+                "alert_type": (
+                    TicketAlertTypeEnum.RESPONSE
+                    if w_type == "response"
+                    else TicketAlertTypeEnum.RESOLUTION
+                ),
+                "warning_level": WarningLevelEnum.WARNING_75,
+                "sent_at": datetime.utcnow(),
+            }
+            await TicketAlert.create(**data)
+
+    async def handle_warning_100(self, w_type: str, ticket: Ticket, message: str):
         """
         Handles when SLA time has elapsed 75%
         """
-        await self.send_alert_broadcast(ticket, message)
-
-    async def handle_warning_100(self, ticket: Ticket, message: str):
-        """
-        Handles when SLA time has elapsed 75%
-        """
-        await self.send_alert_broadcast(ticket, message)
+        alert = await TicketAlert.find_one(
+            where={
+                "ticket_id": ticket.id,
+                "alert_type": (
+                    TicketAlertTypeEnum.RESPONSE
+                    if w_type == "response"
+                    else TicketAlertTypeEnum.RESOLUTION
+                ),
+                "warning_level": WarningLevelEnum.WARNING_100,
+            }
+        )
+        if not alert:
+            await self.send_alert_broadcast(ticket, message)
+            # saving in the ticketalert table
+            data = {
+                "ticket_id": ticket.id,
+                "alert_type": (
+                    TicketAlertTypeEnum.RESPONSE
+                    if w_type == "response"
+                    else TicketAlertTypeEnum.RESOLUTION
+                ),
+                "warning_level": WarningLevelEnum.WARNING_75,
+                "sent_at": datetime.utcnow(),
+            }
+            await TicketAlert.create(**data)
 
     async def send_alert_broadcast(self, ticket: Ticket, message: str):
         """
