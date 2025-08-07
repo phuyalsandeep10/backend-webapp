@@ -43,8 +43,8 @@ def upgrade() -> None:
         {
             "id": 1,
             "name": "Critical Standard",
-            "response_time": "120",  # 2 minutes in seconds
-            "resolution_time": "300",  # 24 hours in seconds
+            "response_time": "600",  # 5 minutes in seconds
+            "resolution_time": "1200",  # 10 minutes in seconds
             "organization_id": None,
             "priority_id": 1,
         },
