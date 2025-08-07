@@ -81,6 +81,7 @@ async def validate_user(
             )
 
         if isTwoFaVerifyCheck and user.two_fa_enabled and not user.is_2fa_verified:
+            
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Email "
             )

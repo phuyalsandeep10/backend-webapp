@@ -28,10 +28,11 @@ async def sender(websocket: WebSocket, room: str):
             await websocket.send_text(event.message)
 
 
+
+
 async def receiver(websocket: WebSocket, room: str):
     async for message in websocket.iter_text():
         await broadcast.publish(channel=f"room_{room}", message=message)
-
 
 
 
@@ -50,3 +51,4 @@ async def get(request: Request):
 @app.get("/health")
 def read_items():
     return "Health check OK"
+
