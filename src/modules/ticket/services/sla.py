@@ -110,11 +110,14 @@ class TicketSLAServices:
         Opened at time must be sent in timestamp format in terms of second
         """
         due_time = opened_at + response_time
+        current_time = int(time())
+        logger.info(f"Current response time {current_time}")
+        logger.info(f"Due response time {due_time}")
+
+        if current_time >= due_time:
+            return 100
+
         percentage = ((due_time - int(time())) * 100) / due_time
-        logger.info(f"The due_time {due_time}")
-        logger.info(f"The opened_at {opened_at}")
-        logger.info(f"The now {int(time())}")
-        logger.info(f"The percentage {percentage}")
 
         return int(percentage)
 
@@ -125,6 +128,13 @@ class TicketSLAServices:
         Opened at time must be sent in timestamp format in terms of second
         """
         due_time = opened_at + resolution_time
+        current_time = int(time())
+        logger.info(f"Current resolution time {current_time}")
+        logger.info(f"Due resolution time {due_time}")
+
+        if current_time > due_time:
+            return 100
+
         percentage = ((due_time - int(time())) * 100) / due_time
 
         return int(percentage)
@@ -143,30 +153,35 @@ class TicketSLAServices:
         """
         IT will send the notification if there is any sla breach
         """
+        await self.sla_response_breach_notification(ticket, response_time)
+        await self.sla_resolution_breach_notification(ticket, resolution_time)
         pass
 
-    async def sla_response_breach_notification(
-        self, ticket, response_time, resolution_time
-    ):
-        is_response_time_breached = await self.check_response_time_breach(response_time)
-        if not is_response_time_breached:
-            return  # because we don't need to look at resolution time if even is_response_time is not breached yet
-        await self.handle_sla_response_breach(response_time)
+    async def sla_response_breach_notification(self, ticket, response_time):
+        if response_time < WarningLevelEnum.WARNING_75:
+            return None
 
-    async def handle_sla_response_breach(self, response_time):
         response_breach = self.get_enum_from_range(response_time)
         if response_breach is WarningLevelEnum.WARNING_75:
-            logger.info("Response time reached 75")
+            logger.info(f"Ticket id {ticket.id}Response time reached 75")
         if response_breach is WarningLevelEnum.WARNING_100:
-            logger.info("Response time reached 100")
+            logger.info(f"Ticket id {ticket.id}Response time reached 100")
 
-    async def check_response_time_breach(self, response_time: int) -> bool:
-        """
-        Returns True if response_time has passed over 75%
-        """
-        if response_time < WarningLevelEnum.WARNING_75:
-            return False
-        return True
+    async def sla_resolution_breach_notification(self, ticket, resolution_time):
+        if resolution_time < WarningLevelEnum.WARNING_75:
+            return None
+
+        resolution_breach = self.get_enum_from_range(resolution_time)
+        if resolution_breach is WarningLevelEnum.WARNING_75:
+            logger.info(f"Ticket id {ticket.id} resolution time reached 75")
+        if resolution_breach is WarningLevelEnum.WARNING_100:
+            logger.info(f"Ticket id {ticket.id} resolution time reached 100")
+
+    async def handle_warning_75(self, ticket):
+        pass
+
+    async def handle_warning_100(self, ticket):
+        pass
 
 
 sla_service = TicketSLAServices()

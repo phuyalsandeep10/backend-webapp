@@ -23,7 +23,6 @@ async def check_sla_breach():
         where={"status_id": {"ne": closed_ticket_status.id}},
         related_items=[selectinload(Ticket.sla)],
     )
-    logger.info("Arey hudai chha")
     if not tickets:
         return
     for ticket in tickets:
@@ -37,8 +36,6 @@ async def check_sla_breach():
                 ticket.sla.resolution_time, int(ticket.opened_at.timestamp())
             )
         )
-        logger.info(f"The response time {response_remaining_time}")
-        logger.info(f"The resolution time {resolution_remaining_time}")
         await sla_service.sla_breach_notification(
             ticket, response_remaining_time, resolution_remaining_time
         )

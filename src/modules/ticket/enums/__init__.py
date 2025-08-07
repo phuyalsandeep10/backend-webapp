@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 
 class PriorityEnum(str, Enum):
@@ -21,7 +21,7 @@ class TicketEmailTypeEnum(str, Enum):
     EMAIL_TICKET_SOLVED = "email_ticket_solved"
 
 
-class WarningLevelEnum(str, Enum):
+class WarningLevelEnum(IntEnum):
     WARNING_75 = 75
     WARNING_90 = 90
     WARNING_100 = 100
