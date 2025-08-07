@@ -259,7 +259,7 @@ async def update_role(
         role.id, name=body.name, permissions=permissions, description=body.description
     )
 
-    return cr.success(data=role)
+    return cr.success(data=role.to_json())
 
 
 @router.get("/roles")
@@ -271,7 +271,7 @@ async def get_roles(user=Depends(get_current_user)):
     organization_id = user.attributes.get("organization_id")
 
     roles =  await OrganizationRole.filter(where={"organization_id": organization_id})
-    return cr.success(data=roles)
+    return cr.success(data=[role.to_json() for role in roles])
 
 
 
