@@ -81,9 +81,15 @@ class TicketServices:
             print(f"creating ticket validation status end")
             # generating the confirmation token using secrets
             data["confirmation_token"] = secrets.token_hex(32)
+            print(f"Creating ticket with data: {data}")
+            try:
+                record = await Ticket.create(**dict(data))
+            except Exception as e:
+                print(f"Error while creating ticket: {e}")
+
             tick = await Ticket.find_one(
                 where={
-                    "id": (await Ticket.create(**dict(data))).id,
+                    "id": record.id,
                     "organization_id": data["organization_id"],
                 },
                 related_items=[selectinload(Ticket.customer)],
