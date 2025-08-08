@@ -1,9 +1,10 @@
 import os
 import httpx
+from src.config.settings import settings
 
 
 def is_production_env():
-    return os.getenv("ENV", "development") == "production"
+    return settings.ENV == "production"
 
 
 async def get_location(ip: str):

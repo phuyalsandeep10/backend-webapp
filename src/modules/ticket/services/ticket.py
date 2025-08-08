@@ -73,10 +73,12 @@ class TicketServices:
                 org_id=user.attributes.get("organization_id")
             )
 
+            print(f"creating ticket validation status start ")
             await tenant.validate(TicketPriority, data["priority_id"])
             await tenant.validate(TicketStatus, data["status_id"])
             await tenant.validate(TicketSLA, data["sla_id"])
             await tenant.validate(Team, data["department_id"])
+            print(f"creating ticket validation status end")
             # generating the confirmation token using secrets
             data["confirmation_token"] = secrets.token_hex(32)
             tick = await Ticket.find_one(
@@ -108,7 +110,7 @@ class TicketServices:
                 message="Successfully created a ticket",
             )
         except Exception as e:
-            print(e)
+            print(f"Error while creating ticket: {e}")
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while creating a ticket",
@@ -139,7 +141,7 @@ class TicketServices:
                 data=tickets,
             )
         except Exception as e:
-            print(e)
+            print(f"error {e}")
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while listing  tickets",
