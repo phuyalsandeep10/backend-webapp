@@ -33,6 +33,7 @@ class TicketServices:
             data["created_by_id"] = user_id
             data["organization_id"] = user.attributes.get("organization_id")
             # for getting the default ticket status set by the organization
+
             print(f"Organization Id {data['organization_id']}")
             sts = await TicketStatus.find_one(
                 where={
@@ -47,17 +48,21 @@ class TicketServices:
                 )
 
             # for getting the default SLA set by the organization
+
             sla = await TicketSLA.find_one(
                 where={
                     "is_default": True,
                     "organization_id": data["organization_id"],
                 }
             )
+
             print(f"Ticket SLA {sla}")
+
             if not sla:
                 raise HTTPException(
                     status_code=500, detail="SLA default has not been set yet"
                 )
+             
             data["status_id"] = sts.id
             data["sla_id"] = sla.id
             if data["assignees"] is not None:
@@ -87,11 +92,9 @@ class TicketServices:
             # generating the confirmation token using secrets
             data["confirmation_token"] = secrets.token_hex(32)
             
-            try:
-                record = await Ticket.create(**dict(data))
-            except Exception as e:
-                print(f"Error while creating ticket record: {e}")
-
+            
+            record = await Ticket.create(**dict(data))
+        
             tick = await Ticket.find_one(
                 where={
                     "id": record.id,
