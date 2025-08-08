@@ -407,7 +407,7 @@ async def oauth_login(request: Request, provider: str):
 
     # is_production = is_production_env()
     # Ensure the redirect URI uses HTTPS in production
-    print(f"Is production environment: {is_production}")
+    # print(f"Is production environment: {is_production}")
     # if is_production:
     redirect_uri = redirect_uri.replace("http://", "https://")
 
