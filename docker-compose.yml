@@ -42,7 +42,7 @@ services:
     depends_on:
       - db
       - redis
-      - kafka
+      # - kafka
     networks:
       - mynetwork
 
