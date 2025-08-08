@@ -415,6 +415,7 @@ async def oauth_login(request: Request, provider: str):
     # redirect_uri = redirect_uri.replace("http://", "https://")
 
     # redirect_uri = f"{redirect_uri}?frontend_url={origin}" if origin else redirect_uri
+    redirect_uri = redirect_uri.replace(scheme="https")
 
     return await getattr(oauth, provider).authorize_redirect(request, redirect_uri)
 
