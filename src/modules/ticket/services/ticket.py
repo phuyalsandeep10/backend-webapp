@@ -147,7 +147,7 @@ class TicketServices:
                     selectinload(Ticket.department),
                 ],
             )
-            tickets = [ticket.to_dict() for ticket in all_tickets]
+            tickets = [ticket.to_json() for ticket in all_tickets]
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully listed all tickets",
