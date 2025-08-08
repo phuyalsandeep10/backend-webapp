@@ -40,6 +40,7 @@ class TicketServices:
                     "organization_id": data["organization_id"],
                 }
             )
+            print(f"Ticket Status {sts}")
             if not sts:
                 raise HTTPException(
                     status_code=500, detail="Ticket default status has not been set yet"
