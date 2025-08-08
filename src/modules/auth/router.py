@@ -260,6 +260,7 @@ async def verify_email_token(body: VerifyEmailTokenSchema):
     # Here you would typically update the user's email verification status
     user = await User.update(user.id, email_verified_at=datetime.utcnow())
     tokens = await create_token(user)
+    print(f'user {user}')
 
     update_user_cache(tokens.get("access_token"), user)
 
@@ -403,7 +404,7 @@ async def oauth_login(request: Request, provider: str):
     if provider not in ["google", "apple"]:
         return cr.error(data={"success": False}, message="Unsupported provider")
 
-    
+
     redirect_uri = request.url_for("oauth_callback", provider=provider)
 
     # is_production = is_production_env()
