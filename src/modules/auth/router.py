@@ -406,7 +406,8 @@ async def oauth_login(request: Request, provider: str):
 
 
     redirect_uri = request.url_for("oauth_callback", provider=provider)
-
+    print(f"Redirect URI: {redirect_uri}")
+    print(f"Type URI: {type(redirect_uri)}")
     # is_production = is_production_env()
     # Ensure the redirect URI uses HTTPS in production
     # print(f"Is production environment: {is_production}")
