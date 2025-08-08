@@ -238,6 +238,7 @@ class ChatNamespace(socketio.AsyncNamespace):
 
         if not conversation:
             return
+            
         for si in conversation["sids"]:
             if si == sid:
                 continue

@@ -10,16 +10,20 @@ class Settings(BaseSettings):
 
     # def __init__(self):
     #     super()
+
+    celery_broker_url: str = "redis://localhost:6379"
     PROJECT_NAME: str = "Chatboq Service"
     PROJECT_VERSION: str = "1.0.0"
     PROJECT_DESCRIPTION: str = "Chatboq Service API"
     DATABASE_URL: str = ""
     ASYNC_DATABASE_URL: str = ""
     API_PREFIX: str = "/api/v1"
+    CELEREY_BROKER_URL: str = "redis://localhost:6379"
+
     ALLOWED_HOSTS: List[str] = ["*"]
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 # Token expiration time in minutes
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:29092"
     KAFKA_TOPIC: str = "chatboq-events"
     DB_USER: str = "postgres"

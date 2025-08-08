@@ -42,6 +42,8 @@ async def validate_user(
 ):
     """Get current authenticated user"""
 
+    
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -54,10 +56,15 @@ async def validate_user(
             if " " in credentials.credentials
             else credentials.credentials
         )
+        
         user = await get_user_by_token(token)
+
+
 
         if user is None:
             raise credentials_exception
+
+        
 
         if not user.is_active:
             raise HTTPException(
@@ -74,8 +81,9 @@ async def validate_user(
             )
 
         if isTwoFaVerifyCheck and user.two_fa_enabled and not user.is_2fa_verified:
+            
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Email "
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Two FA not "
             )
 
         user_cache[token] = user  # Cache the user object
@@ -110,7 +118,7 @@ def get_current_user_factory(
         return await validate_user(
             credentials=credentials,
             isEmailVerifyCheck=isEmailVerifyCheck,
-            isTwoFaVerifyCheck=isTwoFaVerifyCheck,
+            isTwoFaVerifyCheck=isTwoFaVerifyCheck or False,
         )
 
     return current_user

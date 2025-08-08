@@ -5,6 +5,7 @@ from src.common.dependencies import (
     get_current_user,
     update_user_cache,
 )
+
 from src.common.models import Permission
 from src.enums import InvitationStatus
 from src.models import (
@@ -54,7 +55,11 @@ async def create_organization(
         raise HTTPException(
             status_code=400, detail="Organization with this name already exists"
         )
+    
     slug = body.name.lower().replace(" ", "-")
+
+
+
     organization = await Organization.create(
         name=body.name,
         description=body.description,
@@ -66,9 +71,13 @@ async def create_organization(
         owner_id=user.id
     )
 
+
+
+
     await OrganizationMember.create(
         organization_id=organization.id, user_id=user.id, is_owner=True
     )
+
     user_attributes = user.attributes
 
     if not user_attributes:
@@ -211,7 +220,7 @@ async def create_role(body: OrganizationRoleSchema, user=Depends(get_current_use
         description=body.description,
         permissions=permissions,
     )
-    return cr.success(data=role)
+    return cr.success(data=role.to_json())
 
 
 @router.put("/roles/{role_id}")
@@ -250,7 +259,7 @@ async def update_role(
         role.id, name=body.name, permissions=permissions, description=body.description
     )
 
-    return cr.success(data=role)
+    return cr.success(data=role.to_json())
 
 
 @router.get("/roles")
@@ -262,7 +271,7 @@ async def get_roles(user=Depends(get_current_user)):
     organization_id = user.attributes.get("organization_id")
 
     roles =  await OrganizationRole.filter(where={"organization_id": organization_id})
-    return cr.success(data=roles)
+    return cr.success(data=[role.to_json() for role in roles])
 
 
 
