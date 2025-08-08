@@ -412,7 +412,7 @@ async def oauth_login(request: Request, provider: str):
     # Ensure the redirect URI uses HTTPS in production
     # print(f"Is production environment: {is_production}")
     # if is_production:
-    redirect_uri = redirect_uri.replace("http://", "https://")
+    # redirect_uri = redirect_uri.replace("http://", "https://")
 
     # redirect_uri = f"{redirect_uri}?frontend_url={origin}" if origin else redirect_uri
 
