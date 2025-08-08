@@ -169,8 +169,8 @@ async def validateEmail(body: ValidateEmailSchema):
     user = await User.find_one({"email": body.email})
     if user:
         return cr.error(
-            data={"success": False, "errors": {"email": ["Email already registered"]}},
-            message="Email already registered",
+            data={"success": False, "errors": {"email": ["This email has already been registered"]}},
+            message="This email has already been registered",
         )
 
     return cr.success(data={"success": True})
@@ -184,7 +184,7 @@ async def register(request: RegisterSchema):
     # Check if user already exists
 
     if user:
-        return cr.error(data={"success": False}, message="Email already registered")
+        return cr.error(data={"success": False}, message="This email has already been registered")
 
     hashed_password = hash_password(request.password)
     user = await User.create(
