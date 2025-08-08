@@ -29,7 +29,7 @@ class TicketServices:
         try:
             user_id = user.id
             data = dict(payload)
-            print(f'user {user}')
+            
             data["created_by_id"] = user_id
             data["organization_id"] = user.attributes.get("organization_id")
             # for getting the default ticket status set by the organization
@@ -69,10 +69,14 @@ class TicketServices:
 
             del data["assignees"]  # not assigning None to the db
             # validating the data
-            tenant = TenantEntityValidator(
-                org_id=user.attributes.get("organization_id")
-            )
-
+            try:
+                tenant = TenantEntityValidator(
+                    org_id=user.attributes.get("organization_id")
+    
+                )
+            except Exception as e:
+                print(f"Error while validating tenant: {e}")
+            print(f"Creating ticket with data: {data}")
             print(f"creating ticket validation status start ")
             await tenant.validate(TicketPriority, data["priority_id"])
             await tenant.validate(TicketStatus, data["status_id"])
@@ -81,11 +85,11 @@ class TicketServices:
             print(f"creating ticket validation status end")
             # generating the confirmation token using secrets
             data["confirmation_token"] = secrets.token_hex(32)
-            print(f"Creating ticket with data: {data}")
+            
             try:
                 record = await Ticket.create(**dict(data))
             except Exception as e:
-                print(f"Error while creating ticket: {e}")
+                print(f"Error while creating ticket record: {e}")
 
             tick = await Ticket.find_one(
                 where={
