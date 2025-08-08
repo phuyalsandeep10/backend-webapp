@@ -114,6 +114,34 @@ class ChatNamespace(socketio.AsyncNamespace):
         super().__init__("/chat")
         self.rooms = {}
 
+    async def on_connect_user(self,sid,environ,auth):
+        print(f"on connect user connected: {sid}")
+        if not auth:
+            print("❌ No auth provided")
+            return False
+
+        token = auth.get("token")
+        if not token:
+            print("❌ No token provided")
+            return False
+        
+        user = await get_user_by_token(token)
+
+        if not user:
+            print("❌ User not found")
+            return False
+
+        # user_id = auth.get("user_id")
+        if token:
+            
+            await User.update(user.id,attributes={"is_online": True})
+            print(f"User {user.id} is online")
+
+            self.rooms[sid] = user.id
+            user["sids"].append(sid)
+            user["online"] = True
+        
+
     async def on_connect(self, sid, environ, auth):
         print(f"Chat connected: {sid}")
         if not auth:
