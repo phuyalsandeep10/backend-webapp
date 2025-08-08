@@ -44,44 +44,44 @@ def upgrade() -> None:
     Function to create a table
     """
     TicketPriorityMigration().upgrade()
-    default_priorities = [
-        {
-            "id": 1,
-            "name": "critical",
-            "level": "0",
-            "bg_color": "#FAD6D5",
-            "fg_color": "#F61818",
-            "organization_id": None,
-        },
-        {
-            "id": 2,
-            "name": "high",
-            "level": "1",
-            "bg_color": "#FFF0D2",
-            "fg_color": "#F5CE31",
-            "organization_id": None,
-        },
-        {
-            "id": 3,
-            "name": "medium",
-            "level": "2",
-            "bg_color": "#DAE8FA",
-            "fg_color": "#3872B7",
-            "organization_id": None,
-        },
-        {
-            "id": 4,
-            "name": "low",
-            "level": "3",
-            "bg_color": "#E5F9DB",
-            "fg_color": "#009959",
-            "organization_id": None,
-        },
-    ]
-    TicketPriorityMigration().bulk_insert_data(rows=default_priorities)
-    op.execute(
-        "SELECT setval('ticket_priority_id_seq', (SELECT MAX(id) FROM ticket_priority))"
-    )
+    # default_priorities = [
+    #     {
+    #         "id": 1,
+    #         "name": "critical",
+    #         "level": "0",
+    #         "bg_color": "#FAD6D5",
+    #         "fg_color": "#F61818",
+    #         "organization_id": None,
+    #     },
+    #     {
+    #         "id": 2,
+    #         "name": "high",
+    #         "level": "1",
+    #         "bg_color": "#FFF0D2",
+    #         "fg_color": "#F5CE31",
+    #         "organization_id": None,
+    #     },
+    #     {
+    #         "id": 3,
+    #         "name": "medium",
+    #         "level": "2",
+    #         "bg_color": "#DAE8FA",
+    #         "fg_color": "#3872B7",
+    #         "organization_id": None,
+    #     },
+    #     {
+    #         "id": 4,
+    #         "name": "low",
+    #         "level": "3",
+    #         "bg_color": "#E5F9DB",
+    #         "fg_color": "#009959",
+    #         "organization_id": None,
+    #     },
+    # ]
+    # TicketPriorityMigration().bulk_insert_data(rows=default_priorities)
+    # op.execute(
+    #     "SELECT setval('ticket_priority_id_seq', (SELECT MAX(id) FROM ticket_priority))"
+    # )
 
 
 def downgrade() -> None:
