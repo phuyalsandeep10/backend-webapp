@@ -42,6 +42,8 @@ def read_root():
     return {"Hello": "Hello Chatboq World"}
 
 
+
+
 @app.get("/chat")
 async def get(request: Request):
     with open("src/templates/index.html") as f:
