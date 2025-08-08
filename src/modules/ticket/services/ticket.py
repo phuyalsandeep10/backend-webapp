@@ -32,6 +32,7 @@ class TicketServices:
             data["created_by_id"] = user_id
             data["organization_id"] = user.attributes.get("organization_id")
             # for getting the default ticket status set by the organization
+            print(f"Organization Id {data['organization_id']}")
             sts = await TicketStatus.find_one(
                 where={
                     "is_default": True,

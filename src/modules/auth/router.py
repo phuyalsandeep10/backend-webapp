@@ -404,11 +404,12 @@ async def oauth_login(request: Request, provider: str):
         return cr.error(data={"success": False}, message="Unsupported provider")
 
     redirect_uri = request.url_for("oauth_callback", provider=provider)
-    is_production = is_production_env()
+
+    # is_production = is_production_env()
     # Ensure the redirect URI uses HTTPS in production
     print(f"Is production environment: {is_production}")
-    if is_production:
-        redirect_uri = redirect_uri.replace("http://", "https://")
+    # if is_production:
+    redirect_uri = redirect_uri.replace("http://", "https://")
 
     # redirect_uri = f"{redirect_uri}?frontend_url={origin}" if origin else redirect_uri
 
@@ -495,8 +496,9 @@ async def verify_two_fa(
     if not totp.verify(body.token):
         return cr.error(message=message)
     
-    await User.update(user.id, is_2fa_verified=True)
-    update_user_cache(token, user)
+    updated_user = await User.update(user.id, is_2fa_verified=True)
+    update_user_cache(token, updated_user)
+    print(f'updated user {updated_user.to_json()}')
 
     # Invalidate the refresh token cache
 
