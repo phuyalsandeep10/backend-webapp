@@ -53,6 +53,7 @@ class TicketServices:
                     "organization_id": data["organization_id"],
                 }
             )
+            print(f"Ticket SLA {sla}")
             if not sla:
                 raise HTTPException(
                     status_code=500, detail="SLA default has not been set yet"
@@ -66,7 +67,7 @@ class TicketServices:
                     users.append(usr)
 
                 data["assignees"] = users
-
+            print('ticket start validation')
             del data["assignees"]  # not assigning None to the db
             # validating the data
             try:

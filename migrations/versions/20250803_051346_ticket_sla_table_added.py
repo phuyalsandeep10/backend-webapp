@@ -29,6 +29,7 @@ class TicketSLAMigration(BaseMigration):
         self.tenant_columns()
         self.string(name="name")
         self.biginteger(name="response_time")
+        self.boolean(name="is_default", default=False)
         self.biginteger(name="resolution_time")
         self.foreign(name="priority_id", table="ticket_priority")
         self.unique_constraint("organization_id", "name", "priority_id")
@@ -47,6 +48,8 @@ def upgrade() -> None:
             "resolution_time": "86400",  # 24 hours in seconds
             "organization_id": None,
             "priority_id": 1,
+            "is_default": False
+
         },
         {
             "id": 2,
