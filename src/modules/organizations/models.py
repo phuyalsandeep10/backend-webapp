@@ -122,7 +122,7 @@ class OrganizationInvitation(TenantModel, table=True):
             "foreign_keys": "[OrganizationInvitation.invited_by_id]"
         }
     )
-    
+
     expires_at: datetime = Field(nullable=True)
-    activity_at: Optional[datetime] = Field(default=None, nullable=True)
+    activity_at: Optional[datetime] = Field(default=None, nullable=False)
     token: str = Field(max_length=255, nullable=False)

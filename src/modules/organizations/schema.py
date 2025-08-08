@@ -92,3 +92,5 @@ class CreateRoleOutSchema(BaseModel):
     description: str
     org_name: str
     created_at: str
+    no_of_agents: int
+    permission_summary: List[UpdateRoleInSchema] = []

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime, timedelta
+from sqlmodel import text
 
 from src.common.dependencies import (
     get_bearer_token,
@@ -208,10 +209,10 @@ async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="Role name already exists")
 
     role = await OrganizationRole.create(
-        **body.model_dump(exclude={"permissions"}),
+        **body.model_dump(exclude={"permissions", "updated_at", "created_at"}),
         identifier=body.name.lower().replace(" ", "-"),
     )
-
+    print("Role Created:", role)
     for perm in body.permissions:
         await RolePermission.create(
             role_id=role.id,
@@ -263,13 +264,45 @@ async def update_role(
     return cr.success(data=updated_role.to_json(CreateRoleOutSchema))
 
 
-# Get All Roles
+# # Get All Roles
+# @router.get("/roles")
+# async def get_roles(user=Depends(get_current_user)):
+#     """
+#     Retrieve all the roles for the organization
+#     """
+#     roles = await OrganizationRole.filter()
+
+#     results = []
+#     for role in roles:
+#         org = await Organization.get(role.organization_id)
+#         role_data = {
+#             "role_id": role.id,
+#             "role_name": role.name,
+#             "description": role.description,
+#             "org_name": org.name,
+#             "created_at": role.created_at.isoformat(),
+#         }
+#         results.append(CreateRoleOutSchema(**role_data))
+
+#     return cr.success(data=[r.model_dump() for r in results])
+
+
 @router.get("/roles")
 async def get_roles(user=Depends(get_current_user)):
-    """
-    Retrieve all the roles for the organization
-    """
     roles = await OrganizationRole.filter()
+
+    async with async_session() as session:
+        query = text(
+            """
+            SELECT r.id AS role_id, COUNT(*) AS total_members
+            FROM org_member_roles omr
+            JOIN org_members m ON omr.member_id = m.id
+            JOIN org_roles r ON omr.role_id = r.id
+            GROUP BY r.id
+        """
+        )
+        counts_result = await session.execute(query)
+        counts_map = {row.role_id: row.total_members for row in counts_result}
 
     results = []
     for role in roles:
@@ -280,6 +313,8 @@ async def get_roles(user=Depends(get_current_user)):
             "description": role.description,
             "org_name": org.name,
             "created_at": role.created_at.isoformat(),
+            "no_of_agents": counts_map.get(role.id, 0),
+            "permission_summary": [],
         }
         results.append(CreateRoleOutSchema(**role_data))
 
@@ -333,13 +368,7 @@ async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_u
 
 @router.get("/invitation")
 async def get_invitations(user=Depends(get_current_user)):
-    organization_id = user.attributes.get("organization_id")
-    if not organization_id:
-        raise HTTPException(403, "Not organization setup")
-
-    invitations = await OrganizationInvitation.filter(
-        where={"organization_id": organization_id}
-    )
+    invitations = await OrganizationInvitation.filter()
 
     excluded_fields = {"expires_at", "activity_at", "created_at", "updated_at"}
     return cr.success(

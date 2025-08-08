@@ -26,7 +26,7 @@ class OrganizationrolesMigration(BaseMigration):
         self.string("description")
         self.string("identifier")
         self.json("permissions", default=[])
-        self.foreign("organization_id", "sys_organizations")
+        # self.foreign("organization_id", "sys_organizations")
 
         # describe your schemas here
 
