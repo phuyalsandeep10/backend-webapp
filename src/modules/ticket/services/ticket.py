@@ -75,13 +75,12 @@ class TicketServices:
             print('ticket start validation')
             del data["assignees"]  # not assigning None to the db
             # validating the data
-            try:
-                tenant = TenantEntityValidator(
+            
+            tenant = TenantEntityValidator(
                     org_id=user.attributes.get("organization_id")
     
                 )
-            except Exception as e:
-                print(f"Error while validating tenant: {e}")
+         
             print(f"Creating ticket with data: {data}")
             print(f"creating ticket validation status start ")
             await tenant.validate(TicketPriority, data["priority_id"])
