@@ -403,6 +403,7 @@ async def oauth_login(request: Request, provider: str):
     if provider not in ["google", "apple"]:
         return cr.error(data={"success": False}, message="Unsupported provider")
 
+    
     redirect_uri = request.url_for("oauth_callback", provider=provider)
 
     # is_production = is_production_env()

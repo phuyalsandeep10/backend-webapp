@@ -29,6 +29,7 @@ class TicketServices:
         try:
             user_id = user.id
             data = dict(payload)
+            print(f'user {user}')
             data["created_by_id"] = user_id
             data["organization_id"] = user.attributes.get("organization_id")
             # for getting the default ticket status set by the organization
