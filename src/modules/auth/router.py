@@ -408,14 +408,16 @@ async def oauth_login(request: Request, provider: str):
     redirect_uri = request.url_for("oauth_callback", provider=provider)
     print(f"Redirect URI: {redirect_uri}")
     print(f"Type URI: {type(redirect_uri)}")
-    # is_production = is_production_env()
+    is_production = is_production_env()
     # Ensure the redirect URI uses HTTPS in production
-    # print(f"Is production environment: {is_production}")
-    # if is_production:
+    print(f"Is production environment: {is_production}")
+    if is_production:
+        redirect_uri = redirect_uri.replace(scheme="https")
+
     # redirect_uri = redirect_uri.replace("http://", "https://")
 
     # redirect_uri = f"{redirect_uri}?frontend_url={origin}" if origin else redirect_uri
-    redirect_uri = redirect_uri.replace(scheme="https")
+    
 
     return await getattr(oauth, provider).authorize_redirect(request, redirect_uri)
 
