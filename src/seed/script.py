@@ -16,11 +16,11 @@ async def seed_func():
     await organization_seed_dummy()
     await organization_user_seed_dummy()
     await department_team_seed_dummy()
-    # await create_customer_seed()
+    await create_customer_seed()
     await create_customer_logs_seed()
-    # await priority_seed()
-    # await status_seed()
-    # await sla_seed_dummy()
+    await priority_seed()
+    await status_seed()
+    await sla_seed_dummy()
 
 
 print(f"__name__ {__name__}")
