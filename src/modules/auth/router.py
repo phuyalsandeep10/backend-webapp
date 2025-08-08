@@ -25,6 +25,7 @@ from .schema import (
     RefreshTokenSchema,
     VerifyTwoFAOtpSchema,
     UserSchema,
+    UserProfileUpdateSchema,
     ValidateEmailSchema,
     VerifyEmailEnum,
     ResendVerificationSchema,
@@ -394,6 +395,34 @@ async def get_invitations(user=Depends(get_current_user)):
 
     data = await OrganizationInvitation.filter(where={"email": user.email})
     return cr.success(data=data)
+
+@router.patch("/profile")
+async def update_user_profile(
+    profile_data: UserProfileUpdateSchema,
+    user=Depends(get_current_user)
+):
+    """Update user profile information(partial update)"""
+    
+    current_user = await User.find_one(where={"email": user.email})
+    
+    if not current_user:
+        return cr.error(data={"success": False}, message="User not found")
+    
+    # Only update fields that were provided
+    update_data = profile_data.dict(exclude_unset=True)
+
+    if not update_data:
+        return cr.error(data={"success": False}, message="No data to update") 
+    
+    # Updated user
+    updated_user = await User.update(current_user.id, **update_data)
+    
+    user_schema = UserSchema.model_validate(updated_user, from_attributes=True)
+    
+    return cr.success(
+        data={"user": jsonable_encoder(user_schema)},
+        message="Profile updated successfully"
+    )
 
 
 @router.get("/oauth/{provider}")
