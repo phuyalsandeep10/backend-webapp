@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api/v1"
     CELEREY_BROKER_URL: str = "redis://localhost:6379"
 
-    ALLOWED_HOSTS: List[str] = ["*"]
+
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 # Token expiration time in minutes
@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     CLOUDINARY_CLOUD_NAME: str = ""
     CLOUDINARY_API_KEY: str = ""
     CLOUDINARY_API_SECRET: str = ""
+    ENV: str = "development"
 
     model_config = SettingsConfigDict(env_file=".env")
 

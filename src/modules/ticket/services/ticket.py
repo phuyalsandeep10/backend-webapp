@@ -29,31 +29,40 @@ class TicketServices:
         try:
             user_id = user.id
             data = dict(payload)
+            
             data["created_by_id"] = user_id
             data["organization_id"] = user.attributes.get("organization_id")
             # for getting the default ticket status set by the organization
+
+            print(f"Organization Id {data['organization_id']}")
             sts = await TicketStatus.find_one(
                 where={
                     "is_default": True,
                     "organization_id": data["organization_id"],
                 }
             )
+            print(f"Ticket Status {sts}")
             if not sts:
                 raise HTTPException(
                     status_code=500, detail="Ticket default status has not been set yet"
                 )
 
             # for getting the default SLA set by the organization
+
             sla = await TicketSLA.find_one(
                 where={
                     "is_default": True,
                     "organization_id": data["organization_id"],
                 }
             )
+
+            print(f"Ticket SLA {sla}")
+
             if not sla:
                 raise HTTPException(
                     status_code=500, detail="SLA default has not been set yet"
                 )
+             
             data["status_id"] = sts.id
             data["sla_id"] = sla.id
             if data["assignees"] is not None:
@@ -63,22 +72,31 @@ class TicketServices:
                     users.append(usr)
 
                 data["assignees"] = users
-
+            print('ticket start validation')
             del data["assignees"]  # not assigning None to the db
             # validating the data
+            
             tenant = TenantEntityValidator(
-                org_id=user.attributes.get("organization_id")
-            )
-
+                    org_id=user.attributes.get("organization_id")
+    
+                )
+         
+            print(f"Creating ticket with data: {data}")
+            print(f"creating ticket validation status start ")
             await tenant.validate(TicketPriority, data["priority_id"])
             await tenant.validate(TicketStatus, data["status_id"])
             await tenant.validate(TicketSLA, data["sla_id"])
             await tenant.validate(Team, data["department_id"])
+            print(f"creating ticket validation status end")
             # generating the confirmation token using secrets
             data["confirmation_token"] = secrets.token_hex(32)
+            
+            
+            record = await Ticket.create(**dict(data))
+        
             tick = await Ticket.find_one(
                 where={
-                    "id": (await Ticket.create(**dict(data))).id,
+                    "id": record.id,
                     "organization_id": data["organization_id"],
                 },
                 related_items=[selectinload(Ticket.customer)],
@@ -105,7 +123,7 @@ class TicketServices:
                 message="Successfully created a ticket",
             )
         except Exception as e:
-            print(e)
+            print(f"Error while creating ticket: {e}")
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while creating a ticket",
@@ -129,14 +147,14 @@ class TicketServices:
                     selectinload(Ticket.department),
                 ],
             )
-            tickets = [ticket.to_dict() for ticket in all_tickets]
+            tickets = [ticket.to_json() for ticket in all_tickets]
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully listed all tickets",
                 data=tickets,
             )
         except Exception as e:
-            print(e)
+            print(f"error {e}")
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while listing  tickets",

@@ -169,8 +169,8 @@ async def validateEmail(body: ValidateEmailSchema):
     user = await User.find_one({"email": body.email})
     if user:
         return cr.error(
-            data={"success": False, "errors": {"email": ["Email already registered"]}},
-            message="Email already registered",
+            data={"success": False, "errors": {"email": ["This email has already been registered"]}},
+            message="This email has already been registered",
         )
 
     return cr.success(data={"success": True})
@@ -184,7 +184,7 @@ async def register(request: RegisterSchema):
     # Check if user already exists
 
     if user:
-        return cr.error(data={"success": False}, message="Email already registered")
+        return cr.error(data={"success": False}, message="This email has already been registered")
 
     hashed_password = hash_password(request.password)
     user = await User.create(
@@ -260,6 +260,7 @@ async def verify_email_token(body: VerifyEmailTokenSchema):
     # Here you would typically update the user's email verification status
     user = await User.update(user.id, email_verified_at=datetime.utcnow())
     tokens = await create_token(user)
+    print(f'user {user}')
 
     update_user_cache(tokens.get("access_token"), user)
 
@@ -403,14 +404,20 @@ async def oauth_login(request: Request, provider: str):
     if provider not in ["google", "apple"]:
         return cr.error(data={"success": False}, message="Unsupported provider")
 
+
     redirect_uri = request.url_for("oauth_callback", provider=provider)
+    print(f"Redirect URI: {redirect_uri}")
+    print(f"Type URI: {type(redirect_uri)}")
     is_production = is_production_env()
     # Ensure the redirect URI uses HTTPS in production
     print(f"Is production environment: {is_production}")
     if is_production:
-        redirect_uri = redirect_uri.replace("http://", "https://")
+        redirect_uri = redirect_uri.replace(scheme="https")
+
+    # redirect_uri = redirect_uri.replace("http://", "https://")
 
     # redirect_uri = f"{redirect_uri}?frontend_url={origin}" if origin else redirect_uri
+    
 
     return await getattr(oauth, provider).authorize_redirect(request, redirect_uri)
 
@@ -495,8 +502,9 @@ async def verify_two_fa(
     if not totp.verify(body.token):
         return cr.error(message=message)
     
-    await User.update(user.id, is_2fa_verified=True)
-    update_user_cache(token, user)
+    updated_user = await User.update(user.id, is_2fa_verified=True)
+    update_user_cache(token, updated_user)
+    print(f'updated user {updated_user.to_json()}')
 
     # Invalidate the refresh token cache
 
