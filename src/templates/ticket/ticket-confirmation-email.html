@@ -1,0 +1,23 @@
+<html>
+  <head> </head>
+
+  <body>
+    <p>Hello {{name}}</p>
+    <p>
+      Your ticket (ID: {{ticket["id"]}}) has been successfully created. Please
+      confirm your ticket
+    </p>
+    <div>
+      <h1>Please verify the ticket confirmation</h1>
+      <a
+        href="{settings.FRONTEND_URL}/ticket-confirm/{{ticket['id']}}/{ticket.confirmation_token}"
+        >Verify ticket</a
+      >
+    </div>
+
+    <p>Thank you for contacting us!</p>
+
+    <p>Best regards,</p>
+    <p>Support Team</p>
+  </body>
+</html>

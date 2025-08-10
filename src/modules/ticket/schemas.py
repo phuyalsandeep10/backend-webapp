@@ -61,7 +61,7 @@ class EditTicketSchema(BaseModel):
     description: Optional[str] = None
     sender_domain: Optional[str] = None
     notes: Optional[str] = None
-    attachment: Optional[str] = None
+    attachments: Optional[List[str]] = None
     priority_id: Optional[int] = None
     status_id: Optional[int] = None
     department_id: Optional[str] = None

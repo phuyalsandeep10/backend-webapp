@@ -19,16 +19,6 @@ class TicketPriorityService:
         try:
 
             priorities = await TicketPriority.filter()
-
-            print("The prioritieis", priorities)
-
-            # if there is none of them, then list the default ones
-            if len(priorities) == 0:
-                payload = await self.list_default_priorities()
-                return cr.success(
-                    message="Successfully listed priorities", data=payload
-                )
-
             payload = [priority.to_json(PriorityOut) for priority in priorities]
             return cr.success(message="Successfully listed priorities", data=payload)
         except Exception as e:
@@ -113,16 +103,6 @@ class TicketPriorityService:
         except Exception as e:
             logger.exception(e)
             return cr.error(message="Error while editing priority", data=str(e))
-
-    async def list_default_priorities(self):
-        """
-        Lists all the default priorities
-        """
-        default_priorities = await TicketPriority.filter(
-            where={"organization_id": None}
-        )
-        payload = [priority.to_json(PriorityOut) for priority in default_priorities]
-        return payload
 
 
 priority_service = TicketPriorityService()
