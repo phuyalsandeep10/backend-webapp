@@ -53,6 +53,14 @@ class CreateTicketSchema(BaseModel):
                 "missing_customer_info",
                 "Either provide customer_id or anonymous customer information (name/email/phone/location)",
             )
+
+            # If neither customer_id nor complete anonymous details are sent → error
+        if customer_id is not None and any(field is not None for field in result):
+            raise PydanticCustomError(
+                "missing_customer_info",
+                "Either provide customer_id or all anonymous customer information (name/email/phone/location).",
+            )
+
         return self
 
 

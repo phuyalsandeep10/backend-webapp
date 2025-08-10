@@ -10,7 +10,7 @@
     <div>
       <h1>Please verify the ticket confirmation</h1>
       <a
-        href="{settings.FRONTEND_URL}/ticket-confirm/{{ticket['id']}}/{ticket.confirmation_token}"
+        href="{{settings.FRONTEND_URL}}/ticket-confirm/{{ticket['id']}}/{{ticket.confirmation_token}}"
         >Verify ticket</a
       >
     </div>

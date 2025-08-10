@@ -24,6 +24,7 @@ from src.utils.exceptions.ticket import (
     TicketSLANotFound,
     TicketStatusNotFound,
 )
+from src.utils.get_templates import get_templates
 from src.utils.response import CustomResponse as cr
 from src.utils.validations import TenantEntityValidator
 
@@ -52,7 +53,9 @@ class TicketServices:
             data["status_id"] = sts.id
             data["sla_id"] = sla.id
             if "assignees" in data:
-                data["assignees"] = self.get_assigned_members_by_id(data["assignees"])
+                data["assignees"] = await self.get_assigned_members_by_id(
+                    data["assignees"]
+                )
 
             await self.validate_foreign_restrictions(data)
 
@@ -63,6 +66,7 @@ class TicketServices:
 
             # creating the ticket
             ticket = await Ticket.create(**data)
+            logger.info("The tick rajib", ticket, data)
 
             if attachments:
                 for attachment in attachments:
@@ -306,18 +310,21 @@ class TicketServices:
             raise TicketNotFound()
 
         receiver = tick.customer.email if ticket.customer_id else tick.customer_email
-        content = await self.get_confirmation_content(tick)
+        name = ticket.customer.name if ticket.customer_id else ticket.customer_name
+        html_content = {"name": name, "ticket": ticket, "settings": settings}
+        template = await get_templates(
+            name="ticket/ticket-confirmation-email.html", content=html_content
+        )
 
         email = NotificationFactory.create("email")
         email.send(
-            subject="Ticket confirmation", recipients=[receiver], body_html=content
+            subject="Ticket confirmation", recipients=[receiver], body_html=template
         )
 
     async def get_confirmation_content(self, ticket: Ticket):
         """
         Returns the simple confirmation html
         """
-        name = ticket.customer.name if ticket.customer_id else ticket.customer_name
         content = f"""
 
         <p>Hello {name}</p>,
