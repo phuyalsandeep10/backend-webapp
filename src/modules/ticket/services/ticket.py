@@ -16,7 +16,7 @@ from src.modules.ticket.models import TicketPriority
 from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
-from src.modules.ticket.models.ticket import Ticket
+from src.modules.ticket.models.ticket import Ticket, TicketAttachment
 from src.modules.ticket.schemas import CreateTicketSchema, EditTicketSchema
 from src.modules.ticket.services.status import ticket_status_service
 from src.utils.exceptions.ticket import TicketNotFound
@@ -50,8 +50,16 @@ class TicketServices:
             # generating the confirmation token using secrets
             data["confirmation_token"] = await self.generate_secret_tokens()
 
+            attachments = data.pop("attachments", None)
+
             # creating the ticket
             ticket = await Ticket.create(**data)
+
+            if attachments:
+                for attachment in attachments:
+                    await TicketAttachment.create(
+                        ticket_id=ticket.id, attachment=attachment
+                    )
 
             # sending the confirmation email
             await self.send_confirmation_email(ticket)
@@ -82,6 +90,7 @@ class TicketServices:
                     selectinload(Ticket.customer),
                     selectinload(Ticket.created_by),
                     selectinload(Ticket.department),
+                    selectinload(Ticket.attachments),
                 ],
             )
             tickets = [ticket.to_dict() for ticket in all_tickets]
@@ -272,6 +281,12 @@ class TicketServices:
             usr = await User.find_one(where={"id": assigne_id})
             users.append(usr)
         return users
+
+    async def get_attachments_id(self, attachments: list[str], ticket_id: int):
+        """
+        Registers the ticket attachments
+        """
+        print("Eta pugey")
 
     async def validate_foreign_restrictions(self, data):
         """

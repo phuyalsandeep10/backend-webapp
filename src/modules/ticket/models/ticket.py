@@ -5,9 +5,14 @@ from pydantic import EmailStr
 from sqlalchemy import Column, ForeignKey
 from sqlmodel import Field, Relationship
 
-from src.common.models import BaseModel, TenantModel
+from src.common.models import BaseModel, CommonModel, TenantModel
 from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
-from src.modules.ticket.schemas import PriorityOut, SLAOut, TicketStatusOut
+from src.modules.ticket.schemas import (
+    PriorityOut,
+    SLAOut,
+    TicketAttachmentOut,
+    TicketStatusOut,
+)
 
 if TYPE_CHECKING:
     from src.modules.auth.models import User
@@ -17,6 +22,20 @@ if TYPE_CHECKING:
     from src.modules.ticket.models import TicketSLA
     from src.modules.ticket.models.priority import TicketPriority
     from src.modules.ticket.models.status import TicketStatus
+
+
+class TicketAttachment(CommonModel, table=True):
+    """
+    To store ticket attachments
+    """
+
+    __tablename__ = "ticket_attachments"  # type:ignore
+
+    ticket_id: int = Field(
+        sa_column=Column(ForeignKey("org_tickets.id", ondelete="CASCADE"))
+    )
+    attachment: str
+    ticket: Optional["Ticket"] = Relationship(back_populates="attachments")
 
 
 class TicketAssigneesLink(BaseModel, table=True):
@@ -51,7 +70,6 @@ class Ticket(TenantModel, table=True):
 
     title: str
     description: str
-    attachment: Optional[str] = None
     sender_domain: EmailStr
     notes: Optional[str] = None
     priority_id: int = Field(
@@ -88,6 +106,7 @@ class Ticket(TenantModel, table=True):
     assignees: List["User"] = Relationship(
         back_populates="assigned_tickets", link_model=TicketAssigneesLink
     )
+    attachments: List["TicketAttachment"] = Relationship(back_populates="ticket")
     alerts: List["TicketAlert"] = Relationship(
         back_populates="ticket",
     )
@@ -106,7 +125,10 @@ class Ticket(TenantModel, table=True):
             "id": self.id,
             "title": self.title,
             "description": self.description,
-            "attachment": self.attachment,
+            "attachment": [
+                attachment.to_json(TicketAttachmentOut)
+                for attachment in self.attachments
+            ],
             "priority": self.priority.to_json(PriorityOut),
             "status": self.status.to_json(TicketStatusOut),
             "sla": self.sla.to_json(SLAOut),
