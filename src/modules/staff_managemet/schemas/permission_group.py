@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
+
 class PermissionOutSchema(BaseModel):
     id: int
     name: str
@@ -8,7 +9,12 @@ class PermissionOutSchema(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class PermissionGroupOutSchema(BaseModel):
     id: int
     name: str
     permissions: List[PermissionOutSchema] = []
+
+
+class RolePermissionsInSchema(BaseModel):
+    role_id: int

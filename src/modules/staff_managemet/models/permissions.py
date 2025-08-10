@@ -1,6 +1,7 @@
-from typing import Optional, TYPE_CHECKING
-from sqlmodel import Field, Relationship
+from typing import Optional, TYPE_CHECKING, List
+from sqlmodel import Column, Field, Relationship, ForeignKey
 from src.common.models import BaseModel
+from src.modules.staff_managemet.models.role_permission import RolePermission
 
 
 if TYPE_CHECKING:
@@ -12,7 +13,13 @@ class Permissions(BaseModel, table=True):
 
     name: str = Field(max_length=255, index=True, unique=True)
 
-    group_id: Optional[int] = Field(
-        default=None, foreign_key="sys_permissions_groups.id"
+    group_id: int = Field(
+        sa_column=Column(
+            ForeignKey("sys_permissions_groups.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
     )
+
     group: Optional["PermissionGroup"] = Relationship(back_populates="permissions")
+
+    role_permissions: List["RolePermission"] = Relationship(back_populates="permission")

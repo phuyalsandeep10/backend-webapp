@@ -28,6 +28,7 @@ class PermissionMigration(BaseMigration):
         self.foreign(
             "group_id",
             "sys_permissions_groups",
+            ondelete="CASCADE",
         )
         # describe your schemas here
 

@@ -48,6 +48,7 @@ class Organization(CommonModel, table=True):
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
+    roles: List["OrganizationRole"] = Relationship(back_populates="organization")
 
     ticket_priorities: List["TicketPriority"] = Relationship(
         back_populates="organization"
@@ -84,6 +85,8 @@ class OrganizationRole(TenantModel, table=True):
     role_permissions: list["RolePermission"] = Relationship(back_populates="org_role")
 
     member_roles: list["OrganizationMemberRole"] = Relationship(back_populates="role")
+
+    organization: Optional["Organization"] = Relationship(back_populates="roles")
 
 
 class OrganizationMember(CommonModel, table=True):

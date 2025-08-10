@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime, timedelta
 from sqlmodel import text
+from sqlalchemy.orm import selectinload
+from src.modules.organizations.models import OrganizationRole, OrganizationMemberRole
 
 from src.common.dependencies import (
     get_bearer_token,
@@ -194,12 +196,14 @@ async def set_organization(
     return cr.success(data={"message": "Organization set successfully"})
 
 
-# create Role
 @router.post("/roles")
 async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
     """
     Create a New Role for an organization.
     """
+
+    if not body.name or body.name.strip() == "":
+        raise HTTPException(status_code=400, detail="Role name cannot be empty")
 
     existing_role = await OrganizationRole.find_one(
         where={"name": {"mode": "insensitive", "value": body.name}}
@@ -209,10 +213,12 @@ async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="Role name already exists")
 
     role = await OrganizationRole.create(
-        **body.model_dump(exclude={"permissions", "updated_at", "created_at"}),
-        identifier=body.name.lower().replace(" ", "-"),
+        **body.model_dump(
+            exclude={"permissions", "updated_at", "created_at"}, exclude_none=True
+        ),
+        identifier=body.name.lower().replace(" ", "-") if body.name else None,
     )
-    print("Role Created:", role)
+
     for perm in body.permissions:
         await RolePermission.create(
             role_id=role.id,
@@ -224,7 +230,6 @@ async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
     return cr.success(data=org.to_json(CreateRoleOutSchema))
 
 
-# UPadate role
 @router.put("/roles/{role_id}")
 async def update_role(
     role_id: int, body: UpdateRoleInfoSchema, user=Depends(get_current_user)
@@ -264,61 +269,39 @@ async def update_role(
     return cr.success(data=updated_role.to_json(CreateRoleOutSchema))
 
 
-# # Get All Roles
-# @router.get("/roles")
-# async def get_roles(user=Depends(get_current_user)):
-#     """
-#     Retrieve all the roles for the organization
-#     """
-#     roles = await OrganizationRole.filter()
-
-#     results = []
-#     for role in roles:
-#         org = await Organization.get(role.organization_id)
-#         role_data = {
-#             "role_id": role.id,
-#             "role_name": role.name,
-#             "description": role.description,
-#             "org_name": org.name,
-#             "created_at": role.created_at.isoformat(),
-#         }
-#         results.append(CreateRoleOutSchema(**role_data))
-
-#     return cr.success(data=[r.model_dump() for r in results])
-
-
 @router.get("/roles")
 async def get_roles(user=Depends(get_current_user)):
-    roles = await OrganizationRole.filter()
-
-    async with async_session() as session:
-        query = text(
-            """
-            SELECT r.id AS role_id, COUNT(*) AS total_members
-            FROM org_member_roles omr
-            JOIN org_members m ON omr.member_id = m.id
-            JOIN org_roles r ON omr.role_id = r.id
-            GROUP BY r.id
-        """
-        )
-        counts_result = await session.execute(query)
-        counts_map = {row.role_id: row.total_members for row in counts_result}
+    """
+    List All Roles along with no. of agents, permission summary
+    """
+    roles = await OrganizationRole.filter(
+        related_items=[
+            selectinload(OrganizationRole.organization),
+            selectinload(OrganizationRole.member_roles).selectinload(
+                OrganizationMemberRole.member
+            ),
+            selectinload(OrganizationRole.role_permissions).selectinload(
+                RolePermission.permission
+            ),
+        ]
+    )
 
     results = []
     for role in roles:
-        org = await Organization.get(role.organization_id)
-        role_data = {
-            "role_id": role.id,
-            "role_name": role.name,
-            "description": role.description,
-            "org_name": org.name,
-            "created_at": role.created_at.isoformat(),
-            "no_of_agents": counts_map.get(role.id, 0),
-            "permission_summary": [],
-        }
-        results.append(CreateRoleOutSchema(**role_data))
+        no_of_agents = len(role.member_roles) if role.member_roles else 0
 
-    return cr.success(data=[r.model_dump() for r in results])
+        role_data = role.to_json(CreateRoleOutSchema)
+        role_data["role_name"] = role.name
+        role_data["no_of_agents"] = no_of_agents
+        role_data["permission_summary"] = (
+            [rp.permission.name for rp in role.role_permissions]
+            if role.role_permissions
+            else ""
+        )
+
+        results.append(role_data)
+
+    return cr.success(data=results)
 
 
 @router.delete("/roles/{role_id}")

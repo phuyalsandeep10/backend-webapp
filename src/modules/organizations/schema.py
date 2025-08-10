@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr
 from typing import List
 from typing import Optional
+from src.common.schemas import BaseModel
 
 
 class OrganizationSchema(BaseModel):
@@ -89,7 +90,7 @@ class CreateRoleSchema(BaseModel):
 class CreateRoleOutSchema(BaseModel):
     role_id: int
     role_name: str
-    description: str
+    description: str | None
     org_name: str
     created_at: str
     no_of_agents: int
