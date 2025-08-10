@@ -153,7 +153,7 @@ class ChatNamespace(socketio.AsyncNamespace):
         # user_id = auth.get("user_id")
         if token:
             user = await get_user_by_token(token)
-            await User.update(user.id,attributes={"is_online": True})
+            # await User.update(user.id,attributes={"is_online": True})
             print(f"User {user.id} is online")
         
 
