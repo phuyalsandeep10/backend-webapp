@@ -35,6 +35,8 @@ class OrganizationMigration(BaseMigration):
         self.string("purpose")
         self.string("identifier", unique=True, nullable=False, index=True)
         self.string("time_zone")
+        self.foreign("country_id", "sys_countries", nullable=True)
+        self.foreign("timezone_id", "sys_timezones", nullable=True)
         self.foreign("owner_id", "sys_users")
         self.string("telegram_username")
         self.string("facebook_username")

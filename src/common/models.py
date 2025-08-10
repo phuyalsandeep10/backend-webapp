@@ -7,7 +7,7 @@ from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import and_, inspect, or_
 from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
-from sqlmodel import Column, Field, ForeignKey, SQLModel, select
+from sqlmodel import Column, Field, ForeignKey, Relationship, SQLModel, select
 
 from src.common.context import TenantContext, UserContext
 from src.db.config import async_session
@@ -301,6 +301,26 @@ class Permission(BaseModel, table=True):
 
     class Config:
         table_name = "sys_permissions"
+
+class Country(BaseModel, table=True):
+    __tablename__ = "sys_countries"
+    
+    name: str = Field(nullable=False)
+    iso_code_2: str = Field(max_length=2, nullable=False) # "NP", "US"
+    iso_code_3: str = Field(max_length=3, nullable=False) # "NPL", "USA"
+    phone_code: Optional[str] = None
+
+    timezones: List["Timezone"] = Relationship(back_populates="country")
+    
+
+class Timezone(BaseModel, table=True):
+    __tablename__ = "sys_timezones"
+
+    name: str = Field(nullable=False) #IANA timezone name
+    display_name: str = Field(nullable=False)
+    country_id: int = Field(foreign_key="sys_countries.id")
+
+    country: "Country" = Relationship(back_populates="timezones")
 
 
 class TenantModel(CommonModel):
