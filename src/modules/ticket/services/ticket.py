@@ -122,6 +122,7 @@ class TicketServices:
                     selectinload(Ticket.customer),
                     selectinload(Ticket.created_by),
                     selectinload(Ticket.department),
+                    selectinload(Ticket.attachments),
                 ],
             )
             if ticket is None:
@@ -197,6 +198,7 @@ class TicketServices:
                     selectinload(Ticket.customer),
                     selectinload(Ticket.created_by),
                     selectinload(Ticket.department),
+                    selectinload(Ticket.attachments),
                 ],
             )
             if ticket is None:
