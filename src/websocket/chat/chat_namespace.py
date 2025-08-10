@@ -9,6 +9,8 @@ from src.config.settings import settings
 
 REDIS_URL = settings.REDIS_URL
 
+REDIS_URL = settings.REDIS_URL
+
 chat_namespace = "/chat"
 
 # Redis keys
@@ -29,6 +31,7 @@ async def save_message_db(conversation_id: int, data: dict, user_id=None):
     conversation = await Conversation.get(conversation_id)
     if not conversation:
         return None
+
     replyId = data.get("reply_id")
     msg = await Message.create(
         conversation_id=conversation_id,
@@ -62,11 +65,9 @@ class ChatNamespace(socketio.AsyncNamespace):
             message=json.dumps({"event": self.chat_online, "mode": "online"}),
         )
 
-    async def _notify_to_users(self, org_id: int):
-        await broadcast.publish(
-            channel=f"ws:{org_id}:user_sids",
-            message=json.dumps({"event": self.chat_online, "mode": "online"}),
-        )
+    async def on_join_conversation(self, org_id: int):
+
+        pass
 
     async def on_connect(self, sid, environ, auth):
 
@@ -79,6 +80,7 @@ class ChatNamespace(socketio.AsyncNamespace):
         # user connection
         if token:
             user = await get_user_by_token(token)
+
             if not user:
                 return False
             organization_id = user.attributes.get("organization_id")
@@ -105,7 +107,9 @@ class ChatNamespace(socketio.AsyncNamespace):
         await redis.sadd(
             f"ws:{organization_id}:conversation_sids:{conversation_id}", sid
         )
+
         await redis.set(f"ws:{organization_id}:sid_conversation:{sid}", conversation_id)
+
         # Maintain conversation membership for cross-instance message fanout
         await redis.sadd(f"{REDIS_ROOM_KEY}{conversation_id}", sid)
         await redis.set(f"{REDIS_SID_KEY}{sid}", conversation_id)
@@ -139,6 +143,7 @@ class ChatNamespace(socketio.AsyncNamespace):
                     "message": data.get("message"),
                     "uuid": data.get("uuid"),
                     "seen": data.get("seen"),
+                    # "status":data.get('status'),#delivered, pending and seen
                     "user_id": data.get("user_id"),
                     "files": data.get("files", []),
                 }
@@ -200,102 +205,3 @@ class ChatNamespace(socketio.AsyncNamespace):
             await redis.srem(f"{REDIS_ROOM_KEY}{conversation_id}", sid)
             await redis.delete(f"{REDIS_SID_KEY}{sid}")
             print(f"❌ Disconnected {sid} from conversation {conversation_id}")
-
-
-# Redis subscription listener
-async def redis_listener(sio: socketio.AsyncServer):
-    async with broadcast.subscribe("*") as subscriber:
-        async for event in subscriber:
-            # Attempt to parse JSON payloads only
-            try:
-                payload = json.loads(event.message)
-            except Exception:
-                continue
-
-            event_type = payload.get("event")
-            channel = getattr(event, "channel", "")
-
-            redis = await get_redis()
-
-            # 1) Conversation room fanout (messages, typing, seen, etc.) using channel name
-            if channel.startswith("conversation-"):
-                conversation_id = channel.split("conversation-", 1)[1]
-                sids = await redis.smembers(f"{REDIS_ROOM_KEY}{conversation_id}")
-                sender_sid = payload.get("sid")
-                for target_sid in sids:
-                    if sender_sid and target_sid == sender_sid:
-                        continue
-                    await sio.emit(
-                        event_type, payload, room=target_sid, namespace=chat_namespace
-                    )
-                continue
-
-            # 2) Workspace-scoped online notifications
-            # Channels: ws:{org_id}:customer_sids and ws:{org_id}:user_sids
-            if channel.startswith("ws:"):
-                parts = channel.split(":")
-                # Expecting ["ws", "{org_id}", "{group}"]
-                if len(parts) >= 3:
-                    org_id = parts[1]
-                    group = parts[2]
-
-                    # Notify all customer sockets in the org (iterate all conversation sets)
-                    if group == "customer_sids":
-                        cursor = "0"
-                        pattern = f"ws:{org_id}:conversation_sids:*"
-                        while True:
-                            cursor, keys = await redis.scan(
-                                cursor=cursor, match=pattern, count=100
-                            )
-                            for key in keys:
-                                sids = await redis.smembers(key)
-                                for target_sid in sids:
-                                    await sio.emit(
-                                        event_type,
-                                        payload,
-                                        room=target_sid,
-                                        namespace=chat_namespace,
-                                    )
-                            if cursor == "0":
-                                break
-                        continue
-
-                    # Notify all user sockets in the org (iterate all user_sids per user)
-                    if group == "user_sids":
-                        cursor = "0"
-                        pattern = f"ws:{org_id}:user_sids:*"
-                        while True:
-                            cursor, keys = await redis.scan(
-                                cursor=cursor, match=pattern, count=100
-                            )
-                            for key in keys:
-                                sids = await redis.smembers(key)
-                                for target_sid in sids:
-                                    await sio.emit(
-                                        event_type,
-                                        payload,
-                                        room=target_sid,
-                                        namespace=chat_namespace,
-                                    )
-                            if cursor == "0":
-                                break
-                        continue
-
-            # 3) Fallback: route by sid -> conversation
-            sid = payload.get("sid")
-            if sid:
-                conversation_id = await redis.get(f"{REDIS_SID_KEY}{sid}")
-                if conversation_id:
-                    sids = await redis.smembers(f"{REDIS_ROOM_KEY}{conversation_id}")
-                    for target_sid in sids:
-                        if target_sid != sid:
-                            await sio.emit(
-                                event_type,
-                                payload,
-                                room=target_sid,
-                                namespace=chat_namespace,
-                            )
-
-
-# Startup/shutdown hooks
-# Startup is registered in `src/socket_config.py` to avoid circular imports
