@@ -42,23 +42,20 @@ async def sender(websocket: WebSocket, room: str):
             await websocket.send_text(event.message)
 
 
+
+
 async def receiver(websocket: WebSocket, room: str):
     async for message in websocket.iter_text():
         await broadcast.publish(channel=f"room_{room}", message=message)
 
 
-# @app.websocket("/{room}")
-# async def websocket_chat(websocket: WebSocket, room: str):
-#     await websocket.accept()
-#     await run_until_first_complete(
-#         (receiver, {"websocket": websocket, "room": room}),
-#         (sender, {"websocket": websocket, "room": room}),
-#     )
 
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"Hello": "Hello Chatboq World"}
+
+
 
 
 @app.get("/chat")
@@ -70,3 +67,4 @@ async def get(request: Request):
 @app.get("/health")
 def read_items():
     return "Health check OK"
+

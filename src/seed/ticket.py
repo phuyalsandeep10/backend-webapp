@@ -165,7 +165,7 @@ async def priority_seed():
             print("TicketPriority2 already created")
 
 
-async def status_seed():
+async def ticket_status_seed():
     for i in status:
         record = await TicketStatus.find_one(
             where={

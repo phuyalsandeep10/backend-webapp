@@ -5,6 +5,7 @@ from src.common.dependencies import (
     get_current_user,
     update_user_cache,
 )
+
 from src.common.models import Permission
 from src.enums import InvitationStatus
 from src.models import (
@@ -49,12 +50,24 @@ async def create_organization(
             "name": {"mode": "insensitive", "value": body.name},
         }
     )
+  
 
     if record:
-        raise HTTPException(
-            status_code=400, detail="Organization with this name already exists"
-        )
+        return cr.error(data={"success": False}, message="This domain is already exists")
+        
+    record = await Organization.find_one(
+        where={
+            "domain": {"mode": "insensitive", "value": body.domain},
+        }
+    )
+
+    if record:
+        return cr.error(data={"success": False}, message="This domain is already exists")
+
     slug = body.name.lower().replace(" ", "-")
+
+
+
     organization = await Organization.create(
         name=body.name,
         description=body.description,
@@ -66,9 +79,13 @@ async def create_organization(
         owner_id=user.id
     )
 
+
+
+
     await OrganizationMember.create(
         organization_id=organization.id, user_id=user.id, is_owner=True
     )
+
     user_attributes = user.attributes
 
     if not user_attributes:
@@ -124,29 +141,41 @@ async def update_organization(
     """
     Update an existing organization.
     """
+
+
     organization = await Organization.get(organization_id)
 
     organization_member = await OrganizationMember.find_one(
         {"organization_id": organization_id, "user_id": user.id}
     )
 
+
+
     if not organization_member:
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to update this organization",
-        )
+        return cr.error(data={"success": False}, message="You do not have permission to update this organization")
+       
 
     if not organization:
-        raise HTTPException(status_code=404, detail="Organization not found")
+        return cr.error(data={"success": False}, message="Organization not found")
 
     if organization.name != body.name:
         existing_org = await Organization.find_one(
             {"name": {"value": body.name, "mode": "insensitive"}}
         )
         if existing_org:
-            raise HTTPException(
-                status_code=400, detail="Organization with this name already exists"
+            return cr.error(
+                data={"success": False},
+                message="Organization with this name already exists"
             )
+    record = await Organization.find_one(
+        where={
+            "domain": {"mode": "insensitive", "value": body.domain},
+        }
+    )
+
+    if record and  record.domain != body.domain:
+        return cr.error(data={"success": False}, message="This domain is already exists")
+
 
     record = await Organization.update(
         organization_id,
@@ -174,10 +203,10 @@ async def set_organization(
     user = await User.update(user.id, attributes={"organization_id": organization_id})
 
     if not user:
-        raise HTTPException(404, "Not found User")
+        return cr.error(data={"success": False}, message="Not found User")
 
     if not organization:
-        raise HTTPException(status_code=404, detail="Organization not found")
+        return cr.error(data={"success": False}, message="Organization not found")
     update_user_cache(token, user)
 
     return cr.success(data={"message": "Organization set successfully"})
@@ -211,7 +240,7 @@ async def create_role(body: OrganizationRoleSchema, user=Depends(get_current_use
         description=body.description,
         permissions=permissions,
     )
-    return cr.success(data=role)
+    return cr.success(data=role.to_json())
 
 
 @router.put("/roles/{role_id}")
@@ -250,7 +279,7 @@ async def update_role(
         role.id, name=body.name, permissions=permissions, description=body.description
     )
 
-    return cr.success(data=role)
+    return cr.success(data=role.to_json())
 
 
 @router.get("/roles")
@@ -262,7 +291,7 @@ async def get_roles(user=Depends(get_current_user)):
     organization_id = user.attributes.get("organization_id")
 
     roles =  await OrganizationRole.filter(where={"organization_id": organization_id})
-    return cr.success(data=roles)
+    return cr.success(data=[role.to_json() for role in roles])
 
 
 
