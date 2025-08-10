@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_403_FORBIDDEN
 
+from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
 from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
 from src.modules.ticket.models import TicketSLA
@@ -13,6 +14,7 @@ from src.modules.ticket.models.ticket import Ticket, TicketAlert
 from src.modules.ticket.schemas import CreateSLASchema, SLAOut
 from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 from src.socket_config import alert_ns, sio
+from src.utils.get_templates import get_templates
 from src.utils.response import CustomResponse as cr
 
 logger = logging.getLogger(__name__)
@@ -231,6 +233,24 @@ class TicketSLAServices:
             }
             await TicketAlert.create(**data)
 
+            # sending mail
+            receivers = [assginee.email for assginee in ticket.assignees]
+
+            # getting email of the creator
+            creater = await User.find_one(where={"id": ticket.created_by_id})
+
+            if not creater:
+                return
+
+            receivers.append(creater.email)
+            html_content = {"message": message, "ticket": ticket}
+            template = await get_templates(
+                name="ticket/sla-breach-email.html", content=html_content
+            )
+
+            email = NotificationFactory.create("email")
+            email.send(subject="SLA breach", recipients=receivers, body_html=template)
+
     async def handle_warning_100(self, w_type: str, ticket: Ticket, message: str):
         """
         Handles when SLA time has elapsed 100%
@@ -260,6 +280,22 @@ class TicketSLAServices:
                 "sent_at": datetime.utcnow(),
             }
             await TicketAlert.create(**data)
+            receivers = [assginee.email for assginee in ticket.assignees]
+
+            # getting email of the creator
+            creater = await User.find_one(where={"id": ticket.created_by_id})
+
+            if not creater:
+                return
+
+            receivers.append(creater.email)
+            html_content = {"message": message, "ticket": ticket}
+            template = await get_templates(
+                name="ticket/sla-breach-email.html", content=html_content
+            )
+
+            email = NotificationFactory.create("email")
+            email.send(subject="SLA breach", recipients=receivers, body_html=template)
 
     async def send_alert_broadcast(self, ticket: Ticket, message: str):
         """
