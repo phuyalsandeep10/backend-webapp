@@ -36,8 +36,8 @@ class TicketAlert(BaseModel, table=True):
     ticket_id: int = Field(
         sa_column=Column(ForeignKey("org_tickets.id", ondelete="CASCADE"))
     )
-    alert_type: TicketAlertTypeEnum
-    warning_level: WarningLevelEnum
+    alert_type: str
+    warning_level: int
     sent_at: datetime = Field(default_factory=datetime.utcnow)
     ticket: Optional["Ticket"] = Relationship(back_populates="alerts")
 

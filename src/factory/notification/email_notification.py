@@ -7,6 +7,9 @@ logger = logging.getLogger(__name__)
 
 
 class EmailNotification(NotificationInterface):
+    """
+    Email notification concrete class
+    """
 
     def send(
         self,

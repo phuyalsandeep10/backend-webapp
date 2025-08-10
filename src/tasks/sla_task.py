@@ -20,11 +20,10 @@ async def check_sla_breach():
         name="closed"
     )
     tickets = await Ticket.filter(
-        where={"status_id": {"ne": closed_ticket_status.id}},
+        where={"status_id": {"ne": closed_ticket_status.id}, "opened_at": {"ne": None}},
         related_items=[selectinload(Ticket.sla), selectinload(Ticket.assignees)],
     )
-    if not tickets:
-        return
+    logger.info(f"The tickets {tickets}")
     for ticket in tickets:
         if not ticket.opened_at:
             return

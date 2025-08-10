@@ -195,7 +195,7 @@ class TicketSLAServices:
                 message="75% of the resolution time has elapsed",
             )
         if resolution_breach is WarningLevelEnum.WARNING_100:
-            await self.handle_warning_75(
+            await self.handle_warning_100(
                 w_type="resolution", ticket=ticket, message="SLA has been breached"
             )
 
@@ -209,11 +209,11 @@ class TicketSLAServices:
             where={
                 "ticket_id": ticket.id,
                 "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE
+                    TicketAlertTypeEnum.RESPONSE.value
                     if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION
+                    else TicketAlertTypeEnum.RESOLUTION.value
                 ),
-                "warning_level": WarningLevelEnum.WARNING_75,
+                "warning_level": WarningLevelEnum.WARNING_75.value,
             }
         )
         if not alert:
@@ -222,28 +222,28 @@ class TicketSLAServices:
             data = {
                 "ticket_id": ticket.id,
                 "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE
+                    TicketAlertTypeEnum.RESPONSE.value
                     if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION
+                    else TicketAlertTypeEnum.RESOLUTION.value
                 ),
-                "warning_level": WarningLevelEnum.WARNING_75,
+                "warning_level": WarningLevelEnum.WARNING_75.value,
                 "sent_at": datetime.utcnow(),
             }
             await TicketAlert.create(**data)
 
     async def handle_warning_100(self, w_type: str, ticket: Ticket, message: str):
         """
-        Handles when SLA time has elapsed 75%
+        Handles when SLA time has elapsed 100%
         """
         alert = await TicketAlert.find_one(
             where={
                 "ticket_id": ticket.id,
                 "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE
+                    TicketAlertTypeEnum.RESPONSE.value
                     if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION
+                    else TicketAlertTypeEnum.RESOLUTION.value
                 ),
-                "warning_level": WarningLevelEnum.WARNING_100,
+                "warning_level": WarningLevelEnum.WARNING_100.value,
             }
         )
         if not alert:
@@ -252,11 +252,11 @@ class TicketSLAServices:
             data = {
                 "ticket_id": ticket.id,
                 "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE
+                    TicketAlertTypeEnum.RESPONSE.value
                     if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION
+                    else TicketAlertTypeEnum.RESOLUTION.value
                 ),
-                "warning_level": WarningLevelEnum.WARNING_75,
+                "warning_level": WarningLevelEnum.WARNING_100.value,
                 "sent_at": datetime.utcnow(),
             }
             await TicketAlert.create(**data)
