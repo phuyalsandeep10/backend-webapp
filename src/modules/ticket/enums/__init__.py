@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 
 class PriorityEnum(str, Enum):
@@ -21,7 +21,7 @@ class TicketEmailTypeEnum(str, Enum):
     EMAIL_TICKET_SOLVED = "email_ticket_solved"
 
 
-class WarningLevelEnum(str, Enum):
+class WarningLevelEnum(IntEnum):
     WARNING_75 = 75
     WARNING_90 = 90
     WARNING_100 = 100
@@ -30,3 +30,13 @@ class WarningLevelEnum(str, Enum):
 class TicketAlertTypeEnum(str, Enum):
     RESPONSE = "response"
     RESOLUTION = "resolution"
+
+
+class TicketLogActionEnum(str, Enum):
+    TICKET_CREATED = "ticket_created"
+    TICKET_UPDATED = "ticket_created"
+    TICKET_DELETED = "ticket_created"
+    STATUS_CHANGED = "ticket_created"
+    ASSIGNEE_CHANGED = "ticket_created"
+    PRIORITY_CHANGED = "ticket_created"
+    CONFIRMATION_EMAIL_SENT = "confirmation_email_sent"
