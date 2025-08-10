@@ -158,144 +158,62 @@ class TicketSLAServices:
         """
         It will send the notification if there is any sla breach
         """
-        await self.sla_response_breach_notification(ticket, response_time)
-        await self.sla_resolution_breach_notification(ticket, resolution_time)
+        await self._check_breach("response", ticket, response_time, "response time")
+        await self._check_breach(
+            "resolution", ticket, resolution_time, "resolution time"
+        )
 
-    async def sla_response_breach_notification(self, ticket, response_time):
-        """
-        Responsible for handling sla response time breach
-        """
-        if response_time < WarningLevelEnum.WARNING_75:
-            return None
+    async def _check_breach(
+        self, w_type: str, ticket: Ticket, time_percentage: int, time_label: str
+    ):
+        if time_percentage < WarningLevelEnum.WARNING_75:
+            return
 
-        response_breach = self.get_enum_from_range(response_time)
-        if response_breach is WarningLevelEnum.WARNING_75:
-            await self.handle_warning_75(
-                w_type="response",
-                ticket=ticket,
-                message="75% of the response time has elapsed",
+        breach_level = self.get_enum_from_range(time_percentage)
+
+        if breach_level == WarningLevelEnum.WARNING_75:
+            await self.handle_warning(
+                w_type, ticket, breach_level, f"75% of the {time_label} has elapsed"
             )
-        if response_breach is WarningLevelEnum.WARNING_100:
-            await self.handle_warning_100(
-                w_type="response",
-                ticket=ticket,
-                message="SLA Response time has been breached",
+        elif breach_level == WarningLevelEnum.WARNING_100:
+            await self.handle_warning(
+                w_type, ticket, breach_level, f"SLA {time_label} has been breached"
             )
 
-    async def sla_resolution_breach_notification(self, ticket, resolution_time):
+    async def handle_warning(
+        self, w_type: str, ticket: Ticket, level: WarningLevelEnum, message: str
+    ):
         """
-        Responsible for handling sla resolution time breach
+        Checks if warning already exists and sends alert and email if not
         """
-        if resolution_time < WarningLevelEnum.WARNING_75:
-            return None
 
-        resolution_breach = self.get_enum_from_range(resolution_time)
-        if resolution_breach is WarningLevelEnum.WARNING_75:
-            await self.handle_warning_75(
-                w_type="resolution",
-                ticket=ticket,
-                message="75% of the resolution time has elapsed",
-            )
-        if resolution_breach is WarningLevelEnum.WARNING_100:
-            await self.handle_warning_100(
-                w_type="resolution", ticket=ticket, message="SLA has been breached"
-            )
+        alert_type = (
+            TicketAlertTypeEnum.RESPONSE.value
+            if w_type == "response"
+            else TicketAlertTypeEnum.RESOLUTION.value
+        )
 
-    async def handle_warning_75(self, w_type: str, ticket: Ticket, message: str):
-        """
-        Handles when SLA time has elapsed 75%
-        first it checks if the warning was already sent
-        if none then it sends another one
-        """
-        alert = await TicketAlert.find_one(
+        alert_exists = await TicketAlert.find_one(
             where={
                 "ticket_id": ticket.id,
-                "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE.value
-                    if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION.value
-                ),
-                "warning_level": WarningLevelEnum.WARNING_75.value,
+                "alert_type": alert_type,
+                "warning_level": level.value,
             }
         )
-        if not alert:
-            await self.send_alert_broadcast(ticket, message)
-            # saving in the ticketalert table
-            data = {
-                "ticket_id": ticket.id,
-                "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE.value
-                    if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION.value
-                ),
-                "warning_level": WarningLevelEnum.WARNING_75.value,
-                "sent_at": datetime.utcnow(),
-            }
-            await TicketAlert.create(**data)
 
-            # sending mail
-            receivers = [assginee.email for assginee in ticket.assignees]
+        if alert_exists:
+            return
 
-            # getting email of the creator
-            creater = await User.find_one(where={"id": ticket.created_by_id})
+        await self.send_alert_broadcast(ticket, message)
 
-            if not creater:
-                return
-
-            receivers.append(creater.email)
-            html_content = {"message": message, "ticket": ticket}
-            template = await get_templates(
-                name="ticket/sla-breach-email.html", content=html_content
-            )
-
-            email = NotificationFactory.create("email")
-            email.send(subject="SLA breach", recipients=receivers, body_html=template)
-
-    async def handle_warning_100(self, w_type: str, ticket: Ticket, message: str):
-        """
-        Handles when SLA time has elapsed 100%
-        """
-        alert = await TicketAlert.find_one(
-            where={
-                "ticket_id": ticket.id,
-                "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE.value
-                    if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION.value
-                ),
-                "warning_level": WarningLevelEnum.WARNING_100.value,
-            }
-        )
-        if not alert:
-            await self.send_alert_broadcast(ticket, message)
-            # saving in the ticketalert table
-            data = {
-                "ticket_id": ticket.id,
-                "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE.value
-                    if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION.value
-                ),
-                "warning_level": WarningLevelEnum.WARNING_100.value,
-                "sent_at": datetime.utcnow(),
-            }
-            await TicketAlert.create(**data)
-            receivers = [assginee.email for assginee in ticket.assignees]
-
-            # getting email of the creator
-            creater = await User.find_one(where={"id": ticket.created_by_id})
-
-            if not creater:
-                return
-
-            receivers.append(creater.email)
-            html_content = {"message": message, "ticket": ticket}
-            template = await get_templates(
-                name="ticket/sla-breach-email.html", content=html_content
-            )
-
-            email = NotificationFactory.create("email")
-            email.send(subject="SLA breach", recipients=receivers, body_html=template)
+        data = {
+            "ticket_id": ticket.id,
+            "alert_type": alert_type,
+            "warning_level": level.value,
+            "sent_at": datetime.utcnow(),
+        }
+        await TicketAlert.create(**data)
+        await self._send_email(ticket, message)
 
     async def send_alert_broadcast(self, ticket: Ticket, message: str):
         """
@@ -314,6 +232,23 @@ class TicketSLAServices:
                     namespace="/alert",
                     to=sc_user_ids[user_id],  # sid corresponding to the user id
                 )
+
+    async def _send_email(self, ticket: Ticket, message: str):
+        """
+        Sends SLA breach email to ticket assignees + creator.
+        """
+        receivers = [assignee.email for assignee in ticket.assignees]
+        creator = await User.find_one(where={"id": ticket.created_by_id})
+        if creator:
+            receivers.append(creator.email)
+
+        html_content = {"message": message, "ticket": ticket}
+        template = await get_templates(
+            name="ticket/sla-breach-email.html", content=html_content
+        )
+
+        email = NotificationFactory.create("email")
+        email.send(subject="SLA breach", recipients=receivers, body_html=template)
 
 
 sla_service = TicketSLAServices()

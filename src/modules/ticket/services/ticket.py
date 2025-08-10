@@ -309,9 +309,9 @@ class TicketServices:
         if not tick:
             raise TicketNotFound()
 
-        receiver = tick.customer.email if ticket.customer_id else tick.customer_email
-        name = ticket.customer.name if ticket.customer_id else ticket.customer_name
-        html_content = {"name": name, "ticket": ticket, "settings": settings}
+        receiver = tick.customer.email if tick.customer_id else tick.customer_email
+        name = tick.customer.name if tick.customer_id else tick.customer_name
+        html_content = {"name": name, "ticket": tick, "settings": settings}
         template = await get_templates(
             name="ticket/ticket-confirmation-email.html", content=html_content
         )
