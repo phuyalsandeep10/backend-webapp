@@ -48,11 +48,27 @@ class CreateTicketSchema(BaseModel):
             ]
         ]
 
+        # ensures either customer_id or [customer_name,customer_email,customer_phone] are provided
         if customer_id is None and any(res is None for res in result):
             raise PydanticCustomError(
                 "missing_customer_info",
                 "Either provide customer_id or anonymous customer information (name/email/phone/location)",
             )
+
+        # ensures both customer_id or [customer_name,customer_email,customer_phone] are not provided
+        if customer_id is not None and not any(res is not None for res in result):
+            raise PydanticCustomError(
+                "invalid_customer_info",
+                "Either send customer id or other customer information but not both",
+            )
+
+        # ensures if customer id is not provided all other email ,name, phone numbers are provided
+        if customer_id is None and not all(res is not None for res in result):
+            raise PydanticCustomError(
+                "invalid_customer_info",
+                "All customer details should be provided",
+            )
+
         return self
 
 
@@ -61,7 +77,7 @@ class EditTicketSchema(BaseModel):
     description: Optional[str] = None
     sender_domain: Optional[str] = None
     notes: Optional[str] = None
-    attachment: Optional[str] = None
+    attachments: Optional[List[str]] = None
     priority_id: Optional[int] = None
     status_id: Optional[int] = None
     department_id: Optional[str] = None
@@ -160,3 +176,10 @@ class TicketStatusOut(CreateTicketStatusSchema):
 
 class TicketAttachmentOut(BaseModel):
     attachment: List[str]
+
+
+class EditTicketSLASchema(BaseModel):
+    name: Optional[str] = None
+    response_time: Optional[int] = None
+    resolution_time: Optional[int] = None
+    priority_id: Optional[int] = None

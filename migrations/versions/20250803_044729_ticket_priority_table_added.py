@@ -37,6 +37,10 @@ class TicketPriorityMigration(BaseMigration):
             "name",
             "level",
         )
+        self.unique_constraint(
+            "organization_id",
+            "level",
+        )
 
 
 def upgrade() -> None:
