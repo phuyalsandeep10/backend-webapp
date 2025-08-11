@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from src.modules.ticket.models.priority import TicketPriority
     from src.modules.ticket.models.status import TicketStatus
     from src.modules.ticket.models.ticket import Ticket
+    from src.modules.common.models import Country, Timezone #type:ignore
 
 
 class Organization(CommonModel, table=True):
