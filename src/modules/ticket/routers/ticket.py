@@ -35,7 +35,11 @@ async def list_tickets(user=Depends(get_current_user)):
     return await ticket_services.list_tickets(user)
 
 
-@router.post("/by-status")
+@router.post(
+    "/by-status",
+    summary="List tickets by status",
+    response_model=CustomResponseSchema[List[TicketOut]],
+)
 async def list_tickets_by_status(
     payload: TicketByStatusSchema, user=Depends(get_current_user)
 ):
