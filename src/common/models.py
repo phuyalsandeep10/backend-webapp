@@ -9,12 +9,8 @@ from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import and_, inspect, or_
 from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
-<<<<<<< HEAD
 from sqlmodel import Column, Field, ForeignKey, Relationship, SQLModel, select
-=======
-from sqlmodel import Column, Field, ForeignKey, SQLModel, select
 from starlette.status import HTTP_404_NOT_FOUND
->>>>>>> 80c3c2ca7a9902e53783a42788a13f602df3cf0b
 
 from src.common.context import TenantContext, UserContext
 from src.db.config import async_session
