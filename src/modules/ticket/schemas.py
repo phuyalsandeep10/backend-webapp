@@ -183,3 +183,9 @@ class EditTicketSLASchema(BaseModel):
     response_time: Optional[int] = None
     resolution_time: Optional[int] = None
     priority_id: Optional[int] = None
+
+
+class TicketByStatusSchema(BaseModel):
+    status_id: int
+
+    model_config = {"extra": "forbid"}

@@ -17,7 +17,12 @@ from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket, TicketAttachment
-from src.modules.ticket.schemas import CreateTicketSchema, EditTicketSchema
+from src.modules.ticket.schemas import (
+    CreateTicketSchema,
+    EditTicketSchema,
+    TicketByStatusSchema,
+    TicketOut,
+)
 from src.modules.ticket.services.status import ticket_status_service
 from src.utils.exceptions.ticket import (
     TicketNotFound,
@@ -106,6 +111,7 @@ class TicketServices:
                     selectinload(Ticket.attachments),
                 ],
             )
+            print("The all tickets", all_tickets)
             tickets = [ticket.to_dict() for ticket in all_tickets]
             return cr.success(
                 status_code=status.HTTP_200_OK,
@@ -193,6 +199,44 @@ class TicketServices:
         except Exception as e:
             logger.exception(e)
             return cr.error(message="Invalid confirmation token")
+
+    async def list_tickets_by_status(self, payload: TicketByStatusSchema):
+        """
+        List the tickets on the basis of status id
+        """
+        try:
+            # validator so that it doesn't fetch other organization status tickets
+            tenant = TenantEntityValidator()
+            await tenant.validate(TicketStatus, payload.status_id)
+
+            tickets = await Ticket.filter(
+                where={"status_id": payload.status_id},
+                related_items=[
+                    selectinload(Ticket.sla),
+                    selectinload(Ticket.assignees),
+                    selectinload(Ticket.priority),
+                    selectinload(Ticket.status),
+                    selectinload(Ticket.customer),
+                    selectinload(Ticket.created_by),
+                    selectinload(Ticket.department),
+                    selectinload(Ticket.attachments),
+                ],
+            )
+
+            if not tickets:
+                return cr.success(
+                    message="Successfully fetched tickets by the status", data=[]
+                )
+
+            return cr.success(
+                message="Successfully fetched tickets by the status",
+                data=[ticket.to_dict() for ticket in tickets],
+            )
+
+        except Exception as e:
+            return cr.error(
+                message="Error while listing the tickets by status", data=str(e)
+            )
 
     async def edit_ticket(self, ticket_id: int, payload: EditTicketSchema, user):
         """
