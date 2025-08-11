@@ -125,7 +125,7 @@ status2 = [
         "bg_color": "#DAE8FA",
         "fg_color": "#ffffff",
         "organization_id": 2,
-        "status_category": "open",
+        "status_category": "reopened",
         "is_default": False,
     },
 ]
@@ -151,6 +151,13 @@ default_ticket_sla = [
         "organization_id": 1,
         "priority_id": 3,
     },
+    {
+        "name": "Low Standard",
+        "response_time": 22400,
+        "resolution_time": 146400,
+        "organization_id": 1,
+        "priority_id": 4,
+    },
 ]
 default_ticket_sla2 = [
     {
@@ -173,6 +180,13 @@ default_ticket_sla2 = [
         "resolution_time": 146400,
         "organization_id": 2,
         "priority_id": 3,
+    },
+    {
+        "name": "Low Standard",
+        "response_time": 22400,
+        "resolution_time": 146400,
+        "organization_id": 1,
+        "priority_id": 4,
     },
 ]
 

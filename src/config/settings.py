@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str = ""
     ENV: str = "development"
     EMAIL_DOMAIN: str = ""
+    SENDGRID_API_KEY: str = ""
 
     model_config = SettingsConfigDict(env_file=".env")
 

@@ -363,8 +363,10 @@ class TenantModel(CommonModel):
     async def update(cls: Type[T], id: int, **kwargs) -> Optional[T]:
         organization_id = TenantContext.get()
         user_id = UserContext.get()
-        kwargs.setdefault("organization_id", organization_id)
-        kwargs.setdefault("updated_by_id", user_id)
+        if organization_id:
+            kwargs.setdefault("organization_id", organization_id)
+        if user_id:
+            kwargs.setdefault("updated_by_id", user_id)
         return await super().update(id, **kwargs)
 
     @classmethod

@@ -14,12 +14,14 @@ class EmailNotification(NotificationInterface):
     def send(
         self,
         subject: str,
+        from_email: str,
         recipients: list[str],
         body_html: str,
         body_text: str = "",
     ):
         try:
             send_email.delay(
+                from_email=from_email,
                 subject=subject,
                 recipients=recipients,
                 body_html=body_html,

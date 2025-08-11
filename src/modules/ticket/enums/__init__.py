@@ -13,6 +13,7 @@ class TicketStatusEnum(str, Enum):
     OPEN = "open"
     PENDING = "pending"
     CLOSED = "closed"
+    REOPENED = "reopened"
 
 
 class TicketEmailTypeEnum(str, Enum):

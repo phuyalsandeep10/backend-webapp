@@ -111,7 +111,6 @@ class TicketServices:
                     selectinload(Ticket.attachments),
                 ],
             )
-            print("The all tickets", all_tickets)
             tickets = [ticket.to_dict() for ticket in all_tickets]
             return cr.success(
                 status_code=status.HTTP_200_OK,
@@ -198,7 +197,7 @@ class TicketServices:
 
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Invalid confirmation token")
+            return cr.error(message="Invalid confirmation token", data=str(e))
 
     async def list_tickets_by_status(self, payload: TicketByStatusSchema):
         """
@@ -362,7 +361,10 @@ class TicketServices:
 
         email = NotificationFactory.create("email")
         email.send(
-            subject="Ticket confirmation", recipients=[receiver], body_html=template
+            from_email=ticket.sender_domain,
+            subject="Ticket confirmation",
+            recipients=[receiver],
+            body_html=template,
         )
 
     async def get_confirmation_content(self, ticket: Ticket):

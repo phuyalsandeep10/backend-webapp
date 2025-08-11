@@ -3,6 +3,7 @@ from datetime import datetime
 from time import time
 
 from fastapi import HTTPException, status
+from sendgrid import from_email
 from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
@@ -290,7 +291,12 @@ class TicketSLAServices:
         )
 
         email = NotificationFactory.create("email")
-        email.send(subject="SLA breach", recipients=receivers, body_html=template)
+        email.send(
+            subject="SLA breach",
+            recipients=receivers,
+            body_html=template,
+            from_email="fjalkjdka@chatboq.com",
+        )
 
 
 sla_service = TicketSLAServices()

@@ -39,6 +39,7 @@ async def get_organizations(user=Depends(get_current_user)):
     Get the list of organizations the user belongs to.
     """
     records = await Organization.get_orgs_by_user_id(user_id=user.id)
+    print("The records", records)
     data = [item.to_json() for item in records]
     return cr.success(data=data)
 
