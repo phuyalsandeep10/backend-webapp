@@ -135,6 +135,7 @@ class ChatNamespace(socketio.AsyncNamespace):
         conversation["sids"].append(sid)
         conversation["online"] = True
 
+
         print(f"✅ Connected to /chat: {sid} (conversation_id: {conversation_id})")
         return True
 
@@ -197,6 +198,7 @@ class ChatNamespace(socketio.AsyncNamespace):
 
         if not conversation:
             return
+            
         for si in conversation["sids"]:
             if si == sid:
                 continue

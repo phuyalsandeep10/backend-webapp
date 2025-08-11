@@ -73,7 +73,7 @@ async def update_data(team_id: int, body: TeamSchema, user=Depends(get_current_u
         organization_id=organizationId,
     )
 
-    return cr.success(data=team)
+    return cr.success(data=team.to_json())
 
 
 @router.delete("/{team_id}")
@@ -83,7 +83,7 @@ async def delete_team(team_id: int, user=Depends(get_current_user)):
         raise HTTPException(403, "Not authorized")
     team = await Team.soft_delete(team_id)
 
-    return cr.success(data=team)
+    return cr.success()
 
 
 @router.put("/{team_id}/assign-member")
@@ -131,4 +131,4 @@ async def get_team_members(team_id: int):
         options=[selectinload(TeamMember.user)],  # type:ignore
     )
 
-    return cr.success(data=[member.to_dict() for member in members])
+    return cr.success(data=[member.to_json() for member in members])

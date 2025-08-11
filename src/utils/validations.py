@@ -3,6 +3,7 @@ from typing import Any, Dict, Type, TypeVar, Union
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from src.common.context import TenantContext
 from src.common.models import BaseModel, CommonModel
 
 T = TypeVar("T")
@@ -13,15 +14,27 @@ class TenantEntityValidator:
     TenantEntityValidator class for entity validation
     """
 
-    def __init__(self, org_id: int):
-        self.org_id = org_id
+    def __init__(self):
+        organization_id = TenantContext.get()
+        self.org_id = organization_id
 
-    async def validate(self, model: Type[T], entity_id: int):
+    async def validate(
+        self, model: Type[T], entity_id: int, check_default: bool = False
+    ):
         instance = await model.find_one(
             where={"id": entity_id, "organization_id": self.org_id}
         )
-        print("The instancejl", instance)
-        if instance is None:
+
+        # checking default is asked to
+        if not instance and check_default:
+            ins = await model.find_one(where={"id": entity_id, "organization_id": None})
+            if not ins:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{model.__name__} ID {entity_id} is invalid for this organization.",
+                )
+            return ins
+        if not instance and not check_default:
             raise HTTPException(
                 status_code=400,
                 detail=f"{model.__name__} ID {entity_id} is invalid for this organization.",

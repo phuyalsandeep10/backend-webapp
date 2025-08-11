@@ -9,6 +9,7 @@ from src.modules.ticket.schemas import (
     EditTicketStatusSchema,
     TicketStatusOut,
 )
+from src.utils.exceptions.ticket import TicketStatusNotFound
 from src.utils.response import CustomResponse as cr
 
 logger = logging.getLogger(__name__)
@@ -119,6 +120,24 @@ class TicketStatusService:
         )
         payload = [status.to_json(TicketStatusOut) for status in default_ticket_status]
         return payload
+
+    async def get_status_category_by_name(self, name: str):
+        """
+        Returns the default close category ticket status
+        """
+        ticket_status = await TicketStatus.find_one(where={"status_category": name})
+        # moving to default if there is no close category
+        if not ticket_status:
+            default_ticket_status = await TicketStatus.find_one(
+                where={"status_category": name, "organization_id": None}
+            )
+            if not default_ticket_status:
+                raise TicketStatusNotFound(
+                    "No default ticket status has been set with closed status category"
+                )
+
+            return default_ticket_status
+        return ticket_status
 
 
 ticket_status_service = TicketStatusService()

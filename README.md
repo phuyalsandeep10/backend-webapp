@@ -17,3 +17,6 @@ make migration name=add_users_table msg="Add users table migration"
 alembic upgrade head
 
 alembic downgrade -1
+
+#ahh
+ 

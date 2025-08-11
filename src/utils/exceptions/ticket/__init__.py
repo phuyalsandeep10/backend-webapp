@@ -9,3 +9,12 @@ class TicketNotFound(HTTPException):
 
     def __init__(self, detail="Ticket not found"):
         super().__init__(status_code=HTTP_404_NOT_FOUND, detail=detail)
+
+
+class TicketStatusNotFound(HTTPException):
+    """
+    Custom Ticket Status Exception for ticket not found
+    """
+
+    def __init__(self, detail="Ticket status not found"):
+        super().__init__(status_code=HTTP_404_NOT_FOUND, detail=detail)

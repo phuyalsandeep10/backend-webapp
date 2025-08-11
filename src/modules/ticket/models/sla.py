@@ -23,6 +23,7 @@ class TicketSLA(TenantModel, table=True):
             Column(ForeignKey("ticket_priority.id", ondelete="CASCADE"), nullable=False)
         )
     )
+    is_default: bool = Field(default=False)
     tickets: List[Ticket] = Relationship(back_populates="sla", passive_deletes=True)
 
     def __str__(self):

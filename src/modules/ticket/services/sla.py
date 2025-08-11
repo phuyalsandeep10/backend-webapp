@@ -1,14 +1,18 @@
 import logging
 from datetime import datetime
+from time import time
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_403_FORBIDDEN
 
 from src.modules.auth.models import User
+from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
 from src.modules.ticket.models import TicketSLA
-from src.modules.ticket.models.ticket import Ticket
+from src.modules.ticket.models.ticket import Ticket, TicketAlert
 from src.modules.ticket.schemas import CreateSLASchema, SLAOut
+from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
+from src.socket_config import alert_ns, sio
 from src.utils.response import CustomResponse as cr
 
 logger = logging.getLogger(__name__)
@@ -102,30 +106,178 @@ class TicketSLAServices:
             )
 
     def calculate_sla_response_time_percentage(
-        self, response_time: int, created_at: datetime
+        self, response_time: int, opened_at: int
     ) -> int:
-        percentage = ((response_time - created_at.timestamp()) * 100) / response_time
+        """
+        Opened at time must be sent in timestamp format in terms of second
+        percentage = (current_time - opened_at) * 100 / (due_time - opened_at)
+        """
+        due_time = opened_at + response_time
+        current_time = int(datetime.utcnow().timestamp())
+        logger.info(f"Current response time {current_time}")
+        logger.info(f"Due response time {due_time}")
+
+        if current_time >= due_time:
+            return 100
+
+        percentage = ((current_time - opened_at) * 100) / (due_time - opened_at)
 
         return int(percentage)
 
     def calculate_sla_resolution_time_percentage(
-        self, resolution_time: int, created_at: datetime
+        self, resolution_time: int, opened_at: int
     ) -> int:
-        percentage = (
-            resolution_time - (created_at.timestamp()) * 100
-        ) / resolution_time
+        """
+        Opened at time must be sent in timestamp format in terms of second
+        """
+        due_time = opened_at + resolution_time
+        current_time = int(datetime.utcnow().timestamp())
+        logger.info(f"Current resolution time {current_time}")
+        logger.info(f"Due resolution time {due_time}")
+
+        if current_time > due_time:
+            return 100
+
+        percentage = ((current_time - opened_at) * 100) / (due_time - opened_at)
 
         return int(percentage)
 
-    def check_ticket_sla_status(self, ticket: Ticket):
-        response_time = self.calculate_sla_response_time_percentage(
-            ticket.sla.response_time, ticket.created_at
-        )
-        resolution_time = self.calculate_sla_resolution_time_percentage(
-            ticket.sla.resolution_time, ticket.created_at
-        )
+    def get_enum_from_range(self, value: int) -> WarningLevelEnum:
+        if 75 <= value < 90:
+            return WarningLevelEnum.WARNING_75
+        elif 90 <= value < 100:
+            return WarningLevelEnum.WARNING_90
+        elif value >= 100:
+            return WarningLevelEnum.WARNING_100
+        else:
+            raise ValueError("Value is below the minimum range")
 
-        return response_time, resolution_time
+    async def sla_breach_notification(self, ticket, response_time, resolution_time):
+        """
+        It will send the notification if there is any sla breach
+        """
+        await self.sla_response_breach_notification(ticket, response_time)
+        await self.sla_resolution_breach_notification(ticket, resolution_time)
+
+    async def sla_response_breach_notification(self, ticket, response_time):
+        """
+        Responsible for handling sla response time breach
+        """
+        if response_time < WarningLevelEnum.WARNING_75:
+            return None
+
+        response_breach = self.get_enum_from_range(response_time)
+        if response_breach is WarningLevelEnum.WARNING_75:
+            await self.handle_warning_75(
+                w_type="response",
+                ticket=ticket,
+                message="75% of the response time has elapsed",
+            )
+        if response_breach is WarningLevelEnum.WARNING_100:
+            await self.handle_warning_100(
+                w_type="response",
+                ticket=ticket,
+                message="SLA Response time has been breached",
+            )
+
+    async def sla_resolution_breach_notification(self, ticket, resolution_time):
+        """
+        Responsible for handling sla resolution time breach
+        """
+        if resolution_time < WarningLevelEnum.WARNING_75:
+            return None
+
+        resolution_breach = self.get_enum_from_range(resolution_time)
+        if resolution_breach is WarningLevelEnum.WARNING_75:
+            await self.handle_warning_75(
+                w_type="resolution",
+                ticket=ticket,
+                message="75% of the resolution time has elapsed",
+            )
+        if resolution_breach is WarningLevelEnum.WARNING_100:
+            await self.handle_warning_100(
+                w_type="resolution", ticket=ticket, message="SLA has been breached"
+            )
+
+    async def handle_warning_75(self, w_type: str, ticket: Ticket, message: str):
+        """
+        Handles when SLA time has elapsed 75%
+        first it checks if the warning was already sent
+        if none then it sends another one
+        """
+        alert = await TicketAlert.find_one(
+            where={
+                "ticket_id": ticket.id,
+                "alert_type": (
+                    TicketAlertTypeEnum.RESPONSE.value
+                    if w_type == "response"
+                    else TicketAlertTypeEnum.RESOLUTION.value
+                ),
+                "warning_level": WarningLevelEnum.WARNING_75.value,
+            }
+        )
+        if not alert:
+            await self.send_alert_broadcast(ticket, message)
+            # saving in the ticketalert table
+            data = {
+                "ticket_id": ticket.id,
+                "alert_type": (
+                    TicketAlertTypeEnum.RESPONSE.value
+                    if w_type == "response"
+                    else TicketAlertTypeEnum.RESOLUTION.value
+                ),
+                "warning_level": WarningLevelEnum.WARNING_75.value,
+                "sent_at": datetime.utcnow(),
+            }
+            await TicketAlert.create(**data)
+
+    async def handle_warning_100(self, w_type: str, ticket: Ticket, message: str):
+        """
+        Handles when SLA time has elapsed 100%
+        """
+        alert = await TicketAlert.find_one(
+            where={
+                "ticket_id": ticket.id,
+                "alert_type": (
+                    TicketAlertTypeEnum.RESPONSE.value
+                    if w_type == "response"
+                    else TicketAlertTypeEnum.RESOLUTION.value
+                ),
+                "warning_level": WarningLevelEnum.WARNING_100.value,
+            }
+        )
+        if not alert:
+            await self.send_alert_broadcast(ticket, message)
+            # saving in the ticketalert table
+            data = {
+                "ticket_id": ticket.id,
+                "alert_type": (
+                    TicketAlertTypeEnum.RESPONSE.value
+                    if w_type == "response"
+                    else TicketAlertTypeEnum.RESOLUTION.value
+                ),
+                "warning_level": WarningLevelEnum.WARNING_100.value,
+                "sent_at": datetime.utcnow(),
+            }
+            await TicketAlert.create(**data)
+
+    async def send_alert_broadcast(self, ticket: Ticket, message: str):
+        """
+        Responsible for sending alert message to all the broadcast via a socket
+        """
+        sc_user_ids = (
+            alert_ns.user_ids
+        )  # list of user_ids connected to the alertnamespace socket
+        receiver_id = [assginee.id for assginee in ticket.assignees]
+        receiver_id.append(ticket.created_by_id)
+        for user_id in receiver_id:
+            if user_id in sc_user_ids:
+                await sio.emit(
+                    "ticket_alert",
+                    {"message": message},
+                    namespace="/alert",
+                    to=sc_user_ids[user_id],  # sid corresponding to the user id
+                )
 
 
 sla_service = TicketSLAServices()

@@ -33,7 +33,7 @@ async def create_customer(organizationId: int, request: Request):
         f"select count(*) from org_customers where organization_id={organizationId}"
     )
     customer_count += 1
-    print(f"Customer count: {customer_count}")
+
 
     customer = await Customer.create(
         name=f"guest-{customer_count}", ip_address=ip, organization_id=organizationId
@@ -47,8 +47,7 @@ async def create_customer(organizationId: int, request: Request):
     )
 
     await save_log(ip, customer.id, request)
-    print(f"Customer: {customer}")
-    print(f"Conversation: {conversation}")
+
 
     return cr.success(
         data={"customer": customer.to_json(), "conversation": conversation.to_json()}
@@ -59,7 +58,7 @@ async def save_log(ip: str, customer_id: int, request):
     data = {}
 
     data = await get_location(ip)
-    print(f"Location data: {data}")
+
 
     city = data.get("city")
     country = data.get("country")
@@ -73,14 +72,6 @@ async def save_log(ip: str, customer_id: int, request):
     device = user_agent.split(" ")[3]
     referral_from = request.headers.get("Referer") or None
 
-    print(f"Browser: {browser}")
-    print(f"OS: {os}")
-    print(f"Device type: {device_type}")
-    print(f"Device: {device}")
-    print(f"User agent: {user_agent}")
-    print(f"Referral from: {request.headers.get('Referer')}")
-    print(f"Customer Id {customer_id}")
-    print(f"IP: {ip}")
 
     log = await CustomerVisitLogs.create(
         customer_id=customer_id,
