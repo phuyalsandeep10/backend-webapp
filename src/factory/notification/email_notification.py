@@ -14,7 +14,7 @@ class EmailNotification(NotificationInterface):
     def send(
         self,
         subject: str,
-        from_email: str,
+        from_email: tuple[str, str],
         recipients: list[str],
         body_html: str,
         body_text: str = "",

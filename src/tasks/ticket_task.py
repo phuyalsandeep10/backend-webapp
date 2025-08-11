@@ -13,7 +13,7 @@ def send_email(
     subject: str,
     recipients: str,
     body_html: str,
-    from_email: str,
+    from_email: tuple[str, str],
     body_text: str = "",
 ):
     logger.info(f"Sending {subject} email")

@@ -345,25 +345,27 @@ class TicketServices:
         """
         Sends email for the confirmation
         """
+
         tick = await Ticket.find_one(
             where={"id": ticket.id},
-            related_items=[selectinload(Ticket.customer)],
+            related_items=[
+                selectinload(Ticket.organization),
+                selectinload(Ticket.customer),
+            ],
         )
         if not tick:
             raise TicketNotFound()
-
         receiver = tick.customer.email if tick.customer_id else tick.customer_email
         name = tick.customer.name if tick.customer_id else tick.customer_name
         html_content = {"name": name, "ticket": tick, "settings": settings}
         template = await get_templates(
             name="ticket/ticket-confirmation-email.html", content=html_content
         )
-
         email = NotificationFactory.create("email")
         email.send(
-            from_email=ticket.sender_domain,
+            from_email=(tick.sender_domain, tick.organization.name),
             subject="Ticket confirmation",
-            recipients=[receiver],
+            recipients=receiver,
             body_html=template,
         )
 
