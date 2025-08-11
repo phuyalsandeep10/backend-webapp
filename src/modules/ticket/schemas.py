@@ -176,3 +176,10 @@ class TicketStatusOut(CreateTicketStatusSchema):
 
 class TicketAttachmentOut(BaseModel):
     attachment: List[str]
+
+
+class EditTicketSLASchema(BaseModel):
+    name: Optional[str] = None
+    response_time: Optional[int] = None
+    resolution_time: Optional[int] = None
+    priority_id: Optional[int] = None

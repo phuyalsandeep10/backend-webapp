@@ -25,16 +25,7 @@ class TenantEntityValidator:
             where={"id": entity_id, "organization_id": self.org_id}
         )
 
-        # checking default is asked to
-        if not instance and check_default:
-            ins = await model.find_one(where={"id": entity_id, "organization_id": None})
-            if not ins:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"{model.__name__} ID {entity_id} is invalid for this organization.",
-                )
-            return ins
-        if not instance and not check_default:
+        if not instance:
             raise HTTPException(
                 status_code=400,
                 detail=f"{model.__name__} ID {entity_id} is invalid for this organization.",

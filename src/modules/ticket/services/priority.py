@@ -1,10 +1,11 @@
 import logging
 
 from sqlalchemy.exc import IntegrityError
-from starlette.status import HTTP_400_BAD_REQUEST
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_409_CONFLICT
 
 from src.modules.ticket.models import TicketPriority
 from src.modules.ticket.schemas import EditTicketPrioritySchema, PriorityOut
+from src.utils.exceptions.ticket import TicketPriorityExists
 from src.utils.response import CustomResponse as cr
 
 logger = logging.getLogger(__name__)
@@ -32,16 +33,28 @@ class TicketPriorityService:
         try:
             for d in payload:
                 data = d.model_dump()
-                record = await TicketPriority.find_one(where={"name": data["name"]})
-                if not record:
-                    await TicketPriority.create(**data)
+                record = await TicketPriority.find_one(
+                    where={
+                        "name": {"mode": "insensitive", "value": data["name"]},
+                        "level": data["level"],
+                    }
+                )
+                if record:
+                    raise TicketPriorityExists(
+                        detail="Ticket priority with this name or level already exists"
+                    )
+
+                await TicketPriority.create(**data)
 
             return cr.success(
                 message="Successfully created priorities", status_code=201
             )
         except IntegrityError as e:
             logger.exception(e)
-            return cr.error(message="Priority with this name and level already exists")
+            return cr.error(
+                message="Priority with this name or level already exists",
+                status_code=HTTP_409_CONFLICT,
+            )
         except Exception as e:
             logger.exception(e)
             return cr.error(message="Error while creating priorities", data=str(e))
@@ -71,7 +84,7 @@ class TicketPriorityService:
             return cr.success(message="Successfully deleted priority", data=None)
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Error while deleting priority")
+            return cr.error(message="Error while deleting priority", data=str(e))
 
     async def edit_priority(
         self, priority_id: int, payload: EditTicketPrioritySchema, user

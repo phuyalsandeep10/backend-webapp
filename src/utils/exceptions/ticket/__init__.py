@@ -1,5 +1,5 @@
 from fastapi.exceptions import HTTPException
-from starlette.status import HTTP_404_NOT_FOUND
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
 
 
 class TicketNotFound(HTTPException):
@@ -27,3 +27,12 @@ class TicketSLANotFound(HTTPException):
 
     def __init__(self, detail="Ticket SLA not found"):
         super().__init__(status_code=HTTP_404_NOT_FOUND, detail=detail)
+
+
+class TicketPriorityExists(HTTPException):
+    """
+    Custom Ticket Priority Exists Exception
+    """
+
+    def __init__(self, detail="Ticket Priority already exists"):
+        super().__init__(status_code=HTTP_409_CONFLICT, detail=detail)

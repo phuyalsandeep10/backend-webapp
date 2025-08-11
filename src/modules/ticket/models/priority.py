@@ -22,6 +22,11 @@ class TicketPriority(TenantModel, table=True):
             "level",
             name="uniq_org_ticket_priority_name_level",
         ),
+        UniqueConstraint(
+            "organization_id",
+            "level",
+            name="uniq_org_ticket_priority_level",
+        ),
     )
     name: str
     level: int

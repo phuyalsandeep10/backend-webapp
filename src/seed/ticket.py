@@ -151,13 +151,6 @@ default_ticket_sla = [
         "organization_id": 1,
         "priority_id": 3,
     },
-    {
-        "name": "Low Standard",
-        "response_time": 30400,
-        "resolution_time": 206400,
-        "organization_id": 1,
-        "priority_id": 2,
-    },
 ]
 default_ticket_sla2 = [
     {
@@ -180,13 +173,6 @@ default_ticket_sla2 = [
         "resolution_time": 146400,
         "organization_id": 2,
         "priority_id": 3,
-    },
-    {
-        "name": "Low Standard",
-        "response_time": 30400,
-        "resolution_time": 206400,
-        "organization_id": 2,
-        "priority_id": 2,
     },
 ]
 

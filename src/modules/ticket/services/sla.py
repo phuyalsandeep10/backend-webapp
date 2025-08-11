@@ -4,18 +4,21 @@ from time import time
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
-from starlette.status import HTTP_403_FORBIDDEN
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
 from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
 from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
 from src.modules.ticket.models import TicketSLA
+from src.modules.ticket.models.priority import TicketPriority
 from src.modules.ticket.models.ticket import Ticket, TicketAlert
-from src.modules.ticket.schemas import CreateSLASchema, SLAOut
+from src.modules.ticket.schemas import CreateSLASchema, EditTicketSLASchema, SLAOut
 from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 from src.socket_config import alert_ns, sio
+from src.utils.exceptions.ticket import TicketSLANotFound
 from src.utils.get_templates import get_templates
 from src.utils.response import CustomResponse as cr
+from src.utils.validations import TenantEntityValidator
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,10 @@ class TicketSLAServices:
         """
         try:
 
+            # we need to validate the priority doesn't belong to other organization
+            tenant = TenantEntityValidator()
+            await tenant.validate(TicketPriority, payload.priority_id)
+
             sla = await TicketSLA.create(**payload.model_dump())
             return cr.success(
                 status_code=status.HTTP_200_OK,
@@ -41,12 +48,14 @@ class TicketSLAServices:
             logger.exception(e)
             return cr.error(
                 message="Error while creating sla",
+                data="SLA for this priority is already defined",
             )
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while registering Service Level Agreement",
+                data=str(e),
             )
 
     async def list_slas(self, user):
@@ -64,7 +73,7 @@ class TicketSLAServices:
             )
 
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while fetching Service Level Agreement",
@@ -77,6 +86,9 @@ class TicketSLAServices:
         try:
             sla = await TicketSLA.find_one(where={"id": sla_id})
 
+            if not sla:
+                raise TicketSLANotFound(detail="Ticket SLA not found")
+
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully fetched the sla",
@@ -84,11 +96,40 @@ class TicketSLAServices:
             )
 
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while fetching Service Level Agreement",
+                data=str(e),
             )
+
+    async def edit_sla(self, sla_id: int, payload: EditTicketSLASchema):
+        """
+        Edits the sla if exists
+        """
+        try:
+
+            sla = await TicketSLA.find_one(where={"id": sla_id})
+
+            if not sla:
+                raise TicketSLANotFound(detail="Ticket SLA not found")
+
+            data = payload.model_dump(exclude_none=True)
+            if not data:
+                raise HTTPException(
+                    detail="Nothing to update", status_code=HTTP_400_BAD_REQUEST
+                )
+
+            if "priority_id" in data:
+                tenant = TenantEntityValidator()
+                await tenant.validate(TicketPriority, data["priority_id"])
+
+            await TicketSLA.update(sla_id, **data)
+
+            return cr.success(message="Successfully updated the ticket sla")
+        except Exception as e:
+            logger.exception(e)
+            return cr.error(message="Error while updating the sla", data=str(e))
 
     async def delete_sla(self, sla_id: int):
         """
@@ -101,10 +142,11 @@ class TicketSLAServices:
                 message="Successfully deleted the SLA",
             )
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while deleting the SLA",
+                data=str(e),
             )
 
     def calculate_sla_response_time_percentage(
