@@ -21,11 +21,10 @@ class TimezonesMigration(BaseMigration):
         super().__init__(revision='20250810_070640',down_revision='20250810_070453')
         self.create_whole_table=True
         #describe your schemas here
-        self.primary_key()
+        self.base_columns()
         self.string("name", nullable=False)
         self.string("display_name", nullable=False)
         self.foreign("country_id", "sys_countries", nullable=True)
-        self.timestamp_columns()
 
 def upgrade() -> None:
   """

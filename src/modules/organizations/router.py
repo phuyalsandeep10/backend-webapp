@@ -456,6 +456,7 @@ async def get_countries():
             {
                 "id": country.id,
                 "name": country.name,
+                "code": country.iso_code_2,
                 "iso_code_2": country.iso_code_2, #US
                 "iso_code_3": country.iso_code_3, #USA
                 "phone_code": country.phone_code #+977
