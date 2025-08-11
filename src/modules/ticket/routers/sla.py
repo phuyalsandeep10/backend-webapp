@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends
 
 from src.common.dependencies import get_current_user
-from src.modules.ticket.schemas import CreateSLASchema, SLAOut
+from src.modules.ticket.schemas import CreateSLASchema, EditTicketSLASchema, SLAOut
 from src.modules.ticket.services.sla import sla_service
 from src.utils.response import CustomResponseSchema
 
@@ -31,12 +31,21 @@ async def get_all(user=Depends(get_current_user)):
 @router.get(
     "/sla/{sla_id}", summary="Get a SLA", response_model=CustomResponseSchema[SLAOut]
 )
-async def get_sla(sla_id: int):
+async def get_sla(sla_id: int, user=Depends(get_current_user)):
     return await sla_service.get_sla(sla_id)
+
+
+@router.patch(
+    "/sla/{sla_id}", summary="Edit SLA", response_model=CustomResponseSchema[SLAOut]
+)
+async def get_sla(
+    sla_id: int, payload: EditTicketSLASchema, user=Depends(get_current_user)
+):
+    return await sla_service.edit_sla(sla_id, payload)
 
 
 @router.delete(
     "/sla/{sla_id}", summary="Delete a SLA", response_model=CustomResponseSchema
 )
-async def delete_sla(sla_id: int):
+async def delete_sla(sla_id: int, user=Depends(get_current_user)):
     return await sla_service.delete_sla(sla_id)

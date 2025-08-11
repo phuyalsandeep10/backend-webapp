@@ -4,16 +4,21 @@ from time import time
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
-from starlette.status import HTTP_403_FORBIDDEN
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
+from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
 from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
 from src.modules.ticket.models import TicketSLA
+from src.modules.ticket.models.priority import TicketPriority
 from src.modules.ticket.models.ticket import Ticket, TicketAlert
-from src.modules.ticket.schemas import CreateSLASchema, SLAOut
+from src.modules.ticket.schemas import CreateSLASchema, EditTicketSLASchema, SLAOut
 from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 from src.socket_config import alert_ns, sio
+from src.utils.exceptions.ticket import TicketSLANotFound
+from src.utils.get_templates import get_templates
 from src.utils.response import CustomResponse as cr
+from src.utils.validations import TenantEntityValidator
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +34,10 @@ class TicketSLAServices:
         """
         try:
 
+            # we need to validate the priority doesn't belong to other organization
+            tenant = TenantEntityValidator()
+            await tenant.validate(TicketPriority, payload.priority_id)
+
             sla = await TicketSLA.create(**payload.model_dump())
             return cr.success(
                 status_code=status.HTTP_200_OK,
@@ -39,12 +48,14 @@ class TicketSLAServices:
             logger.exception(e)
             return cr.error(
                 message="Error while creating sla",
+                data="SLA for this priority is already defined",
             )
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while registering Service Level Agreement",
+                data=str(e),
             )
 
     async def list_slas(self, user):
@@ -62,7 +73,7 @@ class TicketSLAServices:
             )
 
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while fetching Service Level Agreement",
@@ -75,6 +86,9 @@ class TicketSLAServices:
         try:
             sla = await TicketSLA.find_one(where={"id": sla_id})
 
+            if not sla:
+                raise TicketSLANotFound(detail="Ticket SLA not found")
+
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully fetched the sla",
@@ -82,11 +96,40 @@ class TicketSLAServices:
             )
 
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while fetching Service Level Agreement",
+                data=str(e),
             )
+
+    async def edit_sla(self, sla_id: int, payload: EditTicketSLASchema):
+        """
+        Edits the sla if exists
+        """
+        try:
+
+            sla = await TicketSLA.find_one(where={"id": sla_id})
+
+            if not sla:
+                raise TicketSLANotFound(detail="Ticket SLA not found")
+
+            data = payload.model_dump(exclude_none=True)
+            if not data:
+                raise HTTPException(
+                    detail="Nothing to update", status_code=HTTP_400_BAD_REQUEST
+                )
+
+            if "priority_id" in data:
+                tenant = TenantEntityValidator()
+                await tenant.validate(TicketPriority, data["priority_id"])
+
+            await TicketSLA.update(sla_id, **data)
+
+            return cr.success(message="Successfully updated the ticket sla")
+        except Exception as e:
+            logger.exception(e)
+            return cr.error(message="Error while updating the sla", data=str(e))
 
     async def delete_sla(self, sla_id: int):
         """
@@ -99,10 +142,11 @@ class TicketSLAServices:
                 message="Successfully deleted the SLA",
             )
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 message="Error while deleting the SLA",
+                data=str(e),
             )
 
     def calculate_sla_response_time_percentage(
@@ -156,110 +200,62 @@ class TicketSLAServices:
         """
         It will send the notification if there is any sla breach
         """
-        await self.sla_response_breach_notification(ticket, response_time)
-        await self.sla_resolution_breach_notification(ticket, resolution_time)
+        await self._check_breach("response", ticket, response_time, "response time")
+        await self._check_breach(
+            "resolution", ticket, resolution_time, "resolution time"
+        )
 
-    async def sla_response_breach_notification(self, ticket, response_time):
-        """
-        Responsible for handling sla response time breach
-        """
-        if response_time < WarningLevelEnum.WARNING_75:
-            return None
+    async def _check_breach(
+        self, w_type: str, ticket: Ticket, time_percentage: int, time_label: str
+    ):
+        if time_percentage < WarningLevelEnum.WARNING_75:
+            return
 
-        response_breach = self.get_enum_from_range(response_time)
-        if response_breach is WarningLevelEnum.WARNING_75:
-            await self.handle_warning_75(
-                w_type="response",
-                ticket=ticket,
-                message="75% of the response time has elapsed",
+        breach_level = self.get_enum_from_range(time_percentage)
+
+        if breach_level == WarningLevelEnum.WARNING_75:
+            await self.handle_warning(
+                w_type, ticket, breach_level, f"75% of the {time_label} has elapsed"
             )
-        if response_breach is WarningLevelEnum.WARNING_100:
-            await self.handle_warning_100(
-                w_type="response",
-                ticket=ticket,
-                message="SLA Response time has been breached",
+        elif breach_level == WarningLevelEnum.WARNING_100:
+            await self.handle_warning(
+                w_type, ticket, breach_level, f"SLA {time_label} has been breached"
             )
 
-    async def sla_resolution_breach_notification(self, ticket, resolution_time):
+    async def handle_warning(
+        self, w_type: str, ticket: Ticket, level: WarningLevelEnum, message: str
+    ):
         """
-        Responsible for handling sla resolution time breach
+        Checks if warning already exists and sends alert and email if not
         """
-        if resolution_time < WarningLevelEnum.WARNING_75:
-            return None
 
-        resolution_breach = self.get_enum_from_range(resolution_time)
-        if resolution_breach is WarningLevelEnum.WARNING_75:
-            await self.handle_warning_75(
-                w_type="resolution",
-                ticket=ticket,
-                message="75% of the resolution time has elapsed",
-            )
-        if resolution_breach is WarningLevelEnum.WARNING_100:
-            await self.handle_warning_100(
-                w_type="resolution", ticket=ticket, message="SLA has been breached"
-            )
+        alert_type = (
+            TicketAlertTypeEnum.RESPONSE.value
+            if w_type == "response"
+            else TicketAlertTypeEnum.RESOLUTION.value
+        )
 
-    async def handle_warning_75(self, w_type: str, ticket: Ticket, message: str):
-        """
-        Handles when SLA time has elapsed 75%
-        first it checks if the warning was already sent
-        if none then it sends another one
-        """
-        alert = await TicketAlert.find_one(
+        alert_exists = await TicketAlert.find_one(
             where={
                 "ticket_id": ticket.id,
-                "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE.value
-                    if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION.value
-                ),
-                "warning_level": WarningLevelEnum.WARNING_75.value,
+                "alert_type": alert_type,
+                "warning_level": level.value,
             }
         )
-        if not alert:
-            await self.send_alert_broadcast(ticket, message)
-            # saving in the ticketalert table
-            data = {
-                "ticket_id": ticket.id,
-                "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE.value
-                    if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION.value
-                ),
-                "warning_level": WarningLevelEnum.WARNING_75.value,
-                "sent_at": datetime.utcnow(),
-            }
-            await TicketAlert.create(**data)
 
-    async def handle_warning_100(self, w_type: str, ticket: Ticket, message: str):
-        """
-        Handles when SLA time has elapsed 100%
-        """
-        alert = await TicketAlert.find_one(
-            where={
-                "ticket_id": ticket.id,
-                "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE.value
-                    if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION.value
-                ),
-                "warning_level": WarningLevelEnum.WARNING_100.value,
-            }
-        )
-        if not alert:
-            await self.send_alert_broadcast(ticket, message)
-            # saving in the ticketalert table
-            data = {
-                "ticket_id": ticket.id,
-                "alert_type": (
-                    TicketAlertTypeEnum.RESPONSE.value
-                    if w_type == "response"
-                    else TicketAlertTypeEnum.RESOLUTION.value
-                ),
-                "warning_level": WarningLevelEnum.WARNING_100.value,
-                "sent_at": datetime.utcnow(),
-            }
-            await TicketAlert.create(**data)
+        if alert_exists:
+            return
+
+        await self.send_alert_broadcast(ticket, message)
+
+        data = {
+            "ticket_id": ticket.id,
+            "alert_type": alert_type,
+            "warning_level": level.value,
+            "sent_at": datetime.utcnow(),
+        }
+        await TicketAlert.create(**data)
+        await self._send_email(ticket, message)
 
     async def send_alert_broadcast(self, ticket: Ticket, message: str):
         """
@@ -278,6 +274,23 @@ class TicketSLAServices:
                     namespace="/alert",
                     to=sc_user_ids[user_id],  # sid corresponding to the user id
                 )
+
+    async def _send_email(self, ticket: Ticket, message: str):
+        """
+        Sends SLA breach email to ticket assignees + creator.
+        """
+        receivers = [assignee.email for assignee in ticket.assignees]
+        creator = await User.find_one(where={"id": ticket.created_by_id})
+        if creator:
+            receivers.append(creator.email)
+
+        html_content = {"message": message, "ticket": ticket}
+        template = await get_templates(
+            name="ticket/sla-breach-email.html", content=html_content
+        )
+
+        email = NotificationFactory.create("email")
+        email.send(subject="SLA breach", recipients=receivers, body_html=template)
 
 
 sla_service = TicketSLAServices()

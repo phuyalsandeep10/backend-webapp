@@ -23,10 +23,6 @@ class TicketStatusService:
         """
         try:
             ticket_status = await TicketStatus.filter()
-            # if there is none of them, then list the default ones
-            if len(ticket_status) == 0:
-                payload = await self.get_default_status()
-                return cr.success(message="Successfully listed status", data=payload)
             payload = [status.to_json(TicketStatusOut) for status in ticket_status]
             return cr.success(message="Successfully listed status", data=payload)
         except Exception as e:
@@ -111,32 +107,16 @@ class TicketStatusService:
             logger.exception(e)
             return cr.error(message="Error while editing ticket status", data=str(e))
 
-    async def get_default_status(self):
-        """
-        Returns the default ticket status
-        """
-        default_ticket_status = await TicketStatus.filter(
-            where={"organization_id": None}
-        )
-        payload = [status.to_json(TicketStatusOut) for status in default_ticket_status]
-        return payload
-
     async def get_status_category_by_name(self, name: str):
         """
         Returns the default close category ticket status
         """
         ticket_status = await TicketStatus.find_one(where={"status_category": name})
-        # moving to default if there is no close category
         if not ticket_status:
-            default_ticket_status = await TicketStatus.find_one(
-                where={"status_category": name, "organization_id": None}
+            raise TicketStatusNotFound(
+                "No default ticket status has been set with closed status category"
             )
-            if not default_ticket_status:
-                raise TicketStatusNotFound(
-                    "No default ticket status has been set with closed status category"
-                )
 
-            return default_ticket_status
         return ticket_status
 
 

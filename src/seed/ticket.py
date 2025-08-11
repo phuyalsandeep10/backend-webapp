@@ -1,129 +1,181 @@
-from src.models import TicketPriority, TicketStatus, TicketSLA
+from src.models import TicketPriority, TicketSLA, TicketStatus
 
 priorities = [
     {
-        "name": "Critical",
+        "name": "critical",
         "level": 0,
-        "fg_color": "#ffffff",
-        "bg_color": "#ffffff",
+        "bg_color": "#FAD6D5",
+        "fg_color": "#F61818",
         "organization_id": 1,
     },
     {
-        "name": "High",
+        "name": "high",
         "level": 1,
-        "fg_color": "#ffffff",
-        "bg_color": "#ffffff",
+        "bg_color": "#FFF0D2",
+        "fg_color": "#F5CE31",
         "organization_id": 1,
     },
     {
-        "name": "Medium",
+        "name": "medium",
         "level": 2,
-        "fg_color": "#ffffff",
-        "bg_color": "#ffffff",
+        "bg_color": "#DAE8FA",
+        "fg_color": "#3872B7",
         "organization_id": 1,
     },
     {
-        "name": "Low",
+        "name": "low",
         "level": 3,
-        "fg_color": "#ffffff",
-        "bg_color": "#ffffff",
-        "organization_id": 1,
-    },
-    {
-        "name": "Trivial",
-        "level": 4,
-        "fg_color": "#ffffff",
-        "bg_color": "#ffffff",
+        "bg_color": "#E5F9DB",
+        "fg_color": "#009959",
         "organization_id": 1,
     },
 ]
 priorities2 = [
     {
-        "name": "Critical",
+        "name": "critical",
         "level": 0,
-        "fg_color": "#ffffff",
-        "bg_color": "#ffffff",
+        "bg_color": "#FAD6D5",
+        "fg_color": "#F61818",
         "organization_id": 2,
     },
     {
-        "name": "High",
+        "name": "high",
         "level": 1,
-        "fg_color": "#ffffff",
-        "bg_color": "#ffffff",
+        "bg_color": "#FFF0D2",
+        "fg_color": "#F5CE31",
         "organization_id": 2,
     },
     {
-        "name": "Medium",
+        "name": "medium",
         "level": 2,
-        "fg_color": "#ffffff",
-        "bg_color": "#ffffff",
+        "bg_color": "#DAE8FA",
+        "fg_color": "#3872B7",
         "organization_id": 2,
     },
     {
-        "name": "Low",
+        "name": "low",
         "level": 3,
-        "fg_color": "#ffffff",
-        "bg_color": "#ffffff",
-        "organization_id": 2,
-    },
-    {
-        "name": "Trivial",
-        "level": 4,
-        "fg_color": "#ffffff",
-        "bg_color": "#ffffff",
+        "bg_color": "#E5F9DB",
+        "fg_color": "#009959",
         "organization_id": 2,
     },
 ]
 
 status = [
     {
-        "name": "Open",
-        "bg_color": "#ffffff",
+        "name": "Unassigned",
+        "bg_color": "#F61818",
         "fg_color": "#ffffff",
         "organization_id": 1,
-        "status_category": "OPEN",
-    },
-    {
-        "name": "Pending",
-        "bg_color": "#ffffff",
-        "fg_color": "#ffffff",
-        "organization_id": 1,
+        "status_category": "pending",
         "is_default": True,
-        "status_category": "PENDING",
     },
     {
-        "name": "Closed",
-        "bg_color": "#ffffff",
+        "name": "Assigned",
+        "bg_color": "#FFF0D2",
         "fg_color": "#ffffff",
         "organization_id": 1,
-        "status_category": "CLOSED",
+        "status_category": "open",
+        "is_default": False,
+    },
+    {
+        "name": "Solved",
+        "bg_color": "#009959",
+        "fg_color": "#ffffff",
+        "organization_id": 1,
+        "status_category": "closed",
+        "is_default": False,
+    },
+    {
+        "name": "Reopened",
+        "bg_color": "#DAE8FA",
+        "fg_color": "#ffffff",
+        "organization_id": 1,
+        "status_category": "open",
+        "is_default": False,
     },
 ]
 status2 = [
     {
-        "name": "In-Progress",
-        "bg_color": "#ffffff",
+        "name": "Unassigned",
+        "bg_color": "#F61818",
         "fg_color": "#ffffff",
         "organization_id": 2,
-        "status_category": "OPEN",
-    },
-    {
-        "name": "Pending",
-        "bg_color": "#ffffff",
-        "fg_color": "#ffffff",
-        "organization_id": 2,
+        "status_category": "pending",
         "is_default": True,
-        "status_category": "PENDING",
     },
     {
-        "name": "Closed",
-        "color": "#ffffff",
-        "organization_id": 2,
-        "bg_color": "#ffffff",
+        "name": "Assigned",
+        "bg_color": "#FFF0D2",
         "fg_color": "#ffffff",
-        "status_category": "CLOSED",
+        "organization_id": 2,
+        "status_category": "open",
+        "is_default": False,
+    },
+    {
+        "name": "Solved",
+        "bg_color": "#009959",
+        "fg_color": "#ffffff",
+        "organization_id": 2,
+        "status_category": "closed",
+        "is_default": False,
+    },
+    {
+        "name": "Reopened",
+        "bg_color": "#DAE8FA",
+        "fg_color": "#ffffff",
+        "organization_id": 2,
+        "status_category": "open",
+        "is_default": False,
     },
 ]
+default_ticket_sla = [
+    {
+        "name": "Critical Standard",
+        "response_time": 300,  # 4 hours in seconds
+        "resolution_time": 600,  # 24 hours in seconds
+        "organization_id": 1,
+        "priority_id": 1,
+    },
+    {
+        "name": "High Standard",
+        "response_time": 18400,
+        "resolution_time": 106400,
+        "organization_id": 1,
+        "priority_id": 2,
+    },
+    {
+        "name": "Medium Standard",
+        "response_time": 22400,
+        "resolution_time": 146400,
+        "organization_id": 1,
+        "priority_id": 3,
+    },
+]
+default_ticket_sla2 = [
+    {
+        "name": "Critical Standard",
+        "response_time": 300,  # 4 hours in seconds
+        "resolution_time": 600,  # 24 hours in seconds
+        "organization_id": 2,
+        "priority_id": 1,
+    },
+    {
+        "name": "High Standard",
+        "response_time": 18400,
+        "resolution_time": 106400,
+        "organization_id": 2,
+        "priority_id": 2,
+    },
+    {
+        "name": "Medium Standard",
+        "response_time": 22400,
+        "resolution_time": 146400,
+        "organization_id": 2,
+        "priority_id": 3,
+    },
+]
+
 
 async def priority_seed():
     for i in priorities:
@@ -208,38 +260,37 @@ async def ticket_status_seed():
 
 
 async def sla_seed_dummy():
-    record = await TicketSLA.find_one(
-        where={
-            "name": {"mode": "insensitive", "value": "test_sla"},
-        }
-    )
-    record2 = await TicketSLA.find_one(
-        where={
-            "name": {"mode": "insensitive", "value": "test_sla2"},
-        }
-    )
-    if not record:
-        await TicketSLA.create(
-            name="test_sla",
-            response_time=18000,  # 5 hours
-            resolution_time=432000,  # 5 days
-            organization_id=1,
-            issued_by=1,
-            is_default=True,
+    for i in default_ticket_sla:
+        record = await TicketSLA.find_one(
+            where={
+                "name": {"mode": "insensitive", "value": i["name"]},
+            }
         )
-        print("Test TicketSLA 1 has been created")
-    else:
-        print("Test TicketSLA 1 already exists")
-
-    if not record2:
-        await TicketSLA.create(
-            name="test_sla2",
-            response_time=18000,  # 5 hours
-            resolution_time=432000,  # 5 days
-            organization_id=2,
-            issued_by=2,
-            is_default=True,
+        if not record:
+            await TicketSLA.create(
+                name=i["name"],
+                response_time=i["response_time"],
+                resolution_time=i["resolution_time"],
+                organization_id=i["organization_id"],
+                priority_id=i["priority_id"],
+            )
+            print("Test TicketSLA 1 has been created")
+        else:
+            print("Test TicketSLA 1 already exists")
+    for i in default_ticket_sla2:
+        record = await TicketSLA.find_one(
+            where={
+                "name": {"mode": "insensitive", "value": i["name"]},
+            }
         )
-        print("Test TicketSLA 2 has been created")
-    else:
-        print("Test TicketSLA 2 already exists")
+        if not record:
+            await TicketSLA.create(
+                name=i["name"],
+                response_time=i["response_time"],
+                resolution_time=i["resolution_time"],
+                organization_id=i["organization_id"],
+                priority_id=i["priority_id"],
+            )
+            print("Test TicketSLA 2 has been created")
+        else:
+            print("Test TicketSLA 2 already exists")

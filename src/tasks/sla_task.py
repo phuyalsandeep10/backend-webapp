@@ -27,7 +27,6 @@ async def check_sla_breach():
     for ticket in tickets:
         if not ticket.opened_at:
             return
-        logger.info(f"Opened at {ticket.opened_at}")
         response_remaining_time = sla_service.calculate_sla_response_time_percentage(
             ticket.sla.response_time, int(ticket.opened_at.timestamp())
         )

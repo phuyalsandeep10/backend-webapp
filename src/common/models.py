@@ -3,11 +3,18 @@ from datetime import datetime
 from typing import Any, List, Optional, Type, TypeVar, Union
 
 import sqlalchemy as sa
+from fastapi import HTTPException
+from fastapi.requests import HTTPConnection
 from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import and_, inspect, or_
 from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
+<<<<<<< HEAD
 from sqlmodel import Column, Field, ForeignKey, Relationship, SQLModel, select
+=======
+from sqlmodel import Column, Field, ForeignKey, SQLModel, select
+from starlette.status import HTTP_404_NOT_FOUND
+>>>>>>> 80c3c2ca7a9902e53783a42788a13f602df3cf0b
 
 from src.common.context import TenantContext, UserContext
 from src.db.config import async_session
@@ -110,12 +117,16 @@ class BaseModel(SQLModel):
     @classmethod
     async def delete(cls: Type[T], where: dict = {}) -> None:
         async with async_session() as session:
+            print("The where", where)
             statement = query_statement(
                 cls,
                 where=where,
             )
             result = await session.execute(statement)
             obj = result.scalars().first()
+            print("The obj", obj)
+            if not obj:
+                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Not found")
             if obj:
                 await session.delete(obj)
                 await session.commit()
@@ -385,7 +396,6 @@ class TenantModel(CommonModel):
         organization_id = TenantContext.get()
         user_id = UserContext.get()
         where.setdefault("organization_id", organization_id)
-        where.setdefault("updated_by_id", user_id)
         return await super().delete(where)
 
     @classmethod
