@@ -1,13 +1,18 @@
 import logging
 
+from apscheduler.triggers.interval import IntervalTrigger
 from fastapi import Request, WebSocket
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 from src.app import app
 from src.config.broadcast import broadcast
+from src.config.scheduler import scheduler, start_scheduler
 from src.routers import add_routers
 from src.socket_config import socket_app
+from src.tasks.sla_task import check_sla_breach
 from src.utils.exceptions import add_exceptions_handler
+from src.utils.get_templates import get_templates
 
 # custom exceptions
 add_exceptions_handler(app)
@@ -18,8 +23,17 @@ logging.basicConfig(
 )
 
 
+# apscheduler configuration
+@app.on_event("startup")
+async def startup_event():
+    start_scheduler()
+    scheduler.add_job(check_sla_breach, IntervalTrigger(seconds=10))
+
+
 # adding routers
 add_routers(app)
+
+templates = Jinja2Templates(directory="templates")
 
 
 async def sender(websocket: WebSocket, room: str):

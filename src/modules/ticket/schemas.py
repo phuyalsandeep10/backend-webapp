@@ -18,7 +18,7 @@ class CreateTicketSchema(BaseModel):
     description: str
     sender_domain: EmailStr
     notes: Optional[str] = None
-    attachment: Optional[str] = None
+    attachments: Optional[List[str]] = None
     priority_id: int
     department_id: int
     customer_id: Optional[int] = None
@@ -156,3 +156,7 @@ class PriorityOut(CreatePrioriySchema):
 
 class TicketStatusOut(CreateTicketStatusSchema):
     id: int
+
+
+class TicketAttachmentOut(BaseModel):
+    attachment: List[str]
