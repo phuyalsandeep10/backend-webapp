@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from src.models import PermissionGroup, Permissions, RolePermission, OrganizationRole
 from src.modules.staff_managemet.schemas.permission_group import (
     PermissionOutSchema,
-    RolePermissionsInSchema,
 )
 from src.common.dependencies import get_current_user
 
@@ -30,16 +29,14 @@ async def get_permission_groups(current_user=Depends(get_current_user)):
 
 @router.post("/permission-groups", response_model=Dict[str, Any])
 async def get_permission_groups_with_role_perms(
-    body: RolePermissionsInSchema,
+    role_id: int,
     current_user=Depends(get_current_user),
 ):
     groups = await PermissionGroup.filter()
     all_permissions = await Permissions.filter()
-    role_perms = await RolePermission.filter(where={"role_id": body.role_id})
+    role_perms = await RolePermission.filter(where={"role_id": role_id})
 
-    role_perm_map = {}
-    for rp in role_perms:
-        role_perm_map[rp.permission_id] = rp
+    role_perm_map = {rp.permission_id: rp for rp in role_perms}
 
     perms_by_group_id = {}
     for perm in all_permissions:
@@ -53,13 +50,15 @@ async def get_permission_groups_with_role_perms(
             schema_data = PermissionOutSchema.model_validate(perm).model_dump()
 
             rp = role_perm_map.get(perm.id)
-            schema_data.update(
-                {
-                    "is_changeable": rp.is_changeable,
-                    "is_deletable": rp.is_deletable,
-                    "is_viewable": rp.is_viewable,
-                }
-            )
+            if rp is not None:
+                schema_data.update(
+                    {
+                        "is_changeable": rp.is_changeable,
+                        "is_deletable": rp.is_deletable,
+                        "is_viewable": rp.is_viewable,
+                    }
+                )
+
             perms_list.append(PermissionOutSchema(**schema_data))
 
         response[group.name] = perms_list

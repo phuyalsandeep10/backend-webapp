@@ -65,11 +65,12 @@ async def create_organization(
             "name": {"mode": "insensitive", "value": body.name},
         }
     )
-  
 
     if record:
-        return cr.error(data={"success": False}, message="This domain is already exists")
-        
+        return cr.error(
+            data={"success": False}, message="This domain is already exists"
+        )
+
     record = await Organization.find_one(
         where={
             "domain": {"mode": "insensitive", "value": body.domain},
@@ -77,11 +78,11 @@ async def create_organization(
     )
 
     if record:
-        return cr.error(data={"success": False}, message="This domain is already exists")
+        return cr.error(
+            data={"success": False}, message="This domain is already exists"
+        )
 
     slug = body.name.lower().replace(" ", "-")
-
-
 
     organization = await Organization.create(
         name=body.name,
@@ -93,9 +94,6 @@ async def create_organization(
         identifier=f"{slug}-{random_unique_key()}",
         owner_id=user.id,
     )
-
-
-
 
     await OrganizationMember.create(
         organization_id=organization.id, user_id=user.id, is_owner=True
@@ -155,18 +153,17 @@ async def update_organization(
     Update an existing organization.
     """
 
-
     organization = await Organization.get(organization_id)
 
     organization_member = await OrganizationMember.find_one(
         {"organization_id": organization_id, "user_id": user.id}
     )
 
-
-
     if not organization_member:
-        return cr.error(data={"success": False}, message="You do not have permission to update this organization")
-       
+        return cr.error(
+            data={"success": False},
+            message="You do not have permission to update this organization",
+        )
 
     if not organization:
         return cr.error(data={"success": False}, message="Organization not found")
@@ -178,7 +175,7 @@ async def update_organization(
         if existing_org:
             return cr.error(
                 data={"success": False},
-                message="Organization with this name already exists"
+                message="Organization with this name already exists",
             )
     record = await Organization.find_one(
         where={
@@ -186,9 +183,10 @@ async def update_organization(
         }
     )
 
-    if record and  record.domain != body.domain:
-        return cr.error(data={"success": False}, message="This domain is already exists")
-
+    if record and record.domain != body.domain:
+        return cr.error(
+            data={"success": False}, message="This domain is already exists"
+        )
 
     record = await Organization.update(
         organization_id,
@@ -282,16 +280,17 @@ async def update_role(
         identifier=body.name.lower().replace(" ", "-"),
     )
 
-    # Update permissions
     for perm in body.permissions:
-        await RolePermission.update(
-            where={"role_id": role.id, "permission_id": perm.permission_id},
-            values={
-                "is_changeable": perm.is_changeable,
-                "is_deletable": perm.is_deletable,
-                "is_viewable": perm.is_viewable,
-            },
+        role_perm = await RolePermission.find_one(
+            where={"role_id": role.id, "permission_id": perm.permission_id}
         )
+        if role_perm:
+            await RolePermission.update(
+                role_perm.id,
+                is_changeable=perm.is_changeable,
+                is_deletable=perm.is_deletable,
+                is_viewable=perm.is_viewable,
+            )
 
     updated_role = await OrganizationRole.find_one(where={"id": role_id})
 
@@ -317,16 +316,13 @@ async def get_roles(user=Depends(get_current_user)):
 
     results = []
     for role in roles:
-        no_of_agents = len(role.member_roles) if role.member_roles else 0
+        no_of_agents = len(role.member_roles)
 
         role_data = role.to_json(CreateRoleOutSchema)
+        role_data["role_id"] = role.id
         role_data["role_name"] = role.name
         role_data["no_of_agents"] = no_of_agents
-        role_data["permission_summary"] = (
-            [rp.permission.name for rp in role.role_permissions]
-            if role.role_permissions
-            else ""
-        )
+        role_data["permission_summary"] = ()
 
         results.append(role_data)
 
