@@ -1,3 +1,6 @@
+import base64
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.common.dependencies import (
@@ -5,8 +8,9 @@ from src.common.dependencies import (
     get_current_user,
     update_user_cache,
 )
-
 from src.common.models import Permission
+from src.common.utils import random_unique_key
+from src.config.settings import settings
 from src.enums import InvitationStatus
 from src.models import (
     Organization,
@@ -16,12 +20,15 @@ from src.models import (
     OrganizationRole,
     User,
 )
-
 from src.tasks import send_invitation_email
-from src.common.utils import random_unique_key
 from src.utils.response import CustomResponse as cr
 
-from .schema import OrganizationSchema , OrganizationInviteSchema, OrganizationRoleSchema,AssignRoleSchema
+from .schema import (
+    AssignRoleSchema,
+    OrganizationInviteSchema,
+    OrganizationRoleSchema,
+    OrganizationSchema,
+)
 
 router = APIRouter()
 
@@ -31,7 +38,7 @@ async def get_organizations(user=Depends(get_current_user)):
     """
     Get the list of organizations the user belongs to.
     """
-    records =  await Organization.get_orgs_by_user_id(user_id=user.id)
+    records = await Organization.get_orgs_by_user_id(user_id=user.id)
     data = [item.to_json() for item in records]
     return cr.success(data=data)
 
@@ -50,11 +57,12 @@ async def create_organization(
             "name": {"mode": "insensitive", "value": body.name},
         }
     )
-  
 
     if record:
-        return cr.error(data={"success": False}, message="This domain is already exists")
-        
+        return cr.error(
+            data={"success": False}, message="This domain is already exists"
+        )
+
     record = await Organization.find_one(
         where={
             "domain": {"mode": "insensitive", "value": body.domain},
@@ -62,11 +70,26 @@ async def create_organization(
     )
 
     if record:
-        return cr.error(data={"success": False}, message="This domain is already exists")
+        return cr.error(
+            data={"success": False}, message="This domain is already exists"
+        )
+
+    email_alias = ""
+    while True:
+        # generating the random email
+        token = secrets.token_bytes(9)
+        email_alias_name = base64.urlsafe_b64decode(token).rstrip(b"=").decode("ascii")
+        email_alias = f"{email_alias_name}@{settings.EMAIL_DOMAIN}"
+
+        # checking it the email alias exists before
+        record = await Organization.find_one(
+            where={"email_alias": {"mode": "insensitive", "value": email_alias}}
+        )
+        if record:
+            continue
+        break
 
     slug = body.name.lower().replace(" ", "-")
-
-
 
     organization = await Organization.create(
         name=body.name,
@@ -76,11 +99,9 @@ async def create_organization(
         domain=body.domain,
         purpose=body.purpose,
         identifier=f"{slug}-{random_unique_key()}",
-        owner_id=user.id
+        owner_id=user.id,
+        email_alias=email_alias,
     )
-
-
-
 
     await OrganizationMember.create(
         organization_id=organization.id, user_id=user.id, is_owner=True
@@ -101,10 +122,8 @@ async def create_organization(
             raise HTTPException(404, "Not found User")
 
         update_user_cache(token, user)
-   
-    
-    return cr.success(data=organization.to_json())
 
+    return cr.success(data=organization.to_json())
 
 
 @router.get("/{organization_id}/members")
@@ -142,18 +161,17 @@ async def update_organization(
     Update an existing organization.
     """
 
-
     organization = await Organization.get(organization_id)
 
     organization_member = await OrganizationMember.find_one(
         {"organization_id": organization_id, "user_id": user.id}
     )
 
-
-
     if not organization_member:
-        return cr.error(data={"success": False}, message="You do not have permission to update this organization")
-       
+        return cr.error(
+            data={"success": False},
+            message="You do not have permission to update this organization",
+        )
 
     if not organization:
         return cr.error(data={"success": False}, message="Organization not found")
@@ -165,7 +183,7 @@ async def update_organization(
         if existing_org:
             return cr.error(
                 data={"success": False},
-                message="Organization with this name already exists"
+                message="Organization with this name already exists",
             )
     record = await Organization.find_one(
         where={
@@ -173,9 +191,10 @@ async def update_organization(
         }
     )
 
-    if record and  record.domain != body.domain:
-        return cr.error(data={"success": False}, message="This domain is already exists")
-
+    if record and record.domain != body.domain:
+        return cr.error(
+            data={"success": False}, message="This domain is already exists"
+        )
 
     record = await Organization.update(
         organization_id,
@@ -290,9 +309,8 @@ async def get_roles(user=Depends(get_current_user)):
 
     organization_id = user.attributes.get("organization_id")
 
-    roles =  await OrganizationRole.filter(where={"organization_id": organization_id})
+    roles = await OrganizationRole.filter(where={"organization_id": organization_id})
     return cr.success(data=[role.to_json() for role in roles])
-
 
 
 @router.delete("/{role_id}/roles")
