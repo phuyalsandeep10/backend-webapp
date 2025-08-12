@@ -1,9 +1,13 @@
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from sqlalchemy import Column
 from sqlmodel import BigInteger, Field, ForeignKey, Relationship, UniqueConstraint
 
 from src.common.models import TenantModel
+
+if TYPE_CHECKING:
+
+    from src.modules.ticket.models.priority import TicketPriority
 
 from .ticket import Ticket
 
@@ -38,6 +42,7 @@ class TicketSLA(TenantModel, table=True):
     )
     is_default: bool = Field(default=False)
     tickets: List[Ticket] = Relationship(back_populates="sla", passive_deletes=True)
+    priority: "TicketPriority" = Relationship(back_populates="sla")
 
     def __str__(self):
         return f"{self.name}-{self.created_at}"

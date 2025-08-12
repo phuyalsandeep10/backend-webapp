@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from fastapi import status
@@ -155,10 +156,15 @@ class ContactOut(CreateContactSchema):
     id: int
 
 
+class PriorityOut(CreatePrioriySchema):
+    id: int
+
+
 class SLAOut(CreateSLASchema):
     id: int
     issued_by: int
-    created_at: str
+    created_at: datetime
+    priority: PriorityOut
 
 
 class TicketOut(BaseModel):
@@ -169,10 +175,6 @@ class TicketOut(BaseModel):
     sla: SLAOut
     contact: ContactOut
     assignees: AssigneeOut
-
-
-class PriorityOut(CreatePrioriySchema):
-    id: int
 
 
 class TicketStatusOut(CreateTicketStatusSchema):

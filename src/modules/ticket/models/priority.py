@@ -6,6 +6,7 @@ from src.common.models import TenantModel
 
 if TYPE_CHECKING:
     from src.modules.organizations.models import Organization
+    from src.modules.ticket.models.sla import TicketSLA
     from src.modules.ticket.models.ticket import Ticket
 
 
@@ -33,6 +34,7 @@ class TicketPriority(TenantModel, table=True):
     bg_color: str
     fg_color: str
     tickets: List["Ticket"] = Relationship(back_populates="priority")
+    sla: "TicketSLA" = Relationship(back_populates="priority")
     organization: "Organization" = Relationship(back_populates="ticket_priorities")
 
     def __str__(self):

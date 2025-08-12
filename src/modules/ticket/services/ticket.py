@@ -392,12 +392,16 @@ class TicketServices:
             raise TicketNotFound()
         receiver = tick.customer.email if tick.customer_id else tick.customer_email
         name = tick.customer.name if tick.customer_id else tick.customer_name
-        html_content = {"name": name, "ticket": tick, "settings": settings}
+        html_content = {
+            "name": name,
+            "ticket": tick,
+            "settings": settings,
+        }
         template = await get_templates(
             name="ticket/ticket-confirmation-email.html", content=html_content
         )
         email = NotificationFactory.create("email")
-        email.send_ticket_email(
+        await email.send_ticket_email(
             from_email=(tick.sender_domain, tick.organization.name),
             subject="Ticket confirmation",
             recipients=receiver,

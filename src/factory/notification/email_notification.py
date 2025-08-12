@@ -1,5 +1,8 @@
 import logging
 
+from arq import create_pool
+from arq.connections import RedisSettings
+
 from src.factory.notification.interface import NotificationInterface
 from src.modules.ticket.models.ticket import Ticket
 from src.tasks import send_email
@@ -30,7 +33,7 @@ class EmailNotification(NotificationInterface):
         except Exception as e:
             logger.exception(e)
 
-    def send_ticket_email(
+    async def send_ticket_email(
         self,
         subject: str,
         from_email: tuple[str, str],
@@ -39,9 +42,11 @@ class EmailNotification(NotificationInterface):
         ticket: Ticket,
     ):
         try:
-            send_email.delay(
-                from_email=from_email,
+            redis = await create_pool((RedisSettings()))
+            await redis.enqueue_job(
+                "send_email",
                 subject=subject,
+                from_email=from_email,
                 recipients=recipients,
                 body_html=body_html,
                 ticket_id=ticket.id,

@@ -5,6 +5,7 @@ from time import time
 from fastapi import HTTPException, status
 from sendgrid import from_email
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
 from src.factory.notification import NotificationFactory
@@ -13,7 +14,12 @@ from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
 from src.modules.ticket.models import TicketSLA
 from src.modules.ticket.models.priority import TicketPriority
 from src.modules.ticket.models.ticket import Ticket, TicketAlert
-from src.modules.ticket.schemas import CreateSLASchema, EditTicketSLASchema, SLAOut
+from src.modules.ticket.schemas import (
+    CreateSLASchema,
+    EditTicketSLASchema,
+    PriorityOut,
+    SLAOut,
+)
 from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 from src.socket_config import alert_ns, sio
 from src.utils.exceptions.ticket import TicketSLANotFound
@@ -64,8 +70,20 @@ class TicketSLAServices:
         List all the SLA of the organization
         """
         try:
-            sla_list = await TicketSLA.filter()
-            slas = [s.to_json(SLAOut) for s in sla_list]
+            sla_list = await TicketSLA.filter(
+                related_items=[
+                    selectinload(TicketSLA.priority),
+                    selectinload(TicketSLA.tickets),
+                ]
+            )
+            slas = [
+                s.to_json(
+                    schema=SLAOut,
+                    include_relationships=True,
+                    related_schemas={"priority": PriorityOut},
+                )
+                for s in sla_list
+            ]
 
             return cr.success(
                 status_code=status.HTTP_200_OK,
