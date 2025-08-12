@@ -75,6 +75,8 @@ class UpdateRoleInSchema(BaseModel):
 
 class UpdateRoleInfoSchema(BaseModel):
     name: str = Field(..., max_length=100, description="Name of the role")
+    permission_group: int
+
     description: str | None = Field(
         None, max_length=500, description="Description of the role"
     )
@@ -84,6 +86,7 @@ class UpdateRoleInfoSchema(BaseModel):
 class CreateRoleSchema(BaseModel):
     name: str = Field(..., max_length=100)
     description: str = Field(..., max_length=500)
+    permission_group: int
     permissions: List[UpdateRoleInSchema] = []
 
 
@@ -94,4 +97,4 @@ class CreateRoleOutSchema(BaseModel):
     org_name: str
     created_at: str
     no_of_agents: int
-    permission_summary: List[UpdateRoleInSchema] = []
+    permission_summary: str = ""

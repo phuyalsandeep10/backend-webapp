@@ -24,7 +24,7 @@ class OrganizationinvitationMigration(BaseMigration):
         self.tenant_columns()
         self.string("email", nullable=False)
         self.string("status", nullable=False)
-        self.foreign("invited_by_id", "sys_users")
+        self.foreign("invited_by_id", "sys_users", ondelete="CASCADE")
         self.date_time("expires_at", nullable=False)
         self.date_time("activity_at", nullable=True)
         self.json("role_ids", nullable=False, default=[])

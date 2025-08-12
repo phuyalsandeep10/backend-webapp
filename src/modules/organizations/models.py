@@ -1,8 +1,9 @@
+from operator import index
 from typing import TYPE_CHECKING, List, Optional
 from datetime import datetime
 
 import sqlalchemy as sa
-from sqlmodel import Field, Relationship, Session, SQLModel, select
+from sqlmodel import Field, Relationship, select, Column, Integer, ForeignKey
 
 from src.common.models import CommonModel, TenantModel
 from src.db.config import async_session
@@ -22,11 +23,13 @@ if TYPE_CHECKING:
 
 class Organization(CommonModel, table=True):
     __tablename__ = "sys_organizations"  # type:ignore
-    name: str = Field(max_length=255, index=True)
+    name: str = Field(max_length=255, index=True, unique=True)
     description: str = Field(default=None, max_length=500, nullable=True)
-    slug: str = Field(default=None, max_length=255, nullable=False, index=True)
+    slug: str = Field(
+        default=None, max_length=255, nullable=False, index=True, unique=True
+    )
 
-    domain: str = Field(default=None, max_length=255)
+    domain: str = Field(default=None, max_length=255, nullable=False, index=True)
     logo: str = Field(default=None, max_length=255, nullable=True)
 
     identifier: str = Field(default=None, max_length=255, nullable=True)
@@ -58,7 +61,12 @@ class Organization(CommonModel, table=True):
     tickets: List["Ticket"] = Relationship(back_populates="organization")
     purpose: str = Field(default=None, max_length=250, nullable=True)
 
-    owner_id: int = Field(foreign_key="sys_users.id", nullable=False)
+    # owner_id: int = Field(foreign_key="sys_users.id", nullable=False)
+    owner_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("sys_users.id", ondelete="CASCADE"), nullable=True
+        )
+    )
     owner: Optional["User"] = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[Organization.owner_id]"}
     )
@@ -91,38 +99,79 @@ class OrganizationRole(TenantModel, table=True):
 
 class OrganizationMember(CommonModel, table=True):
     __tablename__ = "org_members"  # type:ignore
-    user_id: int = Field(foreign_key="sys_users.id", nullable=False)
-    organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
 
-    organization: Optional[Organization] = Relationship(back_populates="members")
-    user: Optional["User"] = Relationship(
-        back_populates="members",
-        sa_relationship_kwargs={"foreign_keys": "[OrganizationMember.user_id]"},
+    user_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("sys_users.id", ondelete="CASCADE"), nullable=False
+        )
     )
 
-    member_roles: List["OrganizationMemberRole"] = Relationship(back_populates="member")
+    organization_id: int = Field(
+        sa_column=Column(
+            Integer,
+            ForeignKey("sys_organizations.id", ondelete="CASCADE"),
+            nullable=False,
+        )
+    )
+
+    organization: Optional[Organization] = Relationship(
+        back_populates="members", sa_relationship_kwargs={"passive_deletes": True}
+    )
+    user: Optional["User"] = Relationship(
+        back_populates="members",
+        sa_relationship_kwargs={
+            "foreign_keys": "[OrganizationMember.user_id]",
+            "passive_deletes": True,
+        },
+    )
+
+    member_roles: List["OrganizationMemberRole"] = Relationship(
+        back_populates="member", sa_relationship_kwargs={"passive_deletes": True}
+    )
 
 
 class OrganizationMemberRole(CommonModel, table=True):
     __tablename__ = "org_member_roles"  # type:ignore
-    member_id: int = Field(foreign_key="org_members.id", nullable=False)
-    role_id: int = Field(foreign_key="org_roles.id", nullable=False)
-    member: Optional[OrganizationMember] = Relationship(back_populates="member_roles")
-    role: Optional[OrganizationRole] = Relationship(back_populates="member_roles")
+    # member_id: int = Field(foreign_key="org_members.id", nullable=False)
+    # role_id: int = Field(foreign_key="org_roles.id", nullable=False)
+    member_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("org_members.id", ondelete="CASCADE"), nullable=False
+        )
+    )
+
+    role_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("org_roles.id", ondelete="CASCADE"), nullable=False
+        )
+    )
+    member: Optional[OrganizationMember] = Relationship(
+        back_populates="member_roles", passive_deletes=True
+    )
+    role: Optional[OrganizationRole] = Relationship(
+        back_populates="member_roles", passive_deletes=True
+    )
 
 
 class OrganizationInvitation(TenantModel, table=True):
     __tablename__ = "org_invitations"  # type:ignore
     email: str = Field(max_length=255, index=True)
 
-    invited_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
+    # invited_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
+    invited_by_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("sys_users.id", ondelete="CASCADE"), nullable=False
+        )
+    )
+
     status: str = Field(default=InvitationStatus.PENDING, max_length=50, nullable=False)
 
     role_ids: list[int] = Field(default_factory=list, sa_column=sa.Column(sa.JSON))
 
     invited_by: Optional["User"] = Relationship(
         sa_relationship_kwargs={
-            "foreign_keys": "[OrganizationInvitation.invited_by_id]"
+            "foreign_keys": "[OrganizationInvitation.invited_by_id]",
+            "passive_deletes": True,
         }
     )
 
