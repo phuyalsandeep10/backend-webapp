@@ -38,6 +38,7 @@ class TicketLogActionEnum(str, Enum):
     TICKET_UPDATED = "ticket_updated"
     TICKET_DELETED = "ticket_hard_deleted"
     TICKET_SOFT_DELETED = "ticket_soft_deleted"
+    TICKET_CONFIRMED = "ticket_confirmed"
     STATUS_CHANGED = "ticket_status_changed"
     ASSIGNEE_CHANGED = "ticket_assignee_changed"
     PRIORITY_CHANGED = "ticket_priority_changed"

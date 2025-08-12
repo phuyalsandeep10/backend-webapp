@@ -298,6 +298,17 @@ class TicketServices:
                 await tenant.validate(Team, data["department_id"])
 
             await Ticket.update(ticket.id, **data)
+            full_previous_ticket = ticket.to_json()
+            previous_value = {
+                k: full_previous_ticket[k]
+                for k in data.keys()
+                if k in full_previous_ticket
+            }
+            await ticket.save_to_log(
+                action=TicketLogActionEnum.TICKET_UPDATED,
+                previous_value=previous_value,
+                new_value=data,
+            )
 
             return cr.success(
                 message="Successfully updated the ticket", data=ticket.to_dict()

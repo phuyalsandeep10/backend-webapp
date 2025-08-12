@@ -95,7 +95,7 @@ class EditTicketSchema(BaseModel):
     customer_phone: Optional[str] = None
     customer_location: Optional[str] = None
     assignees: Optional[List[int]] = None
-    is_spam: Optional[List[int]] = None
+    is_spam: Optional[bool] = None
 
     model_config = {"extra": "forbid"}
 
