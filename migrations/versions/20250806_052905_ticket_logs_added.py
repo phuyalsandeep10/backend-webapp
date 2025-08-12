@@ -25,7 +25,6 @@ class TicketLogMigration(BaseMigration):
         self.create_whole_table = True
         # describe your schemas here
         self.tenant_columns()
-        self.foreign(name="actor_id", table="sys_users", ondelete="SET NULL")
         self.foreign(name="ticket_id", table="org_tickets", ondelete="SET NULL")
         self.string(name="action", nullable=False)
         self.string(name="description", nullable=True)

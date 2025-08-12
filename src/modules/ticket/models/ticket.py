@@ -160,9 +160,6 @@ class TicketLog(TenantModel, table=True):
 
     __tablename__ = "org_tickets_logs"  # type:ignore
 
-    actor_id: int = Field(
-        sa_column=Column(ForeignKey("sys_users.id", ondelete="SET NULL"))
-    )
     ticket_id: int = Field(
         sa_column=Column(ForeignKey("org_tickets.id", ondelete="SET NULL"))
     )
