@@ -4,6 +4,9 @@ run:
 celery:
 		@echo "Starting celery"
 		celery -A src.config.celery worker --beat --loglevel=INFO
+arq:
+		@echo "Starting arq"
+		arq src.config.arq.WorkerSettings
 test:
 	@echo "Starting testing"
 	pytest -v
