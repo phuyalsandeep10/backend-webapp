@@ -41,3 +41,10 @@ class TicketLogActionEnum(str, Enum):
     ASSIGNEE_CHANGED = "ticket_created"
     PRIORITY_CHANGED = "ticket_created"
     CONFIRMATION_EMAIL_SENT = "confirmation_email_sent"
+
+
+class TicketLogEntityEnum(str, Enum):
+    TICKET = "ticket"
+    TICKET_SLA = "ticket_sla"
+    TICKET_STATUS = "ticket_status"
+    TICKET_PRIORITY = "ticket_priority"

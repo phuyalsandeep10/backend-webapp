@@ -12,6 +12,7 @@ from src.config.settings import settings
 from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
 from src.modules.team.models import Team
+from src.modules.ticket.enums import TicketLogActionEnum
 from src.modules.ticket.models import TicketPriority
 from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import TicketSLA
@@ -69,9 +70,12 @@ class TicketServices:
 
             attachments = data.pop("attachments", None)
 
-            # creating the ticket
+            # creating the ticket and saving in the log
             ticket = await Ticket.create(**data)
-            logger.info("The tick rajib", ticket, data)
+            await ticket.save_to_log(
+                action=TicketLogActionEnum.TICKET_CREATED,
+                description="Ticket has been added",
+            )
 
             if attachments:
                 for attachment in attachments:
