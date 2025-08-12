@@ -1,9 +1,5 @@
-import asyncio
 import logging
 
-from src.config.celery import celery_app
-from src.config.mail import mail_sender
-from src.config.settings import settings
 from src.modules.sendgrid.services import send_sendgrid_email
 from src.modules.ticket.enums import TicketLogActionEnum, TicketLogEntityEnum
 from src.modules.ticket.models.ticket import Ticket
@@ -12,8 +8,8 @@ from src.modules.ticket.models.ticket_log import TicketLog
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task
-def send_email(
+async def send_email(
+    ctx,
     subject: str,
     recipients: str,
     body_html: str,
@@ -29,7 +25,7 @@ def send_email(
             html_content=body_html,
         )
         # saving to the log
-        ticket = asyncio.run(Ticket.find_one(where={"id": ticket_id}))
+        ticket = await Ticket.find_one(where={"id": ticket_id})
         if not ticket:
             raise Exception("Ticket doesn't belong to any organization")
 
@@ -39,10 +35,10 @@ def send_email(
             "entity_type": TicketLogEntityEnum.TICKET,
             "action": TicketLogActionEnum.CONFIRMATION_EMAIL_SENT,
         }
-        asyncio.run(TicketLog.create(**log_data))
+        await TicketLog.create(**log_data)
     except Exception as e:
         logger.exception(e)
-        ticket = asyncio.run(Ticket.find_one(where={"id": ticket_id}))
+        ticket = await Ticket.find_one(where={"id": ticket_id})
         if not ticket:
             raise Exception("Ticket doesn't belong to any organization")
 
@@ -53,4 +49,4 @@ def send_email(
             "action": TicketLogActionEnum.CONFIRMATION_EMAIL_SENT_FAILED,
             "description": f"Error while sending confirmation mail {str(e)}",
         }
-        asyncio.run(TicketLog.create(**log_data))
+        await TicketLog.create(**log_data)
