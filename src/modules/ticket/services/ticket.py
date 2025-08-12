@@ -25,7 +25,9 @@ from src.modules.ticket.schemas import (
     TicketOut,
 )
 from src.modules.ticket.services.status import ticket_status_service
+from src.utils.common import extract_subset_from_dict
 from src.utils.exceptions.ticket import (
+    TicketAlreadyConfirmed,
     TicketNotFound,
     TicketSLANotFound,
     TicketStatusNotFound,
@@ -55,9 +57,9 @@ class TicketServices:
                 raise TicketSLANotFound(detail="Ticket SLA not found for this priority")
 
             data = payload.model_dump(exclude_none=True)
-
             data["status_id"] = sts.id
             data["sla_id"] = sla.id
+
             if "assignees" in data:
                 data["assignees"] = await self.get_assigned_members_by_id(
                     data["assignees"]
@@ -67,7 +69,7 @@ class TicketServices:
 
             # generating the confirmation token using secrets
             data["confirmation_token"] = await self.generate_secret_tokens()
-
+            # attachments are needed after creating ticket
             attachments = data.pop("attachments", None)
 
             # creating the ticket and saving in the log
@@ -132,9 +134,8 @@ class TicketServices:
         List the particular ticket of the organization by id
         """
         try:
-            organization_id = user.attributes.get("organization_id")
             ticket = await Ticket.find_one(
-                where={"id": ticket_id, "organization_id": organization_id},
+                where={"id": ticket_id},
                 options=[
                     selectinload(Ticket.sla),
                     selectinload(Ticket.assignees),
@@ -146,8 +147,9 @@ class TicketServices:
                     selectinload(Ticket.attachments),
                 ],
             )
-            if ticket is None:
-                return cr.error(message="Not found")
+            if not ticket:
+                raise TicketNotFound()
+
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully listed the ticket",
@@ -164,14 +166,14 @@ class TicketServices:
         try:
             ticket = await Ticket.find_one(where={"id": ticket_id})
             if not ticket:
-                raise TicketNotFound("Ticket not found to delete")
+                raise TicketNotFound()
             await Ticket.soft_delete(
                 where={
-                    "id": ticket_id,
+                    "id": ticket.id,
                 }
             )
+            # saving to the log
             await ticket.save_to_log(action=TicketLogActionEnum.TICKET_SOFT_DELETED)
-
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully deleted the ticket",
@@ -191,6 +193,17 @@ class TicketServices:
             if ticket is None:
                 raise TicketNotFound("Invalid credentials")
 
+            already_opened = await Ticket.find_one(
+                where={
+                    "id": ticket_id,
+                    "confirmation_token": token,
+                    "opened_at": {"ne": None},
+                }
+            )
+
+            if already_opened:
+                raise TicketAlreadyConfirmed()
+
             # to find which is the open status category status defined the organization it could be in-progress, or open,ongoing
             open_status_category = (
                 await ticket_status_service.get_status_category_by_name("open")
@@ -199,16 +212,11 @@ class TicketServices:
                 "status_id": open_status_category.id,
                 "opened_at": datetime.utcnow(),
             }
+            # updating and saving to the log
             await Ticket.update(id=ticket.id, **payload)
-            full_previous_ticket = ticket.to_json()
-            previous_value = {
-                k: full_previous_ticket[k]
-                for k in payload.keys()
-                if k in full_previous_ticket
-            }
             await ticket.save_to_log(
-                action=TicketLogActionEnum.TICKET_UPDATED,
-                previous_value=previous_value,
+                action=TicketLogActionEnum.TICKET_CONFIRMED,
+                previous_value=extract_subset_from_dict(ticket.to_json(), payload),
                 new_value={**payload, "opened_at": payload["opened_at"].isoformat()},
             )
             return cr.success(
@@ -242,6 +250,7 @@ class TicketServices:
                 ],
             )
 
+            # return empty list if there is none, instead of throwing error
             if not tickets:
                 return cr.success(
                     message="Successfully fetched tickets by the status", data=[]
@@ -297,16 +306,11 @@ class TicketServices:
             if "department_id" in data:
                 await tenant.validate(Team, data["department_id"])
 
+            # updating and logging
             await Ticket.update(ticket.id, **data)
-            full_previous_ticket = ticket.to_json()
-            previous_value = {
-                k: full_previous_ticket[k]
-                for k in data.keys()
-                if k in full_previous_ticket
-            }
             await ticket.save_to_log(
                 action=TicketLogActionEnum.TICKET_UPDATED,
-                previous_value=previous_value,
+                previous_value=extract_subset_from_dict(ticket.to_json(), data),
                 new_value=data,
             )
 
@@ -393,32 +397,13 @@ class TicketServices:
             name="ticket/ticket-confirmation-email.html", content=html_content
         )
         email = NotificationFactory.create("email")
-        email.send(
+        email.send_ticket_email(
             from_email=(tick.sender_domain, tick.organization.name),
             subject="Ticket confirmation",
             recipients=receiver,
             body_html=template,
+            ticket=tick,
         )
-
-    async def get_confirmation_content(self, ticket: Ticket):
-        """
-        Returns the simple confirmation html
-        """
-        content = f"""
-
-        <p>Hello {name}</p>,
-
-        <p>Your ticket (ID: {ticket.id}) has been successfully created. Please confirm your ticket </p>
-        <div><h1>Please verify the ticket confirmation</h1><a href='{settings.FRONTEND_URL}/ticket-confirm/{ticket.id}/{ticket.confirmation_token}'>Verify ticket</a></div>
-
-
-        Thank you for contacting us!
-
-        Best regards,  
-        Support Team
-        """
-
-        return content
 
 
 ticket_services = TicketServices()

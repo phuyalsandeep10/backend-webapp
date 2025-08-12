@@ -1,5 +1,7 @@
 import os
+
 import httpx
+
 from src.config.settings import settings
 
 
@@ -33,3 +35,8 @@ async def get_location(ip: str):
             "as": data.get("as"),
             "query": data.get("query"),
         }
+
+
+def extract_subset_from_dict(superset: dict, subset: dict) -> dict:
+    extracted_value = {k: superset[k] for k in subset.keys() if k in superset}
+    return extracted_value

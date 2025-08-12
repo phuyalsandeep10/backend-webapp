@@ -36,3 +36,12 @@ class TicketPriorityExists(HTTPException):
 
     def __init__(self, detail="Ticket Priority already exists"):
         super().__init__(status_code=HTTP_409_CONFLICT, detail=detail)
+
+
+class TicketAlreadyConfirmed(HTTPException):
+    """
+    Custom Ticket Already Confirmed Exception
+    """
+
+    def __init__(self, detail="This ticket has been already confirmed"):
+        super().__init__(status_code=HTTP_409_CONFLICT, detail=detail)

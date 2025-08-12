@@ -256,7 +256,7 @@ class TicketSLAServices:
             "sent_at": datetime.utcnow(),
         }
         await TicketAlert.create(**data)
-        await self._send_email(ticket, message)
+        # await self._send_email(ticket, message)
 
     async def send_alert_broadcast(self, ticket: Ticket, message: str):
         """

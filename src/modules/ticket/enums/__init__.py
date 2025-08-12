@@ -43,6 +43,7 @@ class TicketLogActionEnum(str, Enum):
     ASSIGNEE_CHANGED = "ticket_assignee_changed"
     PRIORITY_CHANGED = "ticket_priority_changed"
     CONFIRMATION_EMAIL_SENT = "confirmation_email_sent"
+    CONFIRMATION_EMAIL_SENT_FAILED = "confirmation_email_sent_failed"
 
 
 class TicketLogEntityEnum(str, Enum):
