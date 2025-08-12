@@ -35,11 +35,12 @@ class TicketAlertTypeEnum(str, Enum):
 
 class TicketLogActionEnum(str, Enum):
     TICKET_CREATED = "ticket_created"
-    TICKET_UPDATED = "ticket_created"
-    TICKET_DELETED = "ticket_created"
-    STATUS_CHANGED = "ticket_created"
-    ASSIGNEE_CHANGED = "ticket_created"
-    PRIORITY_CHANGED = "ticket_created"
+    TICKET_UPDATED = "ticket_updated"
+    TICKET_DELETED = "ticket_hard_deleted"
+    TICKET_SOFT_DELETED = "ticket_soft_deleted"
+    STATUS_CHANGED = "ticket_status_changed"
+    ASSIGNEE_CHANGED = "ticket_assignee_changed"
+    PRIORITY_CHANGED = "ticket_priority_changed"
     CONFIRMATION_EMAIL_SENT = "confirmation_email_sent"
 
 

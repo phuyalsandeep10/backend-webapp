@@ -74,7 +74,6 @@ class TicketServices:
             ticket = await Ticket.create(**data)
             await ticket.save_to_log(
                 action=TicketLogActionEnum.TICKET_CREATED,
-                description="Ticket has been added",
             )
 
             if attachments:
@@ -163,11 +162,16 @@ class TicketServices:
 
     async def delete_ticket(self, ticket_id: int, user):
         try:
+            ticket = await Ticket.find_one(where={"id": ticket_id})
+            if not ticket:
+                raise TicketNotFound("Ticket not found to delete")
             await Ticket.soft_delete(
                 where={
                     "id": ticket_id,
                 }
             )
+            await ticket.save_to_log(action=TicketLogActionEnum.TICKET_SOFT_DELETED)
+
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully deleted the ticket",
@@ -186,14 +190,26 @@ class TicketServices:
             )
             if ticket is None:
                 raise TicketNotFound("Invalid credentials")
+
             # to find which is the open status category status defined the organization it could be in-progress, or open,ongoing
             open_status_category = (
                 await ticket_status_service.get_status_category_by_name("open")
             )
-            await Ticket.update(
-                id=ticket.id,
-                status_id=open_status_category.id,
-                opened_at=datetime.utcnow(),
+            payload = {
+                "status_id": open_status_category.id,
+                "opened_at": datetime.utcnow(),
+            }
+            await Ticket.update(id=ticket.id, **payload)
+            full_previous_ticket = ticket.to_json()
+            previous_value = {
+                k: full_previous_ticket[k]
+                for k in payload.keys()
+                if k in full_previous_ticket
+            }
+            await ticket.save_to_log(
+                action=TicketLogActionEnum.TICKET_UPDATED,
+                previous_value=previous_value,
+                new_value={**payload, "opened_at": payload["opened_at"].isoformat()},
             )
             return cr.success(
                 message="Your ticket has been activated.", data={"id": ticket.id}

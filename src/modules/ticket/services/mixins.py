@@ -3,6 +3,7 @@ from typing import ClassVar, Optional, Union
 
 import src.modules.ticket.models as TicketModel
 from src.modules.ticket.enums import TicketLogActionEnum, TicketLogEntityEnum
+from src.modules.ticket.schemas import TicketLogSchema
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +19,8 @@ class LoggingMixin:
         self,
         action: TicketLogActionEnum,
         description: Optional[str] = None,
-        previous_value: Optional[Union[str, dict]] = None,
-        new_value: Optional[Union[str, dict]] = None,
+        previous_value: Optional[dict] = None,
+        new_value: Optional[dict] = None,
     ):
         try:
 
@@ -30,15 +31,23 @@ class LoggingMixin:
             if self.entity_type == TicketLogEntityEnum.TICKET:
                 ticket_id = self.id
 
-            data = {
-                "ticket_id": ticket_id,
-                "entity_type": self.entity_type,
-                "action": action,
-                "description": description,
-                "previous_value": previous_value,
-                "new_value": new_value,
-            }
-            await TicketModel.TicketLog.create(**data)
+            organization_id = None
+            if ticket_id:
+                ticket = await TicketModel.Ticket.find_one(where={"id": ticket_id})
+                if not ticket:
+                    return
+                organization_id = ticket.organization_id
+
+            data = TicketLogSchema(
+                organization_id=organization_id,
+                ticket_id=ticket_id,
+                entity_type=self.entity_type,
+                action=action,
+                description=description,
+                previous_value=previous_value,
+                new_value=new_value,
+            )
+            await TicketModel.TicketLog.create(**data.model_dump(exclude_none=True))
             logger.info(f"{self.entity_type.value}--{action.value}--save to log")
         except Exception as e:
             logger.exception(e)

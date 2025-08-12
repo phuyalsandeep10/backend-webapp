@@ -5,7 +5,12 @@ from fastapi.exceptions import HTTPException
 from pydantic import BaseModel, EmailStr, Field, ValidationError, model_validator
 from pydantic_core import PydanticCustomError
 
-from src.modules.ticket.enums import PriorityEnum, TicketStatusEnum
+from src.modules.ticket.enums import (
+    PriorityEnum,
+    TicketLogActionEnum,
+    TicketLogEntityEnum,
+    TicketStatusEnum,
+)
 
 
 class AssigneeOut(BaseModel):
@@ -189,3 +194,13 @@ class TicketByStatusSchema(BaseModel):
     status_id: int
 
     model_config = {"extra": "forbid"}
+
+
+class TicketLogSchema(BaseModel):
+    organization_id: Optional[int] = None
+    ticket_id: Optional[int] = None
+    entity_type: TicketLogEntityEnum
+    action: TicketLogActionEnum
+    description: Optional[str] = None
+    previous_value: Optional[dict] = None
+    new_value: Optional[dict] = None

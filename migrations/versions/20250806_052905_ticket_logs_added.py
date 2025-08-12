@@ -31,8 +31,8 @@ class TicketLogMigration(BaseMigration):
         self.string(name="entity_type", nullable=False)
         self.string(name="action", nullable=False)
         self.string(name="description", nullable=True)
-        self.string(name="previous_value", nullable=True)
-        self.string(name="new_value", nullable=True)
+        self.json(name="previous_value", nullable=True)
+        self.json(name="new_value", nullable=True)
 
 
 def upgrade() -> None:
