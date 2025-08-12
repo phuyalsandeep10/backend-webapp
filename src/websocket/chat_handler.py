@@ -98,25 +98,35 @@ class ChatNamespace(socketio.AsyncNamespace):
         )
 
     async def _notify_to_users(self, org_id: int):
+        print(f"notify users in the same workspace that a customer has connected")
         await redis_publish(
             channel=f"ws:{org_id}:user_notification",
             message=json.dumps(
-                {"event": self.chat_online, "mode": "online", "organization_id": org_id}
+                {"event": self.customer_land, "mode": "online", "organization_id": org_id}
             ),
         )
 
     async def _join_org_user_group(self, org_id: int, sid: int):
-        self.enter_room(sid=sid, room=user_notification_group(org_id))
+        print(f"join room name {user_notification_group(org_id)} and sid {sid}")
+        await self.enter_room(sid=sid, room=user_notification_group(org_id))
 
     async def _join_org_customer_group(self, org_id: int, sid: int):
         self.enter_room(sid=sid, room=customer_notification_group(org_id))
 
     async def _join_conversation(self, conversation_id: int, sid: int):
         self.enter_room(sid=sid, room=conversation_group(conversation_id))
+    
+    async def _leave_user_group(self, org_id: int, sid: int):
+        self.leave_room(sid=sid, room=user_notification_group(org_id))
+    
+    async def _leave_customer_group(self, org_id: int, sid: int):
+        self.leave_room(sid=sid, room=customer_notification_group(org_id))
+    
+  
 
     async def on_connect(self, sid, environ, auth):
-        print(f"🔌 Socket connection attempt: {sid}")
-        print(f"🔑 Auth data: {auth}")
+        # print(f"🔌 Socket connection attempt: {sid}")
+        # print(f"🔑 Auth data: {auth}")
 
         if not auth:
             print("No auth data provided")
@@ -150,14 +160,11 @@ class ChatNamespace(socketio.AsyncNamespace):
             return True
 
         # Handle customer connection (without token)
-        print("👤 Handling customer connection (no token provided)")
         customer_id = auth.get("customer_id")
         conversation_id = auth.get("conversation_id")
         organization_id = auth.get("organization_id")
 
-        print(
-            f"👤 Customer data: customer_id={customer_id}, conversation_id={conversation_id}, organization_id={organization_id}"
-        )
+   
 
         if not conversation_id or not customer_id:
             print(
@@ -184,24 +191,11 @@ class ChatNamespace(socketio.AsyncNamespace):
         await self._join_org_customer_group(organization_id, sid)
         # notify users with a specific customer landing event
         channel = f"ws:{organization_id}:user_notification"
-        message = json.dumps(
-            {
-                "event": self.customer_land,
-                "customer_id": customer_id,
-                "conversation_id": conversation_id,
-                "organization_id": organization_id,
-            }
-        )
-
-        print(f"📢 Publishing to channel: {channel}")
-        print(f"📢 Message: {message}")
-        await redis_publish(channel=channel, message=message)
+    
 
         print(f"✅ Published customer_land event to {channel}")
 
-        print(
-            f"Customer {customer_id} connected with sid {sid} in conversation {conversation_id}"
-        )
+      
 
         return True
 
@@ -275,7 +269,21 @@ class ChatNamespace(socketio.AsyncNamespace):
             ),
         )
 
-    async def on_disconnect(self, sid):
+    async def on_disconnect(self, sid,auth):
+        customer_id = auth.get('customer_id')
+        conversation_id = auth.get('conversation_id')
+        organization_id = auth.get('organization_id')
+        user_id = auth.get('user_id')
+        if customer_id:
+            await redis.srem(f"ws:{organization_id}:conversation_sids:{conversation_id}", sid)
+            await redis.delete(f"ws:{organization_id}:sid_conversation:{sid}")
+            await self._leave_customer_group(organization_id, sid)
+        if user_id:
+            await redis.srem(f"ws:{organization_id}:user_sids:{user_id}", sid)
+            await redis.delete(f"ws:{organization_id}:sid_user:{sid}")
+            await self._leave_user_group(organization_id, sid)
+
+            
         redis = await get_redis()
         conversation_id = await redis.get(f"{REDIS_SID_KEY}{sid}")
         if conversation_id:

@@ -95,9 +95,14 @@ async def redis_listener(sio):
         # Example: handle org-level notifications
         elif ":user_notification" in channel:
             print("user notification subscribe")
+            if payload.get('raw'):
+                payload = payload.get('raw')
             org_id = payload.get("organization_id")
             event = payload.get("event", "notification")
-            room = customer_notification_group(org_id)
+   
+            room = user_notification_group(org_id)
+            print(f"room {room}")
+            print(f"event {event}")
 
             await sio.emit(
                 event,
@@ -109,5 +114,6 @@ async def redis_listener(sio):
         elif ":customer_notification" in channel:
             print("Customer notification subscribe ")
             event = payload.get("event", "notification")
+            org_id = payload.get("organization_id")
             room = customer_notification_group(org_id)
             await sio.emit(event, payload, room=room, namespace="/chat")
