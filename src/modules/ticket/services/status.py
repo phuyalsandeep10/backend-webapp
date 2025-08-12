@@ -114,7 +114,7 @@ class TicketStatusService:
         ticket_status = await TicketStatus.find_one(where={"status_category": name})
         if not ticket_status:
             raise TicketStatusNotFound(
-                "No default ticket status has been set with closed status category"
+                f"No default ticket status has been set with {name} status category"
             )
 
         return ticket_status

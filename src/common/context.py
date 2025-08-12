@@ -1,4 +1,5 @@
 import contextvars
+from typing import Optional
 
 organization_id_ctx = contextvars.ContextVar("organization_id")
 user_id_ctx = contextvars.ContextVar("user_id")
@@ -10,10 +11,13 @@ class TenantContext:
     """
 
     @classmethod
-    def set(cls, organization_id: int):
+    def set(cls, organization_id: Optional[int] = None):
         """
         Sets the context with the organization_id
         """
+        if not organization_id:
+            organization_id_ctx.set(None)
+
         organization_id_ctx.set(organization_id)
 
     @classmethod

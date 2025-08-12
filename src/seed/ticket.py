@@ -185,7 +185,7 @@ default_ticket_sla2 = [
         "name": "Low Standard",
         "response_time": 22400,
         "resolution_time": 146400,
-        "organization_id": 1,
+        "organization_id": 2,
         "priority_id": 4,
     },
 ]
@@ -278,6 +278,7 @@ async def sla_seed_dummy():
         record = await TicketSLA.find_one(
             where={
                 "name": {"mode": "insensitive", "value": i["name"]},
+                "organization_id": i["organization_id"],
             }
         )
         if not record:
@@ -295,6 +296,7 @@ async def sla_seed_dummy():
         record = await TicketSLA.find_one(
             where={
                 "name": {"mode": "insensitive", "value": i["name"]},
+                "organization_id": i["organization_id"],
             }
         )
         if not record:

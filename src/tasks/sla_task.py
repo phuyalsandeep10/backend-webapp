@@ -15,6 +15,12 @@ async def check_sla_breach():
     """
     Checks the sla breach of every tickets
     """
+    # listing all tickets whose organization is not none
+    all_tickets = await Ticket.filter(where={"organization_id": {"ne": None}})
+
+    if not all_tickets:
+        logger.info("No tickets")
+        return
     # getting the default ticket status with close_status set by organization
     closed_ticket_status = await ticket_status_service.get_status_category_by_name(
         name="closed"

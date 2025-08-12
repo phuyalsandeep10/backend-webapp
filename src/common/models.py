@@ -397,8 +397,8 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ):
         organization_id = TenantContext.get()
-        if organization_id:
-            where.setdefault("organization_id", organization_id)
+        where.setdefault("organization_id", organization_id)
+        print("Where", where)
 
         return await super().filter(where, skip, limit, joins, options, related_items)
 
@@ -411,8 +411,7 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> Optional[T]:
         organization_id = TenantContext.get()
-        if organization_id:
-            where.setdefault("organization_id", organization_id)
+        where.setdefault("organization_id", organization_id)
 
         return await super().find_one(where, joins, options, related_items)
 

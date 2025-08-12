@@ -99,7 +99,7 @@ class TicketServices:
                 data=str(e),
             )
 
-    async def list_tickets(self, user):
+    async def list_tickets(self):
         """
         List all the tickets of the user organization
         """
