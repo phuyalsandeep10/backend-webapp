@@ -238,14 +238,12 @@ async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
 
     if existing_role:
         raise HTTPException(400, "Role name already exists")
-    
+
     if not any(
         perm.is_changeable or perm.is_deletable or perm.is_viewable
         for perm in body.permissions
     ):
-        raise HTTPException(
-            400, "minimum 1 permission is required"
-        )
+        raise HTTPException(400, "minimum 1 permission is required")
 
     permission_group_id = body.permission_group
 
@@ -289,9 +287,7 @@ async def update_role(
         perm.is_changeable or perm.is_deletable or perm.is_viewable
         for perm in body.permissions
     ):
-        raise HTTPException(
-            400, "minimum 1 permission is required"
-        )
+        raise HTTPException(400, "minimum 1 permission is required")
 
     role = await OrganizationRole.find_one(where={"id": role_id})
 
@@ -383,7 +379,7 @@ async def delete_role(role_id: int, user=Depends(get_current_user)):
 async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_user)):
     record = await OrganizationInvitation.find_one(
         where={"email": body.email, "status": "pending"}
-    ) 
+    )
 
     organization_id = user.attributes.get("organization_id")
 
@@ -397,6 +393,7 @@ async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_u
 
     record = await OrganizationInvitation.create(
         email=body.email,
+        name=body.name,
         invited_by_id=user.id,
         status="pending",
         organization_id=organization_id,
@@ -437,25 +434,51 @@ async def reject_invitation(invitation_id: int, user=Depends(get_current_user)):
     return cr.success(data=record)
 
 
+# @router.post("/invitation/{invitation_id}/accept")
+# async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
+
+#     invitation = await OrganizationInvitation.get(invitation_id)
+#     # if not invitation:
+#     #     raise HTTPException(404, "Not Found")
+
+#     if user.email != invitation.email:
+#         raise HTTPException(403, "Don't have authorization")
+
+#     if not invitation:
+#         raise HTTPException(404, "Not found")
+
+#     await OrganizationInvitation.update(invitation.id, status=InvitationStatus.ACCEPTED)
+
+#     member = await OrganizationMember.find_one(
+#         {"organization_id": invitation.organization_id, "user_id": user.id}
+#     )
+
+#     if not member:
+#         member = await OrganizationMember.create(
+#             organization_id=invitation.organization_id, user_id=user.id
+#         )
+
+#     for role_id in invitation.role_ids:
+#         await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
+
+#     return cr.success(data={"message": "Successfully approved"})
+
+
 @router.post("/invitation/{invitation_id}/accept")
 async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
-
     invitation = await OrganizationInvitation.get(invitation_id)
-    if not invitation:
-        raise HTTPException(404, "Not Found")
-
-    if user.email != invitation.email:
-        raise HTTPException(403, "Don't have authorization")
 
     if not invitation:
         raise HTTPException(404, "Not found")
+
+    if user.email != invitation.email:
+        raise HTTPException(403, "Don't have authorization")
 
     await OrganizationInvitation.update(invitation.id, status=InvitationStatus.ACCEPTED)
 
     member = await OrganizationMember.find_one(
         {"organization_id": invitation.organization_id, "user_id": user.id}
     )
-
     if not member:
         member = await OrganizationMember.create(
             organization_id=invitation.organization_id, user_id=user.id
@@ -464,8 +487,9 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
     for role_id in invitation.role_ids:
         await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
 
-    return cr.success(data={"message": "Successfully approved"})
+    await User.update(user.id, name=invitation.name)
 
+    return cr.success(data={"message": "Successfully approved"})
 
 @router.post("/roles-assign")
 async def assign_role(body: AssignRoleSchema, user=Depends(get_current_user)):

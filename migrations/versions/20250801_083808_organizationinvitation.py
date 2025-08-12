@@ -23,6 +23,7 @@ class OrganizationinvitationMigration(BaseMigration):
         super().__init__(revision="20250801_083808", down_revision="20250801_080309")
         self.tenant_columns()
         self.string("email", nullable=False)
+        self.string("name", nullable=False)
         self.string("status", nullable=False)
         self.foreign("invited_by_id", "sys_users", ondelete="CASCADE")
         self.date_time("expires_at", nullable=False)

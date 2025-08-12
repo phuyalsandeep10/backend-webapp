@@ -37,6 +37,7 @@ class PermissionSchema(BaseModel):
 class OrganizationInviteSchema(BaseModel):
     email: EmailStr
     role_ids: List[int]
+    name: str
 
 
 class OrganizationInvitationApproveSchema(BaseModel):
