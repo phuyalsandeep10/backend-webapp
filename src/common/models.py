@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from fastapi.requests import HTTPConnection
 from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import and_, inspect, or_
-from sqlalchemy.orm import Load, selectinload
+from sqlalchemy.orm import Load, attributes, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlmodel import Column, Field, ForeignKey, SQLModel, select
 from starlette.status import HTTP_404_NOT_FOUND
@@ -43,12 +43,69 @@ class BaseModel(SQLModel):
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
-    def to_json(self, schema: Optional[Type[PydanticBaseModel]] = None) -> dict:
+    def serialize_for_json(self, value: Any) -> Any:
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if isinstance(value, list):
+            return [self.serialize_for_json(item) for item in value]
+        if isinstance(value, dict):
+            return {k: self.serialize_for_json(v) for k, v in value.items()}
+        return value
+
+    def to_json(
+        self,
+        schema: Optional[Type[PydanticBaseModel]] = None,
+        include_relationships: bool = False,
+        related_schemas: Optional[dict[str, Type[PydanticBaseModel]]] = None,
+    ) -> dict:
         try:
+            # Base dict from model fields only
+            base_dict = self.model_dump()
+
+            # Add relationships dynamically if requested
+            if include_relationships:
+                state = attributes.instance_state(self)
+                for rel in self.__mapper__.relationships:
+                    if rel.key in state.dict:
+                        attr = getattr(self, rel.key)
+                        rel_schema = None
+                        if related_schemas:
+                            rel_schema = related_schemas.get(rel.key)
+
+                        if attr is not None:
+                            if rel.uselist:
+                                base_dict[rel.key] = [
+                                    (
+                                        item.to_json(
+                                            schema=rel_schema,
+                                            include_relationships=include_relationships,
+                                            related_schemas=related_schemas,
+                                        )
+                                        if hasattr(item, "to_json")
+                                        else item
+                                    )
+                                    for item in attr
+                                ]
+                            else:
+                                base_dict[rel.key] = (
+                                    attr.to_json(
+                                        schema=rel_schema,
+                                        include_relationships=include_relationships,
+                                        related_schemas=related_schemas,
+                                    )
+                                    if hasattr(attr, "to_json")
+                                    else attr
+                                )
+                        else:
+                            base_dict[rel.key] = None
+
             if schema:
                 field_names = set(schema.model_fields.keys())  # Pydantic v2
-                return json.loads(self.model_dump_json(include=field_names))
-            return json.loads(self.model_dump_json())
+                filtered_dict = {k: v for k, v in base_dict.items() if k in field_names}
+                return self.serialize_for_json(filtered_dict)
+
+            return self.serialize_for_json(base_dict)
+
         except Exception as e:
             raise e
 
