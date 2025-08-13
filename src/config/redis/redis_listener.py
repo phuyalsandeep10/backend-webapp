@@ -45,10 +45,12 @@ async def redis_listener(sio):
     # await pubsub.subscribe("notifications", "chat:room1")
 
     async for message in pubsub.listen():
+        print(f"Received on {message['channel']}: {message['data']} and message type {message['type']}")
 
         if message["type"] != "pmessage":
             print(f"Received on {message['channel']}: {message['data']}")
         channel = message["channel"]
+        print(f"channel {channel}")
         if isinstance(channel, bytes):
             try:
                 channel = channel.decode("utf-8")
@@ -77,26 +79,47 @@ async def redis_listener(sio):
             print("json decorder error")
             # print(f"type of data {data}")
             payload = {"raw": data}
+        if payload.get('raw'):
+            payload = payload.get('raw')
         print(f"payload {payload}")
 
         # print(f"📩 Received from Redis | Channel: {channel} | Data: {payload}")
 
         # Example: route message to all clients in that conversation
+
         if channel.startswith("conversation-"):
             conversation_id = channel.replace("conversation-", "")
             event = payload.get("event", "message")
-            await sio.emit(
+            room_name = conversation_group(conversation_id)
+            namespace = '/chat'
+
+            if not is_room_empty(sio, namespace, room_name) or payload.get("event") == "typing":
+                print(f"emit to room {room_name}")
+                return await sio.emit(
+                    event,
+                    payload,
+                    room=room_name,
+                    namespace="/chat",
+            )
+
+           
+       
+            org_id = payload.get("organization_id")
+            room_name = user_notification_group(org_id)
+
+            print(f"emit to room {room_name}")
+            return await sio.emit(
                 event,
                 payload,
-                room=conversation_group(conversation_id),
-                namespace="/chat",
+                room=room_name,
+                namespace=namespace,
             )
+            
 
         # Example: handle org-level notifications
         elif ":user_notification" in channel:
             print("user notification subscribe")
-            if payload.get('raw'):
-                payload = payload.get('raw')
+            
             org_id = payload.get("organization_id")
             event = payload.get("event", "notification")
    
@@ -117,3 +140,10 @@ async def redis_listener(sio):
             org_id = payload.get("organization_id")
             room = customer_notification_group(org_id)
             await sio.emit(event, payload, room=room, namespace="/chat")
+
+
+def is_room_empty(sio, namespace, room_name):
+    room_dict = sio.manager.rooms.get(namespace, {})
+    # Get the room members set/dict
+    members = room_dict.get(room_name)
+    return not members 

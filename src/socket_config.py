@@ -24,24 +24,6 @@ socket_app = socketio.ASGIApp(
 )
 
 
-# async def create_socketio_server():
-#     # Use AsyncRedisManager so server can scale horizontally
-#     mgr = socketio.AsyncRedisManager(settings.REDIS_URL)
-
-#     sio = socketio.AsyncServer(
-#         async_mode="asgi",
-#         client_manager=mgr,
-#         cors_allowed_origins=settings.CORS_ORIGINS,
-#         logger=False,
-#         engineio_logger=False,
-#     )
-
-#     # register namespaces
-#     sio.register_namespace(ChatNamespace("/chat"))
-
-#     return sio
-
-
 sio.register_namespace(ChatNamespace())
 
 
@@ -53,11 +35,9 @@ redis_listener_task = None
 @app.on_event("startup")
 async def start_ws_redis_listener():
     import asyncio
-
     global redis_listener_task
 
     print("🚀 Starting WebSocket Redis listener...")
-
     # Create task with proper error handling
     redis_listener_task = asyncio.create_task(redis_listener(sio))
 

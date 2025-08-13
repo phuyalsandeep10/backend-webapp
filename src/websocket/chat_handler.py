@@ -1,13 +1,14 @@
 import json
-import asyncio
+
 import socketio
-from src.common.context import organization_id_ctx
-from src.models import Message, MessageAttachment, Conversation, User, Customer
+
+from src.models import Message, MessageAttachment, Conversation
 from src.common.dependencies import get_user_by_token
 
 # from src.config.broadcast import broadcast  # Replaced with direct Redis pub/sub
 import redis.asyncio as redis
 from src.config.settings import settings
+
 
 REDIS_URL = settings.REDIS_URL
 
@@ -74,7 +75,7 @@ def user_notification_group(org_id: int):
 
 
 def conversation_group(conversationId: int):
-    return f"org-conversation-${conversationId}"
+    return f"conversation-{conversationId}"
 
 
 class ChatNamespace(socketio.AsyncNamespace):
@@ -115,6 +116,9 @@ class ChatNamespace(socketio.AsyncNamespace):
 
     async def _join_conversation(self, conversation_id: int, sid: int):
         self.enter_room(sid=sid, room=conversation_group(conversation_id))
+    
+    async def _leave_conversation(self, conversation_id: int, sid: int):
+        self.leave_room(sid=sid, room=conversation_group(conversation_id))
     
     async def _leave_user_group(self, org_id: int, sid: int):
         self.leave_room(sid=sid, room=user_notification_group(org_id))
@@ -189,6 +193,7 @@ class ChatNamespace(socketio.AsyncNamespace):
         # notify users in the same workspace that a customer has connected
         await self._notify_to_users(organization_id)
         await self._join_org_customer_group(organization_id, sid)
+        await self._join_conversation(conversation_id, sid)
         # notify users with a specific customer landing event
         channel = f"ws:{organization_id}:user_notification"
     
@@ -199,31 +204,55 @@ class ChatNamespace(socketio.AsyncNamespace):
 
         return True
 
-    async def on_message(self, sid, data):
-        redis = await get_redis()
-        conversation_id = await redis.get(f"{REDIS_SID_KEY}{sid}")
+
+    async def on_join_conversation(self, sid, data):
+        conversation_id = data.get("conversation_id")
         if not conversation_id:
             return
+        await self._join_conversation(conversation_id, sid)
+    
+    async def on_leave_conversation(self, sid, data):
+        conversation_id = data.get("conversation_id")
+        if not conversation_id:
+            return False
+        await self._leave_conversation(conversation_id, sid)
+    
 
-        await redis_publish(
-            channel=get_room_channel(conversation_id),
-            message=json.dumps(
-                {
-                    "event": self.receive_message,
-                    "sid": sid,
-                    "message": data.get("message"),
-                    "uuid": data.get("uuid"),
-                    "seen": data.get("seen"),
-                    # "status":data.get('status'),#delivered, pending and seen
-                    "user_id": data.get("user_id"),
-                    "files": data.get("files", []),
-                }
-            ),
-        )
+    async def on_message(self, sid, data):
+        print(f"on message {data} and sid {sid}")
+        
+        conversation_id = data.get('conversation_id')
+        organization_id = data.get('organization_id')
+     
+        
+        if not conversation_id:
+            return
+        
 
-        await save_message_db(
-            conversation_id=int(conversation_id), data=data, user_id=data.get("user_id")
-        )
+        try:
+            print(f'emit to room conversation {get_room_channel(conversation_id)}')
+            await redis_publish(
+                channel=get_room_channel(conversation_id),
+                message=json.dumps(
+                    {
+                        "event": self.receive_message,
+                        "sid": sid,
+                        "message": data.get("message"),
+                        "uuid": data.get("uuid"),
+                        "status":data.get('status','SENT'),#delivered, SENT and seen
+                        "user_id": data.get("user_id"),
+                        "files": data.get("files", []),
+                        "organization_id": organization_id,
+                        "mode":"message"
+                    }
+                ),
+            )
+        except Exception as e:
+            print(f"Error publishing message to Redis: {e}")
+
+        # await save_message_db(
+        #     conversation_id=int(conversation_id), data=data, user_id=data.get("user_id")
+        # )
 
     async def on_message_seen(self, sid, data):
         redis = await get_redis()
