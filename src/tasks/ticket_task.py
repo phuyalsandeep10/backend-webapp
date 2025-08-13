@@ -1,4 +1,5 @@
 import logging
+from contextvars import ContextVar
 
 from src.modules.sendgrid.services import send_sendgrid_email
 from src.modules.ticket.enums import TicketLogActionEnum, TicketLogEntityEnum
@@ -15,6 +16,7 @@ async def send_email(
     body_html: str,
     from_email: tuple[str, str],
     ticket_id: int,
+    organization_id: int,
 ):
     try:
         logger.info(f"Sending {subject} email")
@@ -25,26 +27,18 @@ async def send_email(
             html_content=body_html,
         )
         # saving to the log
-        ticket = await Ticket.find_one(where={"id": ticket_id})
-        if not ticket:
-            raise Exception("Ticket doesn't belong to any organization")
-
         log_data = {
             "ticket_id": ticket_id,
-            "organization_id": ticket.organization_id,
+            "organization_id": organization_id,
             "entity_type": TicketLogEntityEnum.TICKET,
             "action": TicketLogActionEnum.CONFIRMATION_EMAIL_SENT,
         }
         await TicketLog.create(**log_data)
     except Exception as e:
         logger.exception(e)
-        ticket = await Ticket.find_one(where={"id": ticket_id})
-        if not ticket:
-            raise Exception("Ticket doesn't belong to any organization")
-
         log_data = {
             "ticket_id": ticket_id,
-            "organization_id": ticket.organization_id,
+            "organization_id": organization_id,
             "entity_type": TicketLogEntityEnum.TICKET,
             "action": TicketLogActionEnum.CONFIRMATION_EMAIL_SENT_FAILED,
             "description": f"Error while sending confirmation mail {str(e)}",

@@ -50,6 +50,7 @@ class EmailNotification(NotificationInterface):
                 recipients=recipients,
                 body_html=body_html,
                 ticket_id=ticket.id,
+                organization_id=ticket.organization_id,
             )
         except Exception as e:
             logger.exception(e)
