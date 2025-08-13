@@ -45,16 +45,22 @@ async def create_organization(
     """
     Create a new organization.
     """
+    errors = []
     record = await Organization.find_one(
         where={
             "name": {"mode": "insensitive", "value": body.name},
+            "owner_id": user.id
         }
     )
-  
+
+
+
 
     if record:
-        return cr.error(data={"success": False}, message="This domain is already exists")
-        
+        errors.append({
+            "name": "this organization with this name already exists"
+        })
+    
     record = await Organization.find_one(
         where={
             "domain": {"mode": "insensitive", "value": body.domain},
@@ -62,10 +68,17 @@ async def create_organization(
     )
 
     if record:
-        return cr.error(data={"success": False}, message="This domain is already exists")
+        errors.append({
+            "domain": "This domain already exists"
+        })
+    
+
+    
+
+    if errors:
+        return cr.error(data=errors)
 
     slug = body.name.lower().replace(" ", "-")
-
 
 
     organization = await Organization.create(
@@ -141,41 +154,29 @@ async def update_organization(
     """
     Update an existing organization.
     """
-
-
     organization = await Organization.get(organization_id)
 
     organization_member = await OrganizationMember.find_one(
         {"organization_id": organization_id, "user_id": user.id}
     )
 
-
-
     if not organization_member:
-        return cr.error(data={"success": False}, message="You do not have permission to update this organization")
-       
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have permission to update this organization",
+        )
 
     if not organization:
-        return cr.error(data={"success": False}, message="Organization not found")
+        raise HTTPException(status_code=404, detail="Organization not found")
 
     if organization.name != body.name:
         existing_org = await Organization.find_one(
             {"name": {"value": body.name, "mode": "insensitive"}}
         )
         if existing_org:
-            return cr.error(
-                data={"success": False},
-                message="Organization with this name already exists"
+            raise HTTPException(
+                status_code=400, detail="Organization with this name already exists"
             )
-    record = await Organization.find_one(
-        where={
-            "domain": {"mode": "insensitive", "value": body.domain},
-        }
-    )
-
-    if record and  record.domain != body.domain:
-        return cr.error(data={"success": False}, message="This domain is already exists")
-
 
     record = await Organization.update(
         organization_id,
@@ -203,11 +204,12 @@ async def set_organization(
     user = await User.update(user.id, attributes={"organization_id": organization_id})
 
     if not user:
-        return cr.error(data={"success": False}, message="Not found User")
+        raise HTTPException(404, "Not found User")
 
     if not organization:
-        return cr.error(data={"success": False}, message="Organization not found")
+        raise HTTPException(status_code=404, detail="Organization not found")
     update_user_cache(token, user)
+    
 
     return cr.success(data={"message": "Organization set successfully"})
 
