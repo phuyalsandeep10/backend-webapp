@@ -8,7 +8,9 @@ from src.common.dependencies import (
     update_user_cache,
 )
 
-from src.common.models import Permission, Country, Timezone
+from src.common.models import Permission
+from src.models.countries import Country
+from src.models.timezones import Timezone
 from src.enums import InvitationStatus
 from src.models import (
     Organization,
