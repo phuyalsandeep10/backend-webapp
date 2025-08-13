@@ -155,6 +155,7 @@ class OrganizationMemberRole(CommonModel, table=True):
 
 class OrganizationInvitation(TenantModel, table=True):
     __tablename__ = "org_invitations"  # type:ignore
+
     email: str = Field(max_length=255, index=True)
     name: str = Field(max_length=255, nullable=False)
 

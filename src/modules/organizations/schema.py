@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, EmailStr
 from typing import List
 from typing import Optional
 from src.common.schemas import BaseModel
+from datetime import datetime
 
 
 class OrganizationSchema(BaseModel):
@@ -38,6 +39,14 @@ class OrganizationInviteSchema(BaseModel):
     email: EmailStr
     role_ids: List[int]
     name: str
+
+
+class OrganizationInviteOutSchema(BaseModel):
+    email: EmailStr
+    created_at: datetime
+    status: str
+    role_ids: List[int]
+    role_name: str | None
 
 
 class OrganizationInvitationApproveSchema(BaseModel):

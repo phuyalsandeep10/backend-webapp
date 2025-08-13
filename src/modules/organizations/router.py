@@ -30,6 +30,7 @@ from src.modules.staff_managemet.models import RolePermission
 from src.modules.staff_managemet.models import Permissions
 
 from .schema import (
+    OrganizationInviteOutSchema,
     OrganizationSchema,
     OrganizationInviteSchema,
     AssignRoleSchema,
@@ -362,7 +363,7 @@ async def get_roles(user=Depends(get_current_user)):
 
         results.append(role_data)
 
-    return cr.success(data=results)
+    return cr.success(data=results, message="get roles successful")
 
 
 @router.delete("/roles/{role_id}")
@@ -377,14 +378,13 @@ async def delete_role(role_id: int, user=Depends(get_current_user)):
 
 @router.post("/invitation")
 async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_user)):
+
     record = await OrganizationInvitation.find_one(
         where={"email": body.email, "status": "pending"}
     )
 
-    organization_id = user.attributes.get("organization_id")
-
     if record:
-        raise HTTPException(400, "Already invitation exist")
+        raise HTTPException(400, "An invitation already exists for this email.")
 
     if user.email == body.email:
         raise HTTPException(403, "You can't invite yourself.")
@@ -392,28 +392,22 @@ async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_u
     expires_at = datetime.utcnow() + timedelta(days=7)
 
     record = await OrganizationInvitation.create(
-        email=body.email,
-        name=body.name,
+        **body.model_dump(),
         invited_by_id=user.id,
         status="pending",
-        organization_id=organization_id,
-        role_ids=body.role_ids,
         token="",
         expires_at=expires_at,
     )
 
     send_invitation_email.delay(email=body.email)
 
-    return cr.success(
-        data=record.model_dump(
-            exclude={"expires_at", "activity_at", "created_at", "updated_at"}
-        )
-    )
+    return cr.success(data=record.to_json(schema=OrganizationInviteOutSchema))
 
 
 @router.get("/invitation")
 async def get_invitations(user=Depends(get_current_user)):
     invitations = await OrganizationInvitation.filter()
+    print(invitations)
 
     excluded_fields = {"expires_at", "activity_at", "created_at", "updated_at"}
     return cr.success(
@@ -490,6 +484,7 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
     await User.update(user.id, name=invitation.name)
 
     return cr.success(data={"message": "Successfully approved"})
+
 
 @router.post("/roles-assign")
 async def assign_role(body: AssignRoleSchema, user=Depends(get_current_user)):

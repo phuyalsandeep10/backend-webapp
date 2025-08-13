@@ -1,20 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import selectinload
 
+from src.common.context import TenantContext
 from src.common.permissions import get_current_user
 from src.utils.response import CustomResponse as cr
 
 from .models import Team, TeamMember
-from .schema import TeamMemberSchema, TeamSchema
+from .schema import TeamMemberSchema, TeamSchema, TeamResponseOutSchema
+from typing import List
 
 router = APIRouter()
 
 
 @router.post("")
 async def create_team(body: TeamSchema, user=Depends(get_current_user)):
-    organization_id = user.attributes.get("organization_id")
 
-    if not organization_id:
+    if not TenantContext:
         raise HTTPException(403, "Not authorization")
 
     record = await Team.find_one(
@@ -24,23 +25,22 @@ async def create_team(body: TeamSchema, user=Depends(get_current_user)):
     if record:
         raise HTTPException(400, "Duplicate record")
 
-    team = await Team.create(
-        name=body.name, description=body.description, organization_id=organization_id
-    )
+    team = await Team.create(**body.model_dump())
+    data = [team.to_json(schema=TeamResponseOutSchema)]
 
-    return cr.success(data=team.to_json())
+    return cr.success(data=data, message="Team Created Successfully")
 
 
-@router.get("")
+@router.get("", response_model=List[TeamResponseOutSchema])
 async def get_teams(user=Depends(get_current_user)):
-    organizationId = user.attributes.get("organization_id")
-    if not organizationId:
+
+    if not TenantContext:
         raise HTTPException(403, detail="Not authorized")
 
-    teams = await Team.filter(where={"organization_id": organizationId})
-    dict_teams = [team.to_dict() for team in teams]
+    teams = await Team.filter()
+    data = [team.to_json(schema=TeamResponseOutSchema) for team in teams]
 
-    return cr.success(data=dict_teams)
+    return cr.success(data=data)
 
 
 @router.put("/{team_id}")
@@ -132,3 +132,6 @@ async def get_team_members(team_id: int):
     )
 
     return cr.success(data=[member.to_json() for member in members])
+
+
+
