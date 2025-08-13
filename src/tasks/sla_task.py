@@ -22,7 +22,7 @@ async def check_sla_breach():
         logger.info("No tickets")
         return
     # getting the default ticket status with close_status set by organization
-    closed_ticket_status = await ticket_status_service.get_status_category_by_name(
+    closed_ticket_status = await ticket_status_service.get_all_status_category_by_name(
         name="closed"
     )
     tickets = await Ticket.filter(

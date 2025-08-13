@@ -22,6 +22,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
 
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # skip protected or extempted paths
         if self.extemp_paths and any(
             request.url.path.startswith(path) for path in self.extemp_paths
@@ -46,6 +49,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 )
             UserContext.set(user.id)
             organization_id = user.attributes.get("organization_id")
+            print("Organization_id", organization_id)
             if organization_id:
                 TenantContext.set(organization_id)
             else:
