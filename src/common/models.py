@@ -397,9 +397,7 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ):
         organization_id = TenantContext.get()
-        where.setdefault("organization_id", organization_id)
-        print("Where", where)
-
+        where["organization_id"] = organization_id
         return await super().filter(where, skip, limit, joins, options, related_items)
 
     @classmethod
@@ -411,7 +409,7 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> Optional[T]:
         organization_id = TenantContext.get()
-        where.setdefault("organization_id", organization_id)
+        where["organization_id"] = organization_id
 
         return await super().find_one(where, joins, options, related_items)
 
@@ -420,16 +418,16 @@ class TenantModel(CommonModel):
         organization_id = TenantContext.get()
         user_id = UserContext.get()
         if organization_id:
-            kwargs.setdefault("organization_id", organization_id)
+            kwargs["organization_id"] = organization_id
         if user_id:
-            kwargs.setdefault("updated_by_id", user_id)
+            kwargs["updated_by_id"] = user_id
         return await super().update(id, **kwargs)
 
     @classmethod
     async def delete(cls: Type[T], where: dict = {}) -> None:
         organization_id = TenantContext.get()
         user_id = UserContext.get()
-        where.setdefault("organization_id", organization_id)
+        where["organization_id"] = organization_id
         return await super().delete(where)
 
     @classmethod
@@ -439,5 +437,5 @@ class TenantModel(CommonModel):
         """
         organization_id = TenantContext.get()
         user_id = UserContext.get()
-        where.setdefault("organization_id", organization_id)
+        where["organization_id"] = organization_id
         return await super().soft_delete(where)
