@@ -1,15 +1,17 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, ClassVar, List
 
 from sqlmodel import Field, Relationship, UniqueConstraint
 
+import src.modules.ticket.services.mixins as Mixin
 from src.common.models import TenantModel
+from src.modules.ticket.enums import TicketLogEntityEnum
 
 if TYPE_CHECKING:
     from src.modules.organizations.models import Organization
     from src.modules.ticket.models.ticket import Ticket
 
 
-class TicketStatus(TenantModel, table=True):
+class TicketStatus(TenantModel, Mixin.LoggingMixin, table=True):
     """
     Ticket Status model
     """
@@ -18,6 +20,7 @@ class TicketStatus(TenantModel, table=True):
     __table_args__ = (
         UniqueConstraint("organization_id", "name", name="uniq_org_ticket_status_name"),
     )
+    entity_type: ClassVar[TicketLogEntityEnum] = TicketLogEntityEnum.TICKET_STATUS
 
     name: str
     bg_color: str

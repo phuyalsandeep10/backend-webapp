@@ -4,10 +4,12 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_409_CONFLICT
 
+from src.modules.ticket.enums import TicketLogActionEnum
 from src.modules.ticket.models import TicketPriority
 from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import EditTicketPrioritySchema, PriorityOut
-from src.utils.exceptions.ticket import TicketPriorityExists
+from src.utils.common import extract_subset_from_dict
+from src.utils.exceptions.ticket import TicketPriorityExists, TicketPriorityNotFound
 from src.utils.response import CustomResponse as cr
 
 logger = logging.getLogger(__name__)
@@ -46,7 +48,12 @@ class TicketPriorityService:
                         detail="Ticket priority with this name or level already exists"
                     )
 
-                await TicketPriority.create(**data)
+                # saving and logging
+                priority = await TicketPriority.create(**data)
+                await priority.save_to_log(
+                    action=TicketLogActionEnum.PRIORITY_CREATED,
+                    new_value=priority.to_json(),
+                )
 
             return cr.success(
                 message="Successfully created priorities", status_code=201
@@ -82,6 +89,10 @@ class TicketPriorityService:
         soft delete particular priority of the organization
         """
         try:
+            # checking if priority exists
+            priority = await TicketPriority.find_one(where={"id": priority_id})
+            if not priority:
+                raise TicketPriorityNotFound()
             # before deleting finding if there is any tickets with this priority
             ticket_exists = await self.find_ticket_by_priority(priority_id)
             if ticket_exists:
@@ -89,7 +100,13 @@ class TicketPriorityService:
                     status_code=HTTP_403_FORBIDDEN,
                     detail="Tickets with this priority exists, hence cannot be deleted",
                 )
+            # deleting and logging
             await TicketPriority.delete(where={"id": priority_id})
+            await priority.save_to_log(
+                action=TicketLogActionEnum.PRIORITY_DELETED,
+                previous_value=priority.to_json(),
+            )
+
             return cr.success(message="Successfully deleted priority", data=None)
         except Exception as e:
             logger.exception(e)
@@ -114,8 +131,15 @@ class TicketPriorityService:
                     message="Priority not found", status_code=HTTP_400_BAD_REQUEST
                 )
 
+            # updating and logging
             updated_priority = await TicketPriority.update(
                 priority.id, **payload.model_dump(exclude_none=True)
+            )
+            await priority.save_to_log(
+                action=TicketLogActionEnum.PRIORITY_UPDATED,
+                previous_value=extract_subset_from_dict(
+                    priority.to_json(), **payload.model_dump(exclude_none=True)
+                ),
             )
 
             return cr.success(

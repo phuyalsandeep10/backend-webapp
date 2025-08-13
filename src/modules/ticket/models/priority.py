@@ -1,8 +1,10 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, ClassVar, List
 
 from sqlmodel import Relationship, UniqueConstraint
 
+import src.modules.ticket.services.mixins as Mixin
 from src.common.models import TenantModel
+from src.modules.ticket.enums import TicketLogEntityEnum
 
 if TYPE_CHECKING:
     from src.modules.organizations.models import Organization
@@ -10,7 +12,7 @@ if TYPE_CHECKING:
     from src.modules.ticket.models.ticket import Ticket
 
 
-class TicketPriority(TenantModel, table=True):
+class TicketPriority(TenantModel, Mixin.LoggingMixin, table=True):
     """
     Ticket Priority model
     """
@@ -29,6 +31,7 @@ class TicketPriority(TenantModel, table=True):
             name="uniq_org_ticket_priority_level",
         ),
     )
+    entity_type: ClassVar[TicketLogEntityEnum] = TicketLogEntityEnum.TICKET_PRIORITY
     name: str
     level: int
     bg_color: str

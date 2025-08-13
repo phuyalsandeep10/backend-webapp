@@ -37,7 +37,9 @@ class TicketSLA(TenantModel, table=True):
     resolution_time: int = Field(sa_column=Column(BigInteger, nullable=False))
     priority_id: int = Field(
         sa_column=(
-            Column(ForeignKey("ticket_priority.id", ondelete="CASCADE"), nullable=False)
+            Column(
+                ForeignKey("ticket_priority.id", ondelete="SET NULL"), nullable=False
+            )
         )
     )
     is_default: bool = Field(default=False)
