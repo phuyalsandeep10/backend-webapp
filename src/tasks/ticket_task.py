@@ -41,6 +41,6 @@ async def send_email(
             "organization_id": organization_id,
             "entity_type": TicketLogEntityEnum.TICKET,
             "action": TicketLogActionEnum.CONFIRMATION_EMAIL_SENT_FAILED,
-            "description": f"Error while sending confirmation mail {str(e)}",
+            "description": f"Error while sending confirmation mail",
         }
         await TicketLog.create(**log_data)

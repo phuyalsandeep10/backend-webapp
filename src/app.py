@@ -30,7 +30,14 @@ app.add_middleware(
 app.add_middleware(
     AuthMiddleware,
     get_user_by_token,
-    extemp_paths=["/auth/login", "/docs", "/openapi.json", "/auth/me", "/auth/logout"],
+    extemp_paths=[
+        "/auth/login",
+        "/docs",
+        "/openapi.json",
+        "/auth/me",
+        "/auth/logout",
+        "/tickets/confirm",
+    ],
 )
 
 # Session middleware for OAuth

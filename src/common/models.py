@@ -251,6 +251,7 @@ class BaseModel(SQLModel):
             else:
                 statement = statement.options(related_items)
         async with async_session() as session:
+            print("The where", where)
             result = await session.execute(statement)
             return result.scalars().first() if result else None
 
@@ -409,7 +410,12 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> Optional[T]:
         organization_id = TenantContext.get()
+        user_id = UserContext.get()
         where["organization_id"] = organization_id
+        if (
+            not organization_id and not user_id
+        ):  # email confirmation, the client neither have organization_id nor user_id
+            del where["organization_id"]
 
         return await super().find_one(where, joins, options, related_items)
 
