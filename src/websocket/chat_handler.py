@@ -6,9 +6,10 @@ from src.models import Message, MessageAttachment, Conversation
 from src.common.dependencies import get_user_by_token
 
 # from src.config.broadcast import broadcast  # Replaced with direct Redis pub/sub
-import redis.asyncio as redis
-from src.config.settings import settings
 
+from src.config.settings import settings
+from .chat_utils import get_room_channel, user_notification_group, customer_notification_group, conversation_group
+from src.config.redis.redis_listener import get_redis
 
 REDIS_URL = settings.REDIS_URL
 
@@ -20,26 +21,22 @@ REDIS_SID_KEY = "chat:sid:"  # chat:sid:{sid} -> conversation_id
 
 
 # Redis helper
-async def get_redis():
-    return redis.from_url(REDIS_URL, decode_responses=True)
-
 
 async def redis_publish(channel: str, message: str):
     """Direct Redis pub/sub publish - more reliable than broadcaster library"""
     redis_client = await get_redis()
     try:
-        result = await redis_client.publish(channel, message)
+        result = await redis_client.publish(channel, message,namespace="/chat")
         print(f"📡 Published to Redis channel '{channel}': {result} subscribers")
         return result
     except Exception as e:
         print(f"❌ Redis publish failed: {e}")
         return 0
-    finally:
-        await redis_client.aclose()
+    # finally:
+    #     await redis_client.aclose()
 
 
-def get_room_channel(conversation_id: int) -> str:
-    return f"conversation-{conversation_id}"
+
 
 
 async def save_message_db(conversation_id: int, data: dict, user_id=None):
@@ -66,16 +63,7 @@ async def save_message_db(conversation_id: int, data: dict, user_id=None):
     return msg
 
 
-def customer_notification_group(org_id: int):
-    return f"org-{org_id}-customers"
 
-
-def user_notification_group(org_id: int):
-    return f"org-{org_id}-users"
-
-
-def conversation_group(conversationId: int):
-    return f"conversation-{conversationId}"
 
 
 class ChatNamespace(socketio.AsyncNamespace):
@@ -85,7 +73,6 @@ class ChatNamespace(socketio.AsyncNamespace):
     message_seen = "message_seen"
     chat_online = "chat_online"
     customer_land = "customer_land"
-
     def __init__(self):
         super().__init__("/chat")
         self.rooms = {}
@@ -184,6 +171,8 @@ class ChatNamespace(socketio.AsyncNamespace):
         await redis.sadd(
             f"ws:{organization_id}:conversation_sids:{conversation_id}", sid
         )
+
+        
         await redis.set(f"ws:{organization_id}:sid_conversation:{sid}", conversation_id)
 
         # Maintain conversation membership for cross-instance message fanout
@@ -265,6 +254,7 @@ class ChatNamespace(socketio.AsyncNamespace):
             message=json.dumps(
                 {"event": self.message_seen, "sid": sid, "uuid": data.get("uuid")}
             ),
+
         )
 
     async def on_typing(self, sid, data):
@@ -285,9 +275,9 @@ class ChatNamespace(socketio.AsyncNamespace):
             ),
         )
 
-    async def on_stop_typing(self, sid):
-        redis = await get_redis()
-        conversation_id = await redis.get(f"{REDIS_SID_KEY}{sid}")
+    async def on_stop_typing(self, sid,data):
+        print(f"on stop typing  sid {sid} and {data}")
+        conversation_id = data.get("conversation_id")
         if not conversation_id:
             return
 

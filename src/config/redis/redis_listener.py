@@ -3,7 +3,7 @@ import redis.asyncio as redis
 # from src.config.broadcast import broadcast  # Replaced with direct Redis pub/sub
 from src.config.settings import settings
 from src.modules.chat.models import conversation
-from src.websocket.chat_handler import (
+from src.websocket.chat_utils import (
     user_notification_group,
     customer_notification_group,
     conversation_group,
@@ -45,7 +45,7 @@ async def redis_listener(sio):
     # await pubsub.subscribe("notifications", "chat:room1")
 
     async for message in pubsub.listen():
-        print(f"Received on {message['channel']}: {message['data']} and message type {message['type']}")
+        # print(f"Received on {message['channel']}: {message['data']} and message type {message['type']}")
 
         if message["type"] != "pmessage":
             print(f"Received on {message['channel']}: {message['data']}")
@@ -83,7 +83,7 @@ async def redis_listener(sio):
             payload = payload.get('raw')
         print(f"payload {payload}")
 
-        # print(f"📩 Received from Redis | Channel: {channel} | Data: {payload}")
+        # print(f" Received from Redis | Channel: {channel} | Data: {payload}")
 
         # Example: route message to all clients in that conversation
 
@@ -95,25 +95,24 @@ async def redis_listener(sio):
 
             if not is_room_empty(sio, namespace, room_name) or payload.get("event") == "typing":
                 print(f"emit to room {room_name}")
-                return await sio.emit(
+                await sio.emit(
                     event,
                     payload,
                     room=room_name,
                     namespace="/chat",
             )
+            else:
+                print(f"emit to room {room_name}")
+                org_id = payload.get("organization_id")
+                room_name = user_notification_group(org_id)
 
-           
-       
-            org_id = payload.get("organization_id")
-            room_name = user_notification_group(org_id)
-
-            print(f"emit to room {room_name}")
-            return await sio.emit(
-                event,
-                payload,
-                room=room_name,
-                namespace=namespace,
-            )
+                print(f"emit to room {room_name}")
+                await sio.emit(
+                    event,
+                    payload,
+                    room=room_name,
+                    namespace=namespace,
+                )
             
 
         # Example: handle org-level notifications
