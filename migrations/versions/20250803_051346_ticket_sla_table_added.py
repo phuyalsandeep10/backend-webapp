@@ -31,7 +31,7 @@ class TicketSLAMigration(BaseMigration):
         self.biginteger(name="response_time")
         self.boolean(name="is_default", default=False)
         self.biginteger(name="resolution_time")
-        self.foreign(name="priority_id", table="ticket_priority")
+        self.foreign(name="priority_id", table="ticket_priority", ondelete="SET NULL")
         self.unique_constraint("organization_id", "name", "priority_id")
         self.unique_constraint("organization_id", "priority_id")
 
