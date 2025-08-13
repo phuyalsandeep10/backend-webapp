@@ -3,12 +3,14 @@ from typing import List
 
 from starlette.status import HTTP_400_BAD_REQUEST
 
+from src.modules.ticket.enums import TicketLogActionEnum
 from src.modules.ticket.models import TicketStatus
 from src.modules.ticket.schemas import (
     CreateTicketStatusSchema,
     EditTicketStatusSchema,
     TicketStatusOut,
 )
+from src.utils.common import extract_subset_from_dict
 from src.utils.exceptions.ticket import TicketStatusNotFound
 from src.utils.response import CustomResponse as cr
 
@@ -38,7 +40,9 @@ class TicketStatusService:
                 data = d.model_dump()
                 record = await TicketStatus.find_one(where={"name": data["name"]})
                 if not record:
-                    await TicketStatus.create(**data)
+                    # creating ticket status and saving to log
+                    status = await TicketStatus.create(**data)
+                    await status.save_to_log(action=TicketLogActionEnum.STATUS_CREATED)
 
             return cr.success(
                 message="Successfully created ticket status", status_code=201
@@ -68,7 +72,16 @@ class TicketStatusService:
         Delete ticket status by id
         """
         try:
+            status = await TicketStatus.find_one(where={"id": ticket_status_id})
+            if not status:
+                raise TicketStatusNotFound()
+
+            # deleting and logging
             await TicketStatus.delete(where={"id": ticket_status_id})
+            await status.save_to_log(
+                action=TicketLogActionEnum.STATUS_DELETED,
+                previous_value=status.to_json(),
+            )
             return cr.success(message="Successfully deleted the ticket status")
         except Exception as e:
             logger.exception(e)
@@ -86,13 +99,18 @@ class TicketStatusService:
                     "id": ticket_status_id,
                 }
             )
-            if ticket_status is None:
-                return cr.error(
-                    message="Ticket Status not found", status_code=HTTP_400_BAD_REQUEST
-                )
+            if not ticket_status:
+                raise TicketStatusNotFound()
 
+            # updating and logging
             updated_ticket_status = await TicketStatus.update(
                 ticket_status.id, **payload.model_dump(exclude_none=True)
+            )
+            await ticket_status.save_to_log(
+                action=TicketLogActionEnum.STATUS_UPDATED,
+                previous_value=extract_subset_from_dict(
+                    ticket_status.to_json(), **payload.model_dump(exclude_none=True)
+                ),
             )
 
             return cr.success(
@@ -112,6 +130,20 @@ class TicketStatusService:
         Returns the default close category ticket status
         """
         ticket_status = await TicketStatus.find_one(where={"status_category": name})
+        if not ticket_status:
+            raise TicketStatusNotFound(
+                f"No default ticket status has been set with {name} status category"
+            )
+
+        return ticket_status
+
+    async def get_all_status_category_by_name(self, name: str):
+        """
+        Returns the default close category ticket status
+        """
+        ticket_status = await TicketStatus.find_one(
+            where={"status_category": name, "organization_id": {"ne": None}}
+        )
         if not ticket_status:
             raise TicketStatusNotFound(
                 f"No default ticket status has been set with {name} status category"
