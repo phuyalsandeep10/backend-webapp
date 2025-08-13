@@ -46,6 +46,9 @@ class TicketLogActionEnum(str, Enum):
     PRIORITY_CREATED = "ticket_priority_created"
     PRIORITY_UPDATED = "ticket_priority_updated"
     PRIORITY_DELETED = "ticket_priority_deleted"
+    TICKET_SLA_CREATED = "ticket_sla_created"
+    TICKET_SLA_UPDATED = "ticket_sla_updated"
+    TICKET_SLA_DELETED = "ticket_sla_deleted"
     CONFIRMATION_EMAIL_SENT = "confirmation_email_sent"
     CONFIRMATION_EMAIL_SENT_FAILED = "confirmation_email_sent_failed"
 

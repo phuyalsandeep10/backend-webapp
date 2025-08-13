@@ -10,7 +10,11 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
 from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
-from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
+from src.modules.ticket.enums import (
+    TicketAlertTypeEnum,
+    TicketLogActionEnum,
+    WarningLevelEnum,
+)
 from src.modules.ticket.models import TicketSLA
 from src.modules.ticket.models.priority import TicketPriority
 from src.modules.ticket.models.ticket import Ticket, TicketAlert
@@ -22,6 +26,7 @@ from src.modules.ticket.schemas import (
 )
 from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 from src.socket_config import alert_ns, sio
+from src.utils.common import extract_subset_from_dict
 from src.utils.exceptions.ticket import TicketSLANotFound
 from src.utils.get_templates import get_templates
 from src.utils.response import CustomResponse as cr
@@ -45,7 +50,10 @@ class TicketSLAServices:
             tenant = TenantEntityValidator()
             await tenant.validate(TicketPriority, payload.priority_id)
 
+            # create and logging
             sla = await TicketSLA.create(**payload.model_dump())
+            await sla.save_to_log(action=TicketLogActionEnum.TICKET_SLA_CREATED)
+
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully registered the Service Level Agreement",
@@ -143,7 +151,13 @@ class TicketSLAServices:
                 tenant = TenantEntityValidator()
                 await tenant.validate(TicketPriority, data["priority_id"])
 
+            # updating and logging
             await TicketSLA.update(sla_id, **data)
+            await sla.save_to_log(
+                action=TicketLogActionEnum.TICKET_SLA_UPDATED,
+                previous_value=extract_subset_from_dict(sla.to_json(), data),
+                new_value=data,
+            )
 
             return cr.success(message="Successfully updated the ticket sla")
         except Exception as e:
@@ -155,7 +169,15 @@ class TicketSLAServices:
         Soft delete the sla
         """
         try:
+            sla = await TicketSLA.find_one(where={"id": sla_id})
+            if not sla:
+                raise TicketSLANotFound()
+
             await TicketSLA.delete(where={"id": sla_id})
+            await sla.save_to_log(
+                action=TicketLogActionEnum.TICKET_SLA_DELETED,
+                previous_value=sla.to_json(),
+            )
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully deleted the SLA",

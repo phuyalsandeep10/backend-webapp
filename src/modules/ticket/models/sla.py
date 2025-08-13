@@ -1,9 +1,11 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, ClassVar, List
 
 from sqlalchemy import Column
 from sqlmodel import BigInteger, Field, ForeignKey, Relationship, UniqueConstraint
 
+import src.modules.ticket.services.mixins as Mixin
 from src.common.models import TenantModel
+from src.modules.ticket.enums import TicketLogEntityEnum
 
 if TYPE_CHECKING:
 
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
 from .ticket import Ticket
 
 
-class TicketSLA(TenantModel, table=True):
+class TicketSLA(TenantModel, Mixin.LoggingMixin, table=True):
     """
     Ticket SLA model
     """
@@ -31,6 +33,7 @@ class TicketSLA(TenantModel, table=True):
             name="uniq_org_ticket_sla_level",
         ),
     )
+    entity_type: ClassVar[TicketLogEntityEnum] = TicketLogEntityEnum.TICKET_SLA
 
     name: str = Field(nullable=True, unique=True)
     response_time: int = Field(sa_column=Column(BigInteger, nullable=False))

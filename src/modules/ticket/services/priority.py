@@ -138,8 +138,9 @@ class TicketPriorityService:
             await priority.save_to_log(
                 action=TicketLogActionEnum.PRIORITY_UPDATED,
                 previous_value=extract_subset_from_dict(
-                    priority.to_json(), **payload.model_dump(exclude_none=True)
+                    priority.to_json(), payload.model_dump(exclude_none=True)
                 ),
+                new_value=payload.model_dump(exclude_none=True),
             )
 
             return cr.success(

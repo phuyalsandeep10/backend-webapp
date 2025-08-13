@@ -109,8 +109,9 @@ class TicketStatusService:
             await ticket_status.save_to_log(
                 action=TicketLogActionEnum.STATUS_UPDATED,
                 previous_value=extract_subset_from_dict(
-                    ticket_status.to_json(), **payload.model_dump(exclude_none=True)
+                    ticket_status.to_json(), payload.model_dump(exclude_none=True)
                 ),
+                new_value=payload.model_dump(exclude_none=True),
             )
 
             return cr.success(
