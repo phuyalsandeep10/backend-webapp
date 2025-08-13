@@ -1,9 +1,11 @@
 import logging
 
+from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_409_CONFLICT
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_409_CONFLICT
 
 from src.modules.ticket.models import TicketPriority
+from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import EditTicketPrioritySchema, PriorityOut
 from src.utils.exceptions.ticket import TicketPriorityExists
 from src.utils.response import CustomResponse as cr
@@ -80,11 +82,20 @@ class TicketPriorityService:
         soft delete particular priority of the organization
         """
         try:
+            # before deleting finding if there is any tickets with this priority
+            ticket_exists = await self.find_ticket_by_priority(priority_id)
+            if ticket_exists:
+                raise HTTPException(
+                    status_code=HTTP_403_FORBIDDEN,
+                    detail="Tickets with this priority exists, hence cannot be deleted",
+                )
             await TicketPriority.delete(where={"id": priority_id})
             return cr.success(message="Successfully deleted priority", data=None)
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Error while deleting priority", data=str(e))
+            return cr.error(
+                message=f"Error while deleting priority,{str(e)}", data=str(e)
+            )
 
     async def edit_priority(
         self, priority_id: int, payload: EditTicketPrioritySchema, user
@@ -116,6 +127,16 @@ class TicketPriorityService:
         except Exception as e:
             logger.exception(e)
             return cr.error(message="Error while editing priority", data=str(e))
+
+    async def find_ticket_by_priority(self, priority_id: int):
+        """
+        Returns the list of tickets by priority
+        """
+        try:
+            tickets = await Ticket.filter(where={"priority_id": priority_id})
+            return tickets
+        except Exception as e:
+            return None
 
 
 priority_service = TicketPriorityService()
