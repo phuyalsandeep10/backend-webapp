@@ -427,39 +427,44 @@ async def oauth_callback(request: Request, provider: ProviderEnum):
 
     if provider not in ["google", "apple"]:
         return cr.error(data={"success": False}, message="Unsupported provider")
-    client = getattr(oauth, provider)
+    
+    try:
+        client = getattr(oauth, provider)
 
-    token = await client.authorize_access_token(request)
+        token = await client.authorize_access_token(request)
 
-    userinfo = (
-        await client.parse_id_token(request, token)
-        if provider == "apple"
-        else token.get("userinfo")
-    )
-    # Fallback for Apple: userinfo may be in token['id_token'] (decode if needed)
-    # Fallback for Google: userinfo may be in token['userinfo'] or fetch from userinfo_endpoint
-
-    # Extract user info (adjust as needed)
-    email = userinfo.get("email")
-    name = userinfo.get("name") or userinfo.get("email")
-    image = userinfo.get("picture", "")
-
-    # Your user creation/login logic here
-    user = await User.find_one(where={"email": email})
-
-    if not user:
-        user = await User.create(
-            email=email,
-            name=name,
-            image=image,
-            email_verified_at=datetime.utcnow(),
-            password="",
+        userinfo = (
+            await client.parse_id_token(request, token)
+            if provider == "apple"
+            else token.get("userinfo")
         )
+        # Fallback for Apple: userinfo may be in token['id_token'] (decode if needed)
+        # Fallback for Google: userinfo may be in token['userinfo'] or fetch from userinfo_endpoint
 
-    tokens = await create_token(user)
-    redirect_url = f"{settings.FRONTEND_URL}/login?access_token={tokens.get('access_token')}&refresh_token={tokens.get('refresh_token')}"
+        # Extract user info (adjust as needed)
+        email = userinfo.get("email")
+        name = userinfo.get("name") or userinfo.get("email")
+        image = userinfo.get("picture", "")
 
-    return RedirectResponse(redirect_url)
+        # Your user creation/login logic here
+        user = await User.find_one(where={"email": email})
+
+        if not user:
+            user = await User.create(
+                email=email,
+                name=name,
+                image=image,
+                email_verified_at=datetime.utcnow(),
+                password="",
+            )
+
+        tokens = await create_token(user)
+        redirect_url = f"{settings.FRONTEND_URL}/login?access_token={tokens.get('access_token')}&refresh_token={tokens.get('refresh_token')}"
+
+        return RedirectResponse(redirect_url)
+    except Exception as e:
+        redirect_url = f"{settings.FRONTEND_URL}/login"
+        return RedirectResponse(redirect_url)
 
 
 @router.post("/2fa-otp/generate")
