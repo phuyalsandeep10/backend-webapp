@@ -399,6 +399,20 @@ class TenantModel(CommonModel):
     ):
         organization_id = TenantContext.get()
         where["organization_id"] = organization_id
+
+        return await super().filter(where, skip, limit, joins, options, related_items)
+
+    @classmethod
+    async def filter_without_tenant(
+        cls: Type[T],
+        where: dict = {},
+        skip: int = 0,
+        limit: Optional[int] = None,
+        joins: Optional[list[Any]] = None,
+        options: Optional[list[Any]] = None,
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
+    ):
+
         return await super().filter(where, skip, limit, joins, options, related_items)
 
     @classmethod

@@ -151,6 +151,20 @@ class CreateSLASchema(BaseModel):
 
     model_config = {"extra": "forbid"}
 
+    @model_validator(mode="after")
+    def check_time_negative(self):
+        if self.response_time is not None and self.response_time <= 0:
+            raise PydanticCustomError(
+                "Cannot be negative",
+                "Response time cannot be negative",
+            )
+        if self.resolution_time is not None and self.resolution_time <= 0:
+            raise PydanticCustomError(
+                "Cannot be negative",
+                "Resolution time cannot be negative",
+            )
+        return self
+
 
 class ContactOut(CreateContactSchema):
     id: int
@@ -190,6 +204,20 @@ class EditTicketSLASchema(BaseModel):
     response_time: Optional[int] = None
     resolution_time: Optional[int] = None
     priority_id: Optional[int] = None
+
+    @model_validator(mode="after")
+    def check_time_negative(self):
+        if self.response_time is not None and self.response_time <= 0:
+            raise PydanticCustomError(
+                "Cannot be negative",
+                "Response time cannot be negative",
+            )
+        if self.resolution_time is not None and self.resolution_time <= 0:
+            raise PydanticCustomError(
+                "Cannot be negative",
+                "Resolution time cannot be negative",
+            )
+        return self
 
 
 class TicketByStatusSchema(BaseModel):

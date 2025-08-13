@@ -296,17 +296,19 @@ class TicketSLAServices:
             "sent_at": datetime.utcnow(),
         }
         await TicketAlert.create(**data)
-        # await self._send_email(ticket, message)
+        await self._send_email(ticket, message)
 
     async def send_alert_broadcast(self, ticket: Ticket, message: str):
         """
         Responsible for sending alert message to all the broadcast via a socket
         """
+        logger.info("Sending the broadcast")
         sc_user_ids = (
             alert_ns.user_ids
         )  # list of user_ids connected to the alertnamespace socket
         receiver_id = [assginee.id for assginee in ticket.assignees]
         receiver_id.append(ticket.created_by_id)
+        logger.info("The receivers", receiver_id)
         for user_id in receiver_id:
             if user_id in sc_user_ids:
                 await sio.emit(
@@ -330,13 +332,17 @@ class TicketSLAServices:
             name="ticket/sla-breach-email.html", content=html_content
         )
 
-        email = NotificationFactory.create("email")
-        email.send(
-            subject="SLA breach",
-            recipients=receivers,
-            body_html=template,
-            from_email="fjalkjdka@chatboq.com",
-        )
+        logger.info(f"The receivers {receivers} {ticket.sender_domain}")
+        for receiver in receivers:
+            email = NotificationFactory.create("email")
+            await email.send_ticket_email(
+                subject="SLA breach",
+                recipients=receiver,
+                body_html=template,
+                from_email=(ticket.sender_domain, ticket.organization.name),
+                ticket=ticket,
+                mail_type=TicketLogActionEnum.SLA_BREACH_EMAIL_SENT,
+            )
 
 
 sla_service = TicketSLAServices()

@@ -51,6 +51,8 @@ class TicketLogActionEnum(str, Enum):
     TICKET_SLA_DELETED = "ticket_sla_deleted"
     CONFIRMATION_EMAIL_SENT = "confirmation_email_sent"
     CONFIRMATION_EMAIL_SENT_FAILED = "confirmation_email_sent_failed"
+    SLA_BREACH_EMAIL_SENT = "ticket_sla_breach_email_sent"
+    EMAIL_SENT_FAILED = "ticket_email_sent_failed"
 
 
 class TicketLogEntityEnum(str, Enum):

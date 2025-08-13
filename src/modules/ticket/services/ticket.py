@@ -225,7 +225,7 @@ class TicketServices:
 
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Invalid confirmation token", data=str(e))
+            return cr.error(message=f"{e.detail if e.detail else str(e) }", data=str(e))
 
     async def list_tickets_by_status(self, payload: TicketByStatusSchema):
         """
@@ -407,6 +407,7 @@ class TicketServices:
             recipients=receiver,
             body_html=template,
             ticket=tick,
+            mail_type=TicketLogActionEnum.CONFIRMATION_EMAIL_SENT,
         )
 
 

@@ -16,7 +16,7 @@ async def check_sla_breach():
     Checks the sla breach of every tickets
     """
     # listing all tickets whose organization is not none
-    all_tickets = await Ticket.filter(where={"organization_id": {"ne": None}})
+    all_tickets = await Ticket.filter_without_tenant()
 
     if not all_tickets:
         logger.info("No tickets")
@@ -25,11 +25,14 @@ async def check_sla_breach():
     closed_ticket_status = await ticket_status_service.get_all_status_category_by_name(
         name="closed"
     )
-    tickets = await Ticket.filter(
+    tickets = await Ticket.filter_without_tenant(
         where={"status_id": {"ne": closed_ticket_status.id}, "opened_at": {"ne": None}},
-        related_items=[selectinload(Ticket.sla), selectinload(Ticket.assignees)],
+        related_items=[
+            selectinload(Ticket.sla),
+            selectinload(Ticket.assignees),
+            selectinload(Ticket.organization),
+        ],
     )
-    logger.info(f"The tickets {tickets}")
     for ticket in tickets:
         if not ticket.opened_at:
             return

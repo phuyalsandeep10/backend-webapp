@@ -40,6 +40,7 @@ class EmailNotification(NotificationInterface):
         recipients: list[str],
         body_html: str,
         ticket: Ticket,
+        mail_type: str,
     ):
         try:
             redis = await create_pool((RedisSettings()))
@@ -51,6 +52,7 @@ class EmailNotification(NotificationInterface):
                 body_html=body_html,
                 ticket_id=ticket.id,
                 organization_id=ticket.organization_id,
+                mail_type=mail_type,
             )
         except Exception as e:
             logger.exception(e)

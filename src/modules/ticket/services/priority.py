@@ -111,7 +111,8 @@ class TicketPriorityService:
         except Exception as e:
             logger.exception(e)
             return cr.error(
-                message=f"Error while deleting priority,{str(e)}", data=str(e)
+                message=f"Error while deleting priority,{e.detail if e.detail else str(e)}",
+                data=str(e),
             )
 
     async def edit_priority(

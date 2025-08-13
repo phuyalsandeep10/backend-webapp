@@ -17,6 +17,7 @@ async def send_email(
     from_email: tuple[str, str],
     ticket_id: int,
     organization_id: int,
+    mail_type: TicketLogActionEnum,
 ):
     try:
         logger.info(f"Sending {subject} email")
@@ -31,7 +32,7 @@ async def send_email(
             "ticket_id": ticket_id,
             "organization_id": organization_id,
             "entity_type": TicketLogEntityEnum.TICKET,
-            "action": TicketLogActionEnum.CONFIRMATION_EMAIL_SENT,
+            "action": mail_type,
         }
         await TicketLog.create(**log_data)
     except Exception as e:
@@ -40,7 +41,7 @@ async def send_email(
             "ticket_id": ticket_id,
             "organization_id": organization_id,
             "entity_type": TicketLogEntityEnum.TICKET,
-            "action": TicketLogActionEnum.CONFIRMATION_EMAIL_SENT_FAILED,
-            "description": f"Error while sending confirmation mail",
+            "action": TicketLogActionEnum.EMAIL_SENT_FAILED,
+            "description": f"Error while sending {mail_type}",
         }
         await TicketLog.create(**log_data)
