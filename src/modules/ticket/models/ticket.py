@@ -135,11 +135,11 @@ class Ticket(TenantModel, Mixin.LoggingMixin, table=True):
                 attachment.to_json(TicketAttachmentOut)
                 for attachment in self.attachments
             ],
-            "priority": self.priority.to_json(PriorityOut),
-            "status": self.status.to_json(TicketStatusOut),
-            "sla": self.sla.to_json(SLAOut),
-            "department": self.department.to_dict(),
-            "created_by": self.created_by.to_dict(),
+            "priority": self.priority.to_json(PriorityOut) if self.priority else None,
+            "status": self.status.to_json(TicketStatusOut) if self.status else None,
+            "sla": self.sla.to_json(SLAOut) if self.sla else None,
+            "department": self.department.to_json() if self.department else None,
+            "created_by": self.created_by.to_dict() if self.created_by else None,
             "assignees": [assignee.to_json() for assignee in self.assignees],
             "created_at": self.created_at.isoformat(),
             "opened_at": self.opened_at.isoformat() if self.opened_at else None,
