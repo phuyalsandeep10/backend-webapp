@@ -212,13 +212,13 @@ async def priority_seed():
             print("TicketPriority 1 already created")
 
     for i in priorities2:
-        record = await TicketPriority.find_one(
+        record2 = await TicketPriority.find_one(
             where={
                 "name": {"mode": "insensitive", "value": i["name"]},
                 "organization_id": i["organization_id"],
             }
         )
-        if not record:
+        if not record2:
             await TicketPriority.create(
                 name=i["name"],
                 level=i["level"],

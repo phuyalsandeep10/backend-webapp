@@ -381,8 +381,8 @@ class TenantModel(CommonModel):
     async def create(cls: Type[T], **kwargs) -> T:
         organization_id = TenantContext.get()
         user_id = UserContext.get()
-        kwargs.setdefault("organization_id", organization_id)
-        kwargs.setdefault("created_by_id", user_id)
+        kwargs["organization_id"] = organization_id
+        kwargs["created_by_id"] = user_id
 
         obj = await super().create(**kwargs)
         return obj
