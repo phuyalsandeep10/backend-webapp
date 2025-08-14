@@ -1,10 +1,12 @@
 import logging
 from typing import List
 
-from starlette.status import HTTP_400_BAD_REQUEST
+from fastapi import HTTPException
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
 from src.modules.ticket.enums import TicketLogActionEnum
 from src.modules.ticket.models import TicketStatus
+from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.schemas import (
     CreateTicketStatusSchema,
     EditTicketStatusSchema,
@@ -75,6 +77,14 @@ class TicketStatusService:
             status = await TicketStatus.find_one(where={"id": ticket_status_id})
             if not status:
                 raise TicketStatusNotFound()
+
+            # checking if tickets has been created with that ticket_stauts
+            ticket_exists = await self.find_ticket_by_status(ticket_status_id)
+            if ticket_exists:
+                raise HTTPException(
+                    status_code=HTTP_403_FORBIDDEN,
+                    detail="Tickets with this status exists, hence cannot be deleted",
+                )
 
             # deleting and logging
             await TicketStatus.delete(where={"id": ticket_status_id})
@@ -151,6 +161,16 @@ class TicketStatusService:
             )
 
         return ticket_status
+
+    async def find_ticket_by_status(self, status_id: int):
+        """
+        Returns the all tickets by that status
+        """
+        try:
+            tickets = await Ticket.filter(where={"status_id": status_id})
+            return tickets
+        except Exception as e:
+            return None
 
 
 ticket_status_service = TicketStatusService()

@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     EMAIL_DOMAIN: str = ""
     SENDGRID_API_KEY: str = ""
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()  # type:ignore

@@ -68,7 +68,6 @@ status = [
         "fg_color": "#ffffff",
         "organization_id": 1,
         "status_category": "pending",
-        "is_default": True,
     },
     {
         "name": "Assigned",
@@ -76,7 +75,6 @@ status = [
         "fg_color": "#ffffff",
         "organization_id": 1,
         "status_category": "open",
-        "is_default": False,
     },
     {
         "name": "Solved",
@@ -84,15 +82,13 @@ status = [
         "fg_color": "#ffffff",
         "organization_id": 1,
         "status_category": "closed",
-        "is_default": False,
     },
     {
         "name": "Reopened",
         "bg_color": "#DAE8FA",
         "fg_color": "#ffffff",
         "organization_id": 1,
-        "status_category": "open",
-        "is_default": False,
+        "status_category": "reopened",
     },
 ]
 status2 = [
@@ -102,7 +98,6 @@ status2 = [
         "fg_color": "#ffffff",
         "organization_id": 2,
         "status_category": "pending",
-        "is_default": True,
     },
     {
         "name": "Assigned",
@@ -110,7 +105,6 @@ status2 = [
         "fg_color": "#ffffff",
         "organization_id": 2,
         "status_category": "open",
-        "is_default": False,
     },
     {
         "name": "Solved",
@@ -118,7 +112,6 @@ status2 = [
         "fg_color": "#ffffff",
         "organization_id": 2,
         "status_category": "closed",
-        "is_default": False,
     },
     {
         "name": "Reopened",
@@ -126,7 +119,6 @@ status2 = [
         "fg_color": "#ffffff",
         "organization_id": 2,
         "status_category": "reopened",
-        "is_default": False,
     },
 ]
 default_ticket_sla = [
