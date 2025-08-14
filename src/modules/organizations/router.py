@@ -1,4 +1,6 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import selectinload
 
 from src.common.dependencies import (
     get_bearer_token,
@@ -7,6 +9,8 @@ from src.common.dependencies import (
 )
 
 from src.common.models import Permission
+from src.models.countries import Country
+from src.models.timezones import Timezone
 from src.enums import InvitationStatus
 from src.models import (
     Organization,
@@ -444,3 +448,67 @@ async def remove_assign_role(body: AssignRoleSchema, user=Depends(get_current_us
 async def get_permissions(user=Depends(get_current_user)):
     permissions = await Permission.filter()
     return cr.success(data=permissions)
+
+
+@router.get("/countries")
+async def get_countries():
+    """Get all countries for selection"""
+    try: 
+        countries = await Country.filter()
+        
+        countries_data = [
+            {
+                "id": country.id,
+                "name": country.name,
+                "code": country.iso_code_2,
+                "iso_code_2": country.iso_code_2, #US
+                "iso_code_3": country.iso_code_3, #USA
+                "phone_code": country.phone_code #+977
+            }
+            for country in countries
+        ]
+        
+        return cr.success(
+            data={"countries": countries_data},
+            message="Countries retrieved successfully"
+        )
+    except Exception as e:
+        return cr.error(
+            message=f"Failed to retrieve countries: {str(e)}"
+        )
+
+
+@router.get("/timezones")
+async def get_timezones(country_id: Optional[int] = None):
+    """Get all timezones, optionally filtered by country_id"""
+    try:
+        where_clause = {}
+        if country_id:
+            where_clause["country_id"] = country_id
+            
+        timezones = await Timezone.filter(
+            where=where_clause,
+            related_items=[selectinload(Timezone.country)] #for loading countries relationship
+        )
+        
+        timezones_data = [
+            {
+                "id": tz.id,
+                "name": tz.name,
+                "display_name": tz.display_name,
+                "country_id": tz.country_id,
+                "country_name": tz.country.name if tz.country else None
+            }
+            for tz in timezones
+        ]
+        
+        return cr.success(
+            data={"timezones": timezones_data},
+            message="Timezones retrieved successfully"
+        )
+        
+    except Exception as e:
+        return cr.error(
+            message=f"Failed to retrieve timezones: {str(e)}"
+        )
+        

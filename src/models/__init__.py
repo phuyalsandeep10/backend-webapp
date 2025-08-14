@@ -29,6 +29,8 @@ from src.modules.ticket.models.priority import TicketPriority
 from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket, TicketAlert, TicketAssigneesLink
+from .countries import Country
+from .timezones import Timezone
 
 # Import admin models
 # from src.modules.admin.models import Admin
@@ -56,5 +58,7 @@ __all__ = [
     "TicketPriority",
     "TicketSLA",
     "CustomerVisitLogs",
+    "Country",
+    "Timezone"
     # "Admin"
 ]

@@ -25,12 +25,18 @@ from .schema import (
     RefreshTokenSchema,
     VerifyTwoFAOtpSchema,
     UserSchema,
+    UserProfileUpdateSchema,
     ValidateEmailSchema,
     VerifyEmailEnum,
     ResendVerificationSchema,
 )
 from src.utils.response import CustomResponse as cr
 from src.utils.common import get_location
+from src.utils.exceptions.auth import (
+    UserNotFoundException,
+    NoDataToUpdateException,
+    UserUpdateFailedException
+)
 from .models import User, EmailVerification, RefreshToken
 from src.utils.common import is_production_env
 
@@ -394,6 +400,35 @@ async def get_invitations(user=Depends(get_current_user)):
 
     data = await OrganizationInvitation.filter(where={"email": user.email})
     return cr.success(data=data)
+
+@router.patch("/profile")
+async def update_user_profile(
+    profile_data: UserProfileUpdateSchema,
+    user=Depends(get_current_user)
+):
+    """Update user profile information(partial update)"""
+    
+    current_user = await User.find_one(where={"email": user.email})
+    
+    if not current_user:
+        raise UserNotFoundException()
+    
+    # Only update fields that were provided
+    update_data = profile_data.dict(exclude_unset=True)
+
+    if not update_data:
+        raise NoDataToUpdateException()
+        
+    # Updated user
+    updated_user = await User.update(current_user.id, **update_data)
+    
+    if not updated_user:
+        raise UserUpdateFailedException()
+    
+    return cr.success(
+        data={"user": updated_user.to_json(schema=UserSchema)},
+        message="Profile updated successfully"
+    )
 
 
 @router.get("/oauth/{provider}")

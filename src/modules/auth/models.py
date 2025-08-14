@@ -23,6 +23,9 @@ class User(BaseModel, table=True):
     name: Optional[str] = None
     image: Optional[str] = None
     mobile: Optional[str] = Field(default=None, unique=True)
+    address: Optional[str] = Field(default=None)
+    country: Optional[str] = Field(default=None)
+    language: Optional[str] = Field(default="English")
     password: str = Field(default="", min_length=8, max_length=128)
     is_active: bool = Field(default=True)
     two_fa_enabled: bool = Field(default=False)
