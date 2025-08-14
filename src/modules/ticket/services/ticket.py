@@ -12,7 +12,7 @@ from src.config.settings import settings
 from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
 from src.modules.team.models import Team
-from src.modules.ticket.enums import TicketLogActionEnum
+from src.modules.ticket.enums import TicketLogActionEnum, TicketStatusEnum
 from src.modules.ticket.models import TicketPriority
 from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import TicketSLA
@@ -95,7 +95,7 @@ class TicketServices:
             logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                message="Error while creating a ticket",
+                message=f"{e.detail if e.detail else str(e)}",
                 data=str(e),
             )
 
@@ -327,12 +327,10 @@ class TicketServices:
         Returns the default tiket status set by the organization else move to default ticket status
         """
         sts = await TicketStatus.find_one(
-            where={
-                "is_default": True,
-            }
+            where={"status_category": TicketStatusEnum.PENDING}
         )
         if not sts:
-            raise TicketStatusNotFound(detail="Default status has not been set")
+            raise TicketStatusNotFound(detail="Pending status has not been set")
 
         return sts
 
