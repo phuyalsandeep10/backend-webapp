@@ -23,29 +23,29 @@ services:
       - mynetwork
     command: redis-server --appendonly yes
 
-  # backend:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: chatboq_backend
-  #
-  #   command: [ "uvicorn", "src.main:socket_app", "--host", "0.0.0.0", "--port", "8000", "--reload" ]
-  #   ports:
-  #     - "8000:8000"
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - REDIS_URL=redis://redis:6379
-  #     - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
-  #     - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
-  #     - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-  #   depends_on:
-  #     - db
-  #     - redis
-  #     # - kafka
-  #   networks:
-  #     - mynetwork
-  #
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatboq_backend
+
+    command: [ "uvicorn", "src.main:socket_app", "--host", "0.0.0.0", "--port", "8000", "--reload" ]
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
+      - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - db
+      - redis
+      # - kafka
+    networks:
+      - mynetwork
+
   celery_worker:
     build: .
     command: celery -A src.config.celery worker --loglevel=info
