@@ -87,32 +87,24 @@ async def redis_listener(sio):
 
         # Example: route message to all clients in that conversation
 
+  
+
+
         if channel.startswith("conversation-"):
             conversation_id = channel.replace("conversation-", "")
             event = payload.get("event", "message")
             room_name = conversation_group(conversation_id)
-            namespace = '/chat'
+           
 
-            if not is_room_empty(sio, namespace, room_name) or payload.get("event") == "typing":
-                print(f"emit to room {room_name}")
-                await sio.emit(
+            # if not is_room_empty(sio, namespace, room_name) or payload.get("event") == "typing":
+            print(f"conversation emit to room {room_name}")
+            await sio.emit(
                     event,
                     payload,
                     room=room_name,
                     namespace="/chat",
             )
-            else:
-                print(f"emit to room {room_name}")
-                org_id = payload.get("organization_id")
-                room_name = user_notification_group(org_id)
-
-                print(f"emit to room {room_name}")
-                await sio.emit(
-                    event,
-                    payload,
-                    room=room_name,
-                    namespace=namespace,
-                )
+            
             
 
         # Example: handle org-level notifications
@@ -130,7 +122,7 @@ async def redis_listener(sio):
                 event,
                 payload,
                 room=room,
-                namespace="/chat",
+                namespace="/agent-chat",
             )
 
         elif ":customer_notification" in channel:

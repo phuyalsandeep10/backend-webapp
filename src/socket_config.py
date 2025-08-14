@@ -1,6 +1,7 @@
 from src.app import app
 import socketio
-from src.websocket.chat_handler import ChatNamespace
+from src.websocket.chat_namespaces.customer_chat_namespace import CustomerChatNamespace
+from src.websocket.chat_namespaces.agent_chat_namespace import AgentChatNamespace
 from src.config.redis.redis_listener import redis_listener
 from src.config.settings import settings
 from socketio import AsyncRedisManager
@@ -24,7 +25,8 @@ socket_app = socketio.ASGIApp(
 )
 
 
-sio.register_namespace(ChatNamespace())
+sio.register_namespace(CustomerChatNamespace())
+sio.register_namespace(AgentChatNamespace())
 
 
 # Global task reference to prevent garbage collection

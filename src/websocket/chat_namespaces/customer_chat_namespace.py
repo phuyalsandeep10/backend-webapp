@@ -2,18 +2,21 @@ import json
 
 import socketio
 
-from src.models import Message, MessageAttachment, Conversation
+
 from src.common.dependencies import get_user_by_token
 
 # from src.config.broadcast import broadcast  # Replaced with direct Redis pub/sub
 
 from src.config.settings import settings
-from .chat_utils import get_room_channel, user_notification_group, customer_notification_group, conversation_group
+from src.websocket.chat_namespaces.agent_chat_namespace import chat_namespace
+from ..chat_utils import get_room_channel, user_notification_group, customer_notification_group, conversation_group
+from ..chat_redis import redis_publish
 from src.config.redis.redis_listener import get_redis
+
 
 REDIS_URL = settings.REDIS_URL
 
-chat_namespace = "/chat"
+
 
 # Redis keys
 REDIS_ROOM_KEY = "chat:room:"  # chat:room:{conversation_id} -> set of sids
@@ -22,57 +25,25 @@ REDIS_SID_KEY = "chat:sid:"  # chat:sid:{sid} -> conversation_id
 
 # Redis helper
 
-async def redis_publish(channel: str, message: str):
-    """Direct Redis pub/sub publish - more reliable than broadcaster library"""
-    redis_client = await get_redis()
-    try:
-        result = await redis_client.publish(channel, message,namespace="/chat")
-        print(f"📡 Published to Redis channel '{channel}': {result} subscribers")
-        return result
-    except Exception as e:
-        print(f"❌ Redis publish failed: {e}")
-        return 0
-    # finally:
-    #     await redis_client.aclose()
 
 
 
 
 
-async def save_message_db(conversation_id: int, data: dict, user_id=None):
-    conversation = await Conversation.get(conversation_id)
-    if not conversation:
-        return None
-
-    replyId = data.get("reply_id")
-    msg = await Message.create(
-        conversation_id=conversation_id,
-        content=data.get("message"),
-        customer_id=conversation.customer_id,
-        user_id=user_id,
-        reply_to_id=replyId,
-    )
-    for file in data.get("files", []):
-        await MessageAttachment.create(
-            message_id=msg.id,
-            file_url=file.get("url"),
-            file_name=file.get("file_name"),
-            file_type=file.get("file_type"),
-            file_size=file.get("file_size"),
-        )
-    return msg
 
 
 
 
 
-class ChatNamespace(socketio.AsyncNamespace):
+
+class CustomerChatNamespace(socketio.AsyncNamespace):
     receive_message = "receive-message"
     receive_typing = "typing"
     stop_typing = "stop-typing"
     message_seen = "message_seen"
     chat_online = "chat_online"
     customer_land = "customer_land"
+
     def __init__(self):
         super().__init__("/chat")
         self.rooms = {}
@@ -94,6 +65,8 @@ class ChatNamespace(socketio.AsyncNamespace):
             ),
         )
 
+    
+
     async def _join_org_user_group(self, org_id: int, sid: int):
         print(f"join room name {user_notification_group(org_id)} and sid {sid}")
         await self.enter_room(sid=sid, room=user_notification_group(org_id))
@@ -102,10 +75,15 @@ class ChatNamespace(socketio.AsyncNamespace):
         self.enter_room(sid=sid, room=customer_notification_group(org_id))
 
     async def _join_conversation(self, conversation_id: int, sid: int):
+        redis = await get_redis()
+        await redis.sadd(f'ws:conversation_sids:{conversation_id}', sid)
+        await redis.set(f"ws:sid_conversation:{sid}", conversation_id)
         self.enter_room(sid=sid, room=conversation_group(conversation_id))
     
     async def _leave_conversation(self, conversation_id: int, sid: int):
         self.leave_room(sid=sid, room=conversation_group(conversation_id))
+        # await redis.srem(f'ws:conversation_sids:{conversation_id}', sid)
+        # await redis.delete(f"ws:sid_conversation:{sid}")
     
     async def _leave_user_group(self, org_id: int, sid: int):
         self.leave_room(sid=sid, room=user_notification_group(org_id))
@@ -116,7 +94,7 @@ class ChatNamespace(socketio.AsyncNamespace):
   
 
     async def on_connect(self, sid, environ, auth):
-        # print(f"🔌 Socket connection attempt: {sid}")
+        print(f"🔌Customer Socket connection attempt: {sid}")
         # print(f"🔑 Auth data: {auth}")
 
         if not auth:
@@ -124,31 +102,7 @@ class ChatNamespace(socketio.AsyncNamespace):
             return False
 
         redis = await get_redis()
-        token = auth.get("token")
-
-        # Handle user connection (with token)
-        if token:
-            user = await get_user_by_token(token)
-            if not user:
-                print("Invalid token provided")
-                return False
-
-            organization_id = user.attributes.get("organization_id")
-
-            if not organization_id:
-                print("User has no organization_id")
-                return False
-
-            await redis.sadd(f"ws:{organization_id}:user_sids:{user.id}", sid)
-            await redis.set(f"ws:{organization_id}:sid_user:{sid}", user.id)
-
-            await self._join_org_user_group(organization_id, sid)
-            # notify customers in the same workspace that a user has connected
-            await self._notify_to_customers(organization_id)
-            print(
-                f"User {user.id} connected with sid {sid} in workspace {organization_id}"
-            )
-            return True
+       
 
         # Handle customer connection (without token)
         customer_id = auth.get("customer_id")
@@ -182,7 +136,7 @@ class ChatNamespace(socketio.AsyncNamespace):
         # notify users in the same workspace that a customer has connected
         await self._notify_to_users(organization_id)
         await self._join_org_customer_group(organization_id, sid)
-        await self._join_conversation(conversation_id, sid)
+     
         # notify users with a specific customer landing event
         channel = f"ws:{organization_id}:user_notification"
     
@@ -208,10 +162,12 @@ class ChatNamespace(socketio.AsyncNamespace):
     
 
     async def on_message(self, sid, data):
-        print(f"on message {data} and sid {sid}")
+        print(f"on message {data} and sid {sid} and organization")
         
         conversation_id = data.get('conversation_id')
         organization_id = data.get('organization_id')
+
+
      
         
         if not conversation_id:
@@ -219,9 +175,22 @@ class ChatNamespace(socketio.AsyncNamespace):
         
 
         try:
-            print(f'emit to room conversation {get_room_channel(conversation_id)}')
+         
+            # channel_name = user_notification_group(organization_id)
+            channel_name = f"ws:{organization_id}:user_notification"
+            print(f"message channel {channel_name}")
+    
+            # if not data.get('user_id'):
+            #     redis = await get_redis()
+            #     sids = await redis.smembers(f"ws:{organization_id}:conversation_sids:{conversation_id}")
+            #     print("SIDs in this conversation:", [sid.decode() for sid in sids])
+            #     if not sids:
+            #         channel_name = user_notification_group(organization_id)
+            #     else:
+            #         channel_name = conversation_group(conversation_id)
+            # print(f'message channel {channel_name}')
             await redis_publish(
-                channel=get_room_channel(conversation_id),
+                channel=channel_name,
                 message=json.dumps(
                     {
                         "event": self.receive_message,
@@ -259,7 +228,7 @@ class ChatNamespace(socketio.AsyncNamespace):
 
     async def on_typing(self, sid, data):
         redis = await get_redis()
-        conversation_id = await redis.get(f"{REDIS_SID_KEY}{sid}")
+        conversation_id = data.get("conversation_id")
         if not conversation_id:
             return
 
@@ -271,6 +240,7 @@ class ChatNamespace(socketio.AsyncNamespace):
                     "sid": sid,
                     "message": data.get("message", ""),
                     "mode": data.get("mode", "typing"),
+                    "organization_id": data.get("organization_id"),
                 }
             ),
         )
@@ -293,6 +263,7 @@ class ChatNamespace(socketio.AsyncNamespace):
         conversation_id = auth.get('conversation_id')
         organization_id = auth.get('organization_id')
         user_id = auth.get('user_id')
+        redis = await get_redis()
         if customer_id:
             await redis.srem(f"ws:{organization_id}:conversation_sids:{conversation_id}", sid)
             await redis.delete(f"ws:{organization_id}:sid_conversation:{sid}")
