@@ -113,7 +113,8 @@ class CreatePrioriySchema(BaseModel):
 class EditTicketPrioritySchema(BaseModel):
     name: Optional[str] = None
     level: Optional[int] = None
-    color: Optional[str] = None
+    fg_color: Optional[str] = None
+    bg_color: Optional[str] = None
 
 
 class CreateTicketStatusSchema(BaseModel):
@@ -128,7 +129,8 @@ class CreateTicketStatusSchema(BaseModel):
 class EditTicketStatusSchema(BaseModel):
     name: Optional[str] = None
     is_default: Optional[bool] = None
-    color: Optional[str] = None
+    fg_color: Optional[str] = None
+    bg_color: Optional[str] = None
     status_category: Optional[TicketStatusEnum] = None
 
 
