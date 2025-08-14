@@ -51,7 +51,7 @@ class TicketStatusService:
             )
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Error while creating ticket status")
+            return cr.error(message=f"{e.detail if e.detail else str(e)}")
 
     async def get_ticket_status(self, ticket_status_id: int, user):
         """
@@ -95,7 +95,7 @@ class TicketStatusService:
             return cr.success(message="Successfully deleted the ticket status")
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Error while deleting the ticket status")
+            return cr.error(message=f"{e.detail if e.detail else str(e)}")
 
     async def edit_ticket_status(
         self, ticket_status_id: int, payload: EditTicketStatusSchema, user
@@ -134,13 +134,18 @@ class TicketStatusService:
             )
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Error while editing ticket status", data=str(e))
+            return cr.error(
+                message=f"{e.detail if e.detail else str(e)}",
+                data=str(e),
+            )
 
     async def get_status_category_by_name(self, name: str):
         """
         Returns the default close category ticket status
         """
-        ticket_status = await TicketStatus.find_one(where={"status_category": name})
+        ticket_status = await TicketStatus.find_one_without_tenant(
+            where={"status_category": name}
+        )
         if not ticket_status:
             raise TicketStatusNotFound(
                 f"No default ticket status has been set with {name} status category"
@@ -152,7 +157,7 @@ class TicketStatusService:
         """
         Returns the default close category ticket status
         """
-        ticket_status = await TicketStatus.find_one(
+        ticket_status = await TicketStatus.find_one_without_tenant(
             where={"status_category": name, "organization_id": {"ne": None}}
         )
         if not ticket_status:

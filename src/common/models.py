@@ -170,7 +170,6 @@ class BaseModel(SQLModel):
     @classmethod
     async def delete(cls: Type[T], where: dict = {}) -> None:
         async with async_session() as session:
-            print("The where", where)
             statement = query_statement(
                 cls,
                 where=where,
@@ -251,7 +250,6 @@ class BaseModel(SQLModel):
             else:
                 statement = statement.options(related_items)
         async with async_session() as session:
-            print("The where", where)
             result = await session.execute(statement)
             return result.scalars().first() if result else None
 

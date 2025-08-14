@@ -121,14 +121,12 @@ class CreateTicketStatusSchema(BaseModel):
     name: str
     bg_color: str
     fg_color: str
-    is_default: Optional[bool] = False
     status_category: TicketStatusEnum
     model_config = {"extra": "forbid"}
 
 
 class EditTicketStatusSchema(BaseModel):
     name: Optional[str] = None
-    is_default: Optional[bool] = None
     fg_color: Optional[str] = None
     bg_color: Optional[str] = None
     status_category: Optional[TicketStatusEnum] = None
