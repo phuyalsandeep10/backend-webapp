@@ -108,3 +108,14 @@ class CreateRoleOutSchema(BaseModel):
     created_at: str
     no_of_agents: int
     permission_summary: str = ""
+
+
+class InvitationOut(BaseModel):
+    id: int
+    # name: str
+    email: str
+    status: str
+    invited_by_id: int
+    role_ids: List[int]
+    created_at: datetime
+    # role_names: List[str]

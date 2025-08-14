@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from sqlmodel import text
 from sqlalchemy.orm import selectinload
 from src.modules.organizations.models import OrganizationRole, OrganizationMemberRole
+from typing import List
 
 from src.common.dependencies import (
     get_bearer_token,
@@ -37,6 +38,7 @@ from .schema import (
     CreateRoleOutSchema,
     UpdateRoleInfoSchema,
     CreateRoleSchema,
+    InvitationOut,
 )
 
 router = APIRouter()
@@ -333,7 +335,6 @@ async def update_role(
     updated_role = await OrganizationRole.find_one(where={"id": role_id})
     return cr.success(data=updated_role.to_json(CreateRoleOutSchema))
 
-
 @router.get("/roles")
 async def get_roles(user=Depends(get_current_user)):
     """
@@ -403,16 +404,12 @@ async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_u
 
     return cr.success(data=record.to_json(schema=OrganizationInviteOutSchema))
 
-
-@router.get("/invitation")
+@router.get("/invitation", response_model=List[InvitationOut])
 async def get_invitations(user=Depends(get_current_user)):
     invitations = await OrganizationInvitation.filter()
-    print(invitations)
 
-    excluded_fields = {"expires_at", "activity_at", "created_at", "updated_at"}
-    return cr.success(
-        data=[inv.model_dump(exclude=excluded_fields) for inv in invitations]
-    )
+    data = [inv.to_json(schema=InvitationOut) for inv in invitations]
+    return cr.success(data=data)
 
 
 @router.post("/invitation/{invitation_id}/reject")
@@ -426,36 +423,6 @@ async def reject_invitation(invitation_id: int, user=Depends(get_current_user)):
         invitation.id, status=InvitationStatus.REJECTED
     )
     return cr.success(data=record)
-
-
-# @router.post("/invitation/{invitation_id}/accept")
-# async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
-
-#     invitation = await OrganizationInvitation.get(invitation_id)
-#     # if not invitation:
-#     #     raise HTTPException(404, "Not Found")
-
-#     if user.email != invitation.email:
-#         raise HTTPException(403, "Don't have authorization")
-
-#     if not invitation:
-#         raise HTTPException(404, "Not found")
-
-#     await OrganizationInvitation.update(invitation.id, status=InvitationStatus.ACCEPTED)
-
-#     member = await OrganizationMember.find_one(
-#         {"organization_id": invitation.organization_id, "user_id": user.id}
-#     )
-
-#     if not member:
-#         member = await OrganizationMember.create(
-#             organization_id=invitation.organization_id, user_id=user.id
-#         )
-
-#     for role_id in invitation.role_ids:
-#         await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
-
-#     return cr.success(data={"message": "Successfully approved"})
 
 
 @router.post("/invitation/{invitation_id}/accept")
@@ -484,6 +451,16 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
     await User.update(user.id, name=invitation.name)
 
     return cr.success(data={"message": "Successfully approved"})
+
+
+@router.delete("/invitations/{invitation_id}")
+async def delete_invitation(invitation_id: int, user=Depends(get_current_user)):
+    """
+    Soft delete an invitation from the organization (tenant-aware).
+    """
+    await OrganizationInvitation.soft_delete(where={"id": invitation_id})
+
+    return cr.success(data={"message": "Invitation successfully deleted"})
 
 
 @router.post("/roles-assign")

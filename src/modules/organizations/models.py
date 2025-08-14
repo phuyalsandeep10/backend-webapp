@@ -97,7 +97,7 @@ class OrganizationRole(TenantModel, table=True):
     organization: Optional["Organization"] = Relationship(back_populates="roles")
 
 
-class OrganizationMember(CommonModel, table=True):
+class OrganizationMember(TenantModel, table=True):
     __tablename__ = "org_members"  # type:ignore
 
     user_id: int = Field(
@@ -177,5 +177,5 @@ class OrganizationInvitation(TenantModel, table=True):
     )
 
     expires_at: datetime = Field(nullable=True)
-    activity_at: Optional[datetime] = Field(default=None, nullable=False)
+    activity_at: Optional[datetime] = Field(default=None, nullable=True)
     token: str = Field(max_length=255, nullable=False)
