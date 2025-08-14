@@ -17,7 +17,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 class CountryAndTimeZoneSupportMigration(BaseMigration):
 
-    table_name = "sys_users"
+    table_name = "sys_organizations"
 
     def __init__(self):
         super().__init__(revision="20250814_033142", down_revision="20250810_070640")
