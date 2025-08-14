@@ -216,7 +216,7 @@ class CustomerChatNamespace(socketio.AsyncNamespace):
         redis = await get_redis()
         conversation_id = data.get("conversation_id")
         if not conversation_id:
-            return
+            return False
 
         await redis_publish(
             channel=get_room_channel(conversation_id),

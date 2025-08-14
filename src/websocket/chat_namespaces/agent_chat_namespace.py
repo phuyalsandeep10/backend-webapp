@@ -81,6 +81,7 @@ class AgentChatNamespace(socketio.AsyncNamespace):
         token = auth.get("token")
 
         user = await get_user_by_token(token)
+
         if not user:
             print("Invalid token provided")
             return False
@@ -117,10 +118,9 @@ class AgentChatNamespace(socketio.AsyncNamespace):
         organization_id = data.get("organization_id")
 
         if not conversation_id:
-            return
+            return False
 
         try:
-            print(f"emit to room conversation {get_room_channel(conversation_id)}")
             channel_name = get_room_channel(conversation_id)
             if not data.get("user_id"):
                 redis = await get_redis()
