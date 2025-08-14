@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from fastapi import status
@@ -5,7 +6,12 @@ from fastapi.exceptions import HTTPException
 from pydantic import BaseModel, EmailStr, Field, ValidationError, model_validator
 from pydantic_core import PydanticCustomError
 
-from src.modules.ticket.enums import PriorityEnum, TicketStatusEnum
+from src.modules.ticket.enums import (
+    PriorityEnum,
+    TicketLogActionEnum,
+    TicketLogEntityEnum,
+    TicketStatusEnum,
+)
 
 
 class AssigneeOut(BaseModel):
@@ -90,7 +96,7 @@ class EditTicketSchema(BaseModel):
     customer_phone: Optional[str] = None
     customer_location: Optional[str] = None
     assignees: Optional[List[int]] = None
-    is_spam: Optional[List[int]] = None
+    is_spam: Optional[bool] = None
 
     model_config = {"extra": "forbid"}
 
@@ -107,22 +113,22 @@ class CreatePrioriySchema(BaseModel):
 class EditTicketPrioritySchema(BaseModel):
     name: Optional[str] = None
     level: Optional[int] = None
-    color: Optional[str] = None
+    fg_color: Optional[str] = None
+    bg_color: Optional[str] = None
 
 
 class CreateTicketStatusSchema(BaseModel):
     name: str
     bg_color: str
     fg_color: str
-    is_default: Optional[bool] = False
     status_category: TicketStatusEnum
     model_config = {"extra": "forbid"}
 
 
 class EditTicketStatusSchema(BaseModel):
     name: Optional[str] = None
-    is_default: Optional[bool] = None
-    color: Optional[str] = None
+    fg_color: Optional[str] = None
+    bg_color: Optional[str] = None
     status_category: Optional[TicketStatusEnum] = None
 
 
@@ -145,15 +151,34 @@ class CreateSLASchema(BaseModel):
 
     model_config = {"extra": "forbid"}
 
+    @model_validator(mode="after")
+    def check_time_negative(self):
+        if self.response_time is not None and self.response_time <= 0:
+            raise PydanticCustomError(
+                "Cannot be negative",
+                "Response time cannot be negative",
+            )
+        if self.resolution_time is not None and self.resolution_time <= 0:
+            raise PydanticCustomError(
+                "Cannot be negative",
+                "Resolution time cannot be negative",
+            )
+        return self
+
 
 class ContactOut(CreateContactSchema):
+    id: int
+
+
+class PriorityOut(CreatePrioriySchema):
     id: int
 
 
 class SLAOut(CreateSLASchema):
     id: int
     issued_by: int
-    created_at: str
+    created_at: datetime
+    priority: PriorityOut
 
 
 class TicketOut(BaseModel):
@@ -164,10 +189,6 @@ class TicketOut(BaseModel):
     sla: SLAOut
     contact: ContactOut
     assignees: AssigneeOut
-
-
-class PriorityOut(CreatePrioriySchema):
-    id: int
 
 
 class TicketStatusOut(CreateTicketStatusSchema):
@@ -183,3 +204,33 @@ class EditTicketSLASchema(BaseModel):
     response_time: Optional[int] = None
     resolution_time: Optional[int] = None
     priority_id: Optional[int] = None
+
+    @model_validator(mode="after")
+    def check_time_negative(self):
+        if self.response_time is not None and self.response_time <= 0:
+            raise PydanticCustomError(
+                "Cannot be negative",
+                "Response time cannot be negative",
+            )
+        if self.resolution_time is not None and self.resolution_time <= 0:
+            raise PydanticCustomError(
+                "Cannot be negative",
+                "Resolution time cannot be negative",
+            )
+        return self
+
+
+class TicketByStatusSchema(BaseModel):
+    status_id: int
+
+    model_config = {"extra": "forbid"}
+
+
+class TicketLogSchema(BaseModel):
+    organization_id: Optional[int] = None
+    ticket_id: Optional[int] = None
+    entity_type: TicketLogEntityEnum
+    action: TicketLogActionEnum
+    description: Optional[str] = None
+    previous_value: Optional[dict] = None
+    new_value: Optional[dict] = None

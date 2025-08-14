@@ -6,8 +6,9 @@ Create Date: 2025-08-01 07:51:57.544097
 
 """
 
-from migrations.base import BaseMigration
 from typing import Sequence, Union
+
+from migrations.base import BaseMigration
 
 revision: str = "20250801_020657"
 down_revision: Union[str, Sequence[str], None] = "20250801_020510"
@@ -41,6 +42,7 @@ class OrganizationMigration(BaseMigration):
         self.string("facebook_username")
         self.string("whatsapp_number")
         self.string("twitter_username")
+        self.string("email_alias", unique=True, nullable=False)
 
 
 def upgrade() -> None:

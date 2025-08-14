@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, List, Optional
 
 import sqlalchemy as sa
+from pydantic import EmailStr
 from sqlmodel import Field, Relationship, Session, SQLModel, select
 
 from src.common.models import CommonModel
@@ -27,6 +28,7 @@ class Organization(CommonModel, table=True):
 
     domain: str = Field(default=None, max_length=255)
     logo: str = Field(default=None, max_length=255, nullable=True)
+    email_alias: EmailStr = Field(nullable=False, unique=True)
 
     identifier: str = Field(default=None, max_length=255, nullable=True)
 

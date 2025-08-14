@@ -3,18 +3,30 @@ from datetime import datetime
 from time import time
 
 from fastapi import HTTPException, status
+from sendgrid import from_email
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
 from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
-from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
+from src.modules.ticket.enums import (
+    TicketAlertTypeEnum,
+    TicketLogActionEnum,
+    WarningLevelEnum,
+)
 from src.modules.ticket.models import TicketSLA
 from src.modules.ticket.models.priority import TicketPriority
 from src.modules.ticket.models.ticket import Ticket, TicketAlert
-from src.modules.ticket.schemas import CreateSLASchema, EditTicketSLASchema, SLAOut
+from src.modules.ticket.schemas import (
+    CreateSLASchema,
+    EditTicketSLASchema,
+    PriorityOut,
+    SLAOut,
+)
 from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 from src.socket_config import alert_ns, sio
+from src.utils.common import extract_subset_from_dict
 from src.utils.exceptions.ticket import TicketSLANotFound
 from src.utils.get_templates import get_templates
 from src.utils.response import CustomResponse as cr
@@ -38,7 +50,10 @@ class TicketSLAServices:
             tenant = TenantEntityValidator()
             await tenant.validate(TicketPriority, payload.priority_id)
 
+            # create and logging
             sla = await TicketSLA.create(**payload.model_dump())
+            await sla.save_to_log(action=TicketLogActionEnum.TICKET_SLA_CREATED)
+
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully registered the Service Level Agreement",
@@ -63,8 +78,20 @@ class TicketSLAServices:
         List all the SLA of the organization
         """
         try:
-            sla_list = await TicketSLA.filter()
-            slas = [s.to_json(SLAOut) for s in sla_list]
+            sla_list = await TicketSLA.filter(
+                related_items=[
+                    selectinload(TicketSLA.priority),
+                    selectinload(TicketSLA.tickets),
+                ]
+            )
+            slas = [
+                s.to_json(
+                    schema=SLAOut,
+                    include_relationships=True,
+                    related_schemas={"priority": PriorityOut},
+                )
+                for s in sla_list
+            ]
 
             return cr.success(
                 status_code=status.HTTP_200_OK,
@@ -124,7 +151,13 @@ class TicketSLAServices:
                 tenant = TenantEntityValidator()
                 await tenant.validate(TicketPriority, data["priority_id"])
 
+            # updating and logging
             await TicketSLA.update(sla_id, **data)
+            await sla.save_to_log(
+                action=TicketLogActionEnum.TICKET_SLA_UPDATED,
+                previous_value=extract_subset_from_dict(sla.to_json(), data),
+                new_value=data,
+            )
 
             return cr.success(message="Successfully updated the ticket sla")
         except Exception as e:
@@ -136,7 +169,15 @@ class TicketSLAServices:
         Soft delete the sla
         """
         try:
+            sla = await TicketSLA.find_one(where={"id": sla_id})
+            if not sla:
+                raise TicketSLANotFound()
+
             await TicketSLA.delete(where={"id": sla_id})
+            await sla.save_to_log(
+                action=TicketLogActionEnum.TICKET_SLA_DELETED,
+                previous_value=sla.to_json(),
+            )
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully deleted the SLA",
@@ -261,11 +302,13 @@ class TicketSLAServices:
         """
         Responsible for sending alert message to all the broadcast via a socket
         """
+        logger.info("Sending the broadcast")
         sc_user_ids = (
             alert_ns.user_ids
         )  # list of user_ids connected to the alertnamespace socket
         receiver_id = [assginee.id for assginee in ticket.assignees]
         receiver_id.append(ticket.created_by_id)
+        logger.info("The receivers", receiver_id)
         for user_id in receiver_id:
             if user_id in sc_user_ids:
                 await sio.emit(
@@ -289,8 +332,18 @@ class TicketSLAServices:
             name="ticket/sla-breach-email.html", content=html_content
         )
 
-        email = NotificationFactory.create("email")
-        email.send(subject="SLA breach", recipients=receivers, body_html=template)
+        logger.info(f"The receivers {receivers} {ticket.sender_domain}")
+        receivers.append("rajipmahato68@gmail.com")
+        for receiver in receivers:
+            email = NotificationFactory.create("email")
+            await email.send_ticket_email(
+                subject="SLA breach",
+                recipients=receiver,
+                body_html=template,
+                from_email=(ticket.sender_domain, ticket.organization.name),
+                ticket=ticket,
+                mail_type=TicketLogActionEnum.SLA_BREACH_EMAIL_SENT,
+            )
 
 
 sla_service = TicketSLAServices()

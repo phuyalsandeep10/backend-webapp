@@ -30,7 +30,6 @@ class TicketStatusMigration(BaseMigration):
         self.string(name="name")
         self.string(name="bg_color")
         self.string(name="fg_color")
-        self.boolean(name="is_default", default=False)
         self.string(name="status_category")
         self.unique_constraint(
             "organization_id",

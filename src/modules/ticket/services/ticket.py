@@ -12,14 +12,22 @@ from src.config.settings import settings
 from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
 from src.modules.team.models import Team
+from src.modules.ticket.enums import TicketLogActionEnum, TicketStatusEnum
 from src.modules.ticket.models import TicketPriority
 from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket, TicketAttachment
-from src.modules.ticket.schemas import CreateTicketSchema, EditTicketSchema
+from src.modules.ticket.schemas import (
+    CreateTicketSchema,
+    EditTicketSchema,
+    TicketByStatusSchema,
+    TicketOut,
+)
 from src.modules.ticket.services.status import ticket_status_service
+from src.utils.common import extract_subset_from_dict
 from src.utils.exceptions.ticket import (
+    TicketAlreadyConfirmed,
     TicketNotFound,
     TicketSLANotFound,
     TicketStatusNotFound,
@@ -49,9 +57,9 @@ class TicketServices:
                 raise TicketSLANotFound(detail="Ticket SLA not found for this priority")
 
             data = payload.model_dump(exclude_none=True)
-
             data["status_id"] = sts.id
             data["sla_id"] = sla.id
+
             if "assignees" in data:
                 data["assignees"] = await self.get_assigned_members_by_id(
                     data["assignees"]
@@ -61,12 +69,14 @@ class TicketServices:
 
             # generating the confirmation token using secrets
             data["confirmation_token"] = await self.generate_secret_tokens()
-
+            # attachments are needed after creating ticket
             attachments = data.pop("attachments", None)
 
-            # creating the ticket
+            # creating the ticket and saving in the log
             ticket = await Ticket.create(**data)
-            logger.info("The tick rajib", ticket, data)
+            await ticket.save_to_log(
+                action=TicketLogActionEnum.TICKET_CREATED,
+            )
 
             if attachments:
                 for attachment in attachments:
@@ -85,11 +95,11 @@ class TicketServices:
             logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                message="Error while creating a ticket",
+                message=f"{e.detail if e.detail else str(e)}",
                 data=str(e),
             )
 
-    async def list_tickets(self, user):
+    async def list_tickets(self):
         """
         List all the tickets of the user organization
         """
@@ -124,9 +134,8 @@ class TicketServices:
         List the particular ticket of the organization by id
         """
         try:
-            organization_id = user.attributes.get("organization_id")
             ticket = await Ticket.find_one(
-                where={"id": ticket_id, "organization_id": organization_id},
+                where={"id": ticket_id},
                 options=[
                     selectinload(Ticket.sla),
                     selectinload(Ticket.assignees),
@@ -138,8 +147,9 @@ class TicketServices:
                     selectinload(Ticket.attachments),
                 ],
             )
-            if ticket is None:
-                return cr.error(message="Not found")
+            if not ticket:
+                raise TicketNotFound()
+
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully listed the ticket",
@@ -154,11 +164,16 @@ class TicketServices:
 
     async def delete_ticket(self, ticket_id: int, user):
         try:
+            ticket = await Ticket.find_one(where={"id": ticket_id})
+            if not ticket:
+                raise TicketNotFound()
             await Ticket.soft_delete(
                 where={
-                    "id": ticket_id,
+                    "id": ticket.id,
                 }
             )
+            # saving to the log
+            await ticket.save_to_log(action=TicketLogActionEnum.TICKET_SOFT_DELETED)
             return cr.success(
                 status_code=status.HTTP_200_OK,
                 message="Successfully deleted the ticket",
@@ -172,19 +187,37 @@ class TicketServices:
 
     async def confirm_ticket(self, ticket_id: int, token: str):
         try:
-            ticket = await Ticket.find_one(
+            ticket = await Ticket.find_one_without_tenant(
                 where={"id": ticket_id, "confirmation_token": token}
             )
             if ticket is None:
                 raise TicketNotFound("Invalid credentials")
+
+            already_opened = await Ticket.find_one_without_tenant(
+                where={
+                    "id": ticket_id,
+                    "confirmation_token": token,
+                    "opened_at": {"ne": None},
+                }
+            )
+
+            if already_opened:
+                raise TicketAlreadyConfirmed()
+
             # to find which is the open status category status defined the organization it could be in-progress, or open,ongoing
             open_status_category = (
                 await ticket_status_service.get_status_category_by_name("open")
             )
-            await Ticket.update(
-                id=ticket.id,
-                status_id=open_status_category.id,
-                opened_at=datetime.utcnow(),
+            payload = {
+                "status_id": open_status_category.id,
+                "opened_at": datetime.utcnow(),
+            }
+            # updating and saving to the log
+            await Ticket.update_without_tenant(id=ticket.id, **payload)
+            await ticket.save_to_log(
+                action=TicketLogActionEnum.TICKET_CONFIRMED,
+                previous_value=extract_subset_from_dict(ticket.to_json(), payload),
+                new_value={**payload, "opened_at": payload["opened_at"].isoformat()},
             )
             return cr.success(
                 message="Your ticket has been activated.", data={"id": ticket.id}
@@ -192,7 +225,46 @@ class TicketServices:
 
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Invalid confirmation token")
+            return cr.error(message=f"{e.detail if e.detail else str(e) }", data=str(e))
+
+    async def list_tickets_by_status(self, payload: TicketByStatusSchema):
+        """
+        List the tickets on the basis of status id
+        """
+        try:
+            # validator so that it doesn't fetch other organization status tickets
+            tenant = TenantEntityValidator()
+            await tenant.validate(TicketStatus, payload.status_id)
+
+            tickets = await Ticket.filter(
+                where={"status_id": payload.status_id},
+                related_items=[
+                    selectinload(Ticket.sla),
+                    selectinload(Ticket.assignees),
+                    selectinload(Ticket.priority),
+                    selectinload(Ticket.status),
+                    selectinload(Ticket.customer),
+                    selectinload(Ticket.created_by),
+                    selectinload(Ticket.department),
+                    selectinload(Ticket.attachments),
+                ],
+            )
+
+            # return empty list if there is none, instead of throwing error
+            if not tickets:
+                return cr.success(
+                    message="Successfully fetched tickets by the status", data=[]
+                )
+
+            return cr.success(
+                message="Successfully fetched tickets by the status",
+                data=[ticket.to_dict() for ticket in tickets],
+            )
+
+        except Exception as e:
+            return cr.error(
+                message="Error while listing the tickets by status", data=str(e)
+            )
 
     async def edit_ticket(self, ticket_id: int, payload: EditTicketSchema, user):
         """
@@ -234,7 +306,13 @@ class TicketServices:
             if "department_id" in data:
                 await tenant.validate(Team, data["department_id"])
 
+            # updating and logging
             await Ticket.update(ticket.id, **data)
+            await ticket.save_to_log(
+                action=TicketLogActionEnum.TICKET_UPDATED,
+                previous_value=extract_subset_from_dict(ticket.to_json(), data),
+                new_value=data,
+            )
 
             return cr.success(
                 message="Successfully updated the ticket", data=ticket.to_dict()
@@ -249,12 +327,10 @@ class TicketServices:
         Returns the default tiket status set by the organization else move to default ticket status
         """
         sts = await TicketStatus.find_one(
-            where={
-                "is_default": True,
-            }
+            where={"status_category": TicketStatusEnum.PENDING}
         )
         if not sts:
-            raise TicketStatusNotFound(detail="Default status has not been set")
+            raise TicketStatusNotFound(detail="Pending status has not been set")
 
         return sts
 
@@ -302,44 +378,35 @@ class TicketServices:
         """
         Sends email for the confirmation
         """
+
         tick = await Ticket.find_one(
             where={"id": ticket.id},
-            related_items=[selectinload(Ticket.customer)],
+            related_items=[
+                selectinload(Ticket.organization),
+                selectinload(Ticket.customer),
+            ],
         )
         if not tick:
             raise TicketNotFound()
-
         receiver = tick.customer.email if tick.customer_id else tick.customer_email
         name = tick.customer.name if tick.customer_id else tick.customer_name
-        html_content = {"name": name, "ticket": tick, "settings": settings}
+        html_content = {
+            "name": name,
+            "ticket": tick,
+            "settings": settings,
+        }
         template = await get_templates(
             name="ticket/ticket-confirmation-email.html", content=html_content
         )
-
         email = NotificationFactory.create("email")
-        email.send(
-            subject="Ticket confirmation", recipients=[receiver], body_html=template
+        await email.send_ticket_email(
+            from_email=(tick.sender_domain, tick.organization.name),
+            subject="Ticket confirmation",
+            recipients=receiver,
+            body_html=template,
+            ticket=tick,
+            mail_type=TicketLogActionEnum.CONFIRMATION_EMAIL_SENT,
         )
-
-    async def get_confirmation_content(self, ticket: Ticket):
-        """
-        Returns the simple confirmation html
-        """
-        content = f"""
-
-        <p>Hello {name}</p>,
-
-        <p>Your ticket (ID: {ticket.id}) has been successfully created. Please confirm your ticket </p>
-        <div><h1>Please verify the ticket confirmation</h1><a href='{settings.FRONTEND_URL}/ticket-confirm/{ticket.id}/{ticket.confirmation_token}'>Verify ticket</a></div>
-
-
-        Thank you for contacting us!
-
-        Best regards,  
-        Support Team
-        """
-
-        return content
 
 
 ticket_services = TicketServices()

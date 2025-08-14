@@ -1,23 +1,159 @@
-<html>
-  <head> </head>
-
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ticket Confirmation</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: #f8fafc;
+        padding: 40px 20px;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      .title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #8b5cf6;
+        text-align: center;
+        margin-bottom: 40px;
+      }
+      .card {
+        background: white;
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
+      }
+      .greeting {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        color: #030303;
+      }
+      .greeting .name {
+        color: #8b5cf6;
+        font-weight: 600;
+      }
+      .name {
+        text-transform: capitalize;
+      }
+      .message {
+        color: #030303;
+        margin-bottom: 24px;
+        font-size: 1rem;
+        font-weight: 600;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .ticket-details {
+        margin-bottom: 32px;
+        color: #030303;
+      }
+      .ticket-details h3 {
+        color: #030303;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+      .ticket-details ul {
+        color: #030303;
+        list-style: none;
+        padding-left: 0;
+      }
+      .ticket-details li {
+        color: #030303;
+        margin-bottom: 8px;
+        position: relative;
+        padding-left: 16px;
+      }
+      .ticket-details li::before {
+        content: "•";
+        color: #030303;
+        position: absolute;
+        left: 0;
+      }
+      .confirm-button {
+        background: #8b5cf6;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: 24px;
+        transition: background-color 0.2s;
+      }
+      .confirm-button:hover {
+        background: #7c3aed;
+      }
+      .support-text {
+        color: #030303;
+        margin-bottom: 20px;
+        font-size: 1rem;
+      }
+      .welcome-text {
+        color: #030303;
+        margin-bottom: 8px;
+        font-size: 1rem;
+      }
+      .team-signature {
+        color: #030303;
+        font-size: 1rem;
+        font-weight: 500;
+      }
+      @media (max-width: 640px) {
+        .title {
+          font-size: 2rem;
+        }
+        .card {
+          padding: 24px;
+        }
+        body {
+          padding: 20px 16px;
+        }
+      }
+    </style>
+  </head>
   <body>
-    <p>Hello {{name}}</p>
-    <p>
-      Your ticket (ID: {{ticket["id"]}}) has been successfully created. Please
-      confirm your ticket
-    </p>
-    <div>
-      <h1>Please verify the ticket confirmation</h1>
-      <a
-        href="{{settings.FRONTEND_URL}}/ticket-confirm/{{ticket['id']}}/{{ticket.confirmation_token}}"
-        >Verify ticket</a
-      >
+    <div class="container">
+      <h1 class="title">Ticket Confirmation</h1>
+      <div class="card">
+        <p class="greeting">Hello <span class="name">{{name}}</span>,</p>
+        <p class="message">
+          Your query has been successfully received and is currently in Chatboq
+          system. Our support team is awaiting for your confirmation. Please
+          confirm! to proceed.
+        </p>
+        <div class="ticket-details">
+          <h3>Ticket Details:</h3>
+          <ul>
+            <li>Ticket ID: {{ticket["id"]}}</li>
+            <li>Subject: {{ticket["title"]}}</li>
+            <li>Created On: {{ticket["created_at"]}}</li>
+          </ul>
+        </div>
+        <a
+          href="{{settings.FRONTEND_URL}}/ticket-confirm/{{ticket['id']}}/{{ticket.confirmation_token}}"
+        >
+          <button class="confirm-button">Confirm Ticket</button>
+        </a>
+        <p class="support-text">
+          If you have any questions or need help, feel free to reply to this
+          email or contact our support team anytime.
+        </p>
+        <p class="welcome-text">Welcome aboard! :rocket:</p>
+        <p class="team-signature">The Chatboq Team</p>
+      </div>
     </div>
-
-    <p>Thank you for contacting us!</p>
-
-    <p>Best regards,</p>
-    <p>Support Team</p>
   </body>
 </html>
