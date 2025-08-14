@@ -84,17 +84,19 @@ class Organization(CommonModel, table=True):
 
 
 class OrganizationRole(TenantModel, table=True):
-    __tablename__ = "org_roles"  # type: ignore
+    __tablename__ = "org_roles"
 
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     identifier: str = Field(default=None, max_length=500, nullable=False, index=True)
 
     role_permissions: list["RolePermission"] = Relationship(back_populates="org_role")
-
     member_roles: list["OrganizationMemberRole"] = Relationship(back_populates="role")
-
     organization: Optional["Organization"] = Relationship(back_populates="roles")
+
+    invitation_roles: List["OrganizationInvitationRole"] = Relationship(
+        back_populates="role", sa_relationship_kwargs={"passive_deletes": True}
+    )
 
 
 class OrganizationMember(TenantModel, table=True):
@@ -132,8 +134,7 @@ class OrganizationMember(TenantModel, table=True):
 
 class OrganizationMemberRole(CommonModel, table=True):
     __tablename__ = "org_member_roles"  # type:ignore
-    # member_id: int = Field(foreign_key="org_members.id", nullable=False)
-    # role_id: int = Field(foreign_key="org_roles.id", nullable=False)
+
     member_id: int = Field(
         sa_column=Column(
             Integer, ForeignKey("org_members.id", ondelete="CASCADE"), nullable=False
@@ -153,8 +154,8 @@ class OrganizationMemberRole(CommonModel, table=True):
     )
 
 
-class OrganizationInvitation(TenantModel, table=True):
-    __tablename__ = "org_invitations"  # type:ignore
+class OrganizationInvitation(CommonModel, table=True):
+    __tablename__ = "org_invitations"
 
     email: str = Field(max_length=255, index=True)
     name: str = Field(max_length=255, nullable=False)
@@ -167,8 +168,6 @@ class OrganizationInvitation(TenantModel, table=True):
 
     status: str = Field(default=InvitationStatus.PENDING, max_length=50, nullable=False)
 
-    role_ids: list[int] = Field(default_factory=list, sa_column=sa.Column(sa.JSON))
-
     invited_by: Optional["User"] = Relationship(
         sa_relationship_kwargs={
             "foreign_keys": "[OrganizationInvitation.invited_by_id]",
@@ -179,3 +178,32 @@ class OrganizationInvitation(TenantModel, table=True):
     expires_at: datetime = Field(nullable=True)
     activity_at: Optional[datetime] = Field(default=None, nullable=True)
     token: str = Field(max_length=255, nullable=False)
+
+    invitation_roles: List["OrganizationInvitationRole"] = Relationship(
+        back_populates="invitation", sa_relationship_kwargs={"passive_deletes": True}
+    )
+
+
+class OrganizationInvitationRole(CommonModel, table=True):
+    __tablename__ = "org_invitation_roles"
+
+    invitation_id: int = Field(
+        sa_column=Column(
+            Integer,
+            ForeignKey("org_invitations.id", ondelete="CASCADE"),
+            nullable=False,
+        )
+    )
+
+    role_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("org_roles.id", ondelete="SETNULL"), nullable=False
+        )
+    )
+
+    invitation: Optional["OrganizationInvitation"] = Relationship(
+        back_populates="invitation_roles", passive_deletes=True
+    )
+    role: Optional["OrganizationRole"] = Relationship(
+        back_populates="invitation_roles", passive_deletes=True
+    )

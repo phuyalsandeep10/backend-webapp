@@ -25,9 +25,7 @@ class OrganizationRoleSchema(BaseModel):
     description: str | None = Field(
         None, max_length=500, description="Description of the role"
     )
-    # permissions: List[UpdateRoleInSchema] = []
 
-    # permissions: list[str] = Field([])
 
 
 class PermissionSchema(BaseModel):
@@ -112,10 +110,11 @@ class CreateRoleOutSchema(BaseModel):
 
 class InvitationOut(BaseModel):
     id: int
-    # name: str
+    name: str
     email: str
     status: str
     invited_by_id: int
-    role_ids: List[int]
+    role_ids: List[int] = []
+    role_names: List[str] = []
     created_at: datetime
-    # role_names: List[str]
+

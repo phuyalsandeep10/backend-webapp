@@ -28,7 +28,7 @@ class OrganizationinvitationMigration(BaseMigration):
         self.foreign("invited_by_id", "sys_users", ondelete="CASCADE")
         self.date_time("expires_at", nullable=False)
         self.date_time("activity_at", nullable=True)
-        self.json("role_ids", nullable=False, default=[])
+        # self.json("role_ids", nullable=False, default=[])
         self.string("token", nullable=False)
 
 

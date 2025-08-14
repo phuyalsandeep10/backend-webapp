@@ -132,6 +132,3 @@ async def get_team_members(team_id: int):
     )
 
     return cr.success(data=[member.to_json() for member in members])
-
-
-

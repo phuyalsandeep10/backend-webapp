@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime, timedelta
 from sqlmodel import text
 from sqlalchemy.orm import selectinload
@@ -20,6 +20,7 @@ from src.models import (
     OrganizationMemberRole,
     OrganizationRole,
     User,
+    OrganizationInvitationRole,
 )
 
 from src.db.config import async_session
@@ -335,6 +336,7 @@ async def update_role(
     updated_role = await OrganizationRole.find_one(where={"id": role_id})
     return cr.success(data=updated_role.to_json(CreateRoleOutSchema))
 
+
 @router.get("/roles")
 async def get_roles(user=Depends(get_current_user)):
     """
@@ -385,14 +387,19 @@ async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_u
     )
 
     if record:
-        raise HTTPException(400, "An invitation already exists for this email.")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An invitation already exists for this email.",
+        )
 
     if user.email == body.email:
-        raise HTTPException(403, "You can't invite yourself.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You can't invite yourself."
+        )
 
     expires_at = datetime.utcnow() + timedelta(days=7)
 
-    record = await OrganizationInvitation.create(
+    invitations = await OrganizationInvitation.create(
         **body.model_dump(),
         invited_by_id=user.id,
         status="pending",
@@ -400,9 +407,15 @@ async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_u
         expires_at=expires_at,
     )
 
+    for role_id in body.role_ids:
+        await OrganizationInvitationRole.create(
+            invitation_id=invitations.id, role_id=role_id
+        )
+
     send_invitation_email.delay(email=body.email)
 
-    return cr.success(data=record.to_json(schema=OrganizationInviteOutSchema))
+    return cr.success(data=None, message="Invitation sent successfully")
+
 
 @router.get("/invitation", response_model=List[InvitationOut])
 async def get_invitations(user=Depends(get_current_user)):
@@ -427,13 +440,16 @@ async def reject_invitation(invitation_id: int, user=Depends(get_current_user)):
 
 @router.post("/invitation/{invitation_id}/accept")
 async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
-    invitation = await OrganizationInvitation.get(invitation_id)
+    invitation = await OrganizationInvitation.find_one(
+        where={"id": invitation_id},
+        related_items=[selectinload(OrganizationInvitation.role_ids)],
+    )
 
     if not invitation:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Invitation not found")
 
     if user.email != invitation.email:
-        raise HTTPException(403, "Don't have authorization")
+        raise HTTPException(403, "Unauthorized to accept this invitation")
 
     await OrganizationInvitation.update(invitation.id, status=InvitationStatus.ACCEPTED)
 
@@ -445,12 +461,14 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
             organization_id=invitation.organization_id, user_id=user.id
         )
 
-    for role_id in invitation.role_ids:
-        await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
+    if invitation.role_ids:
+        for role_id in invitation.role_ids:
+            await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
 
+    # Update user info
     await User.update(user.id, name=invitation.name)
 
-    return cr.success(data={"message": "Successfully approved"})
+    return cr.success(data={"message": "Invitation successfully accepted"})
 
 
 @router.delete("/invitations/{invitation_id}")

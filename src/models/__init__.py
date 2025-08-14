@@ -21,6 +21,7 @@ from src.modules.organizations.models import (
     OrganizationMember,
     OrganizationMemberRole,
     OrganizationRole,
+    OrganizationInvitationRole,
 )
 
 from src.modules.staff_managemet.models import (
@@ -48,6 +49,7 @@ __all__ = [
     "OrganizationMember",
     "OrganizationMemberRole",
     "OrganizationInvitation",
+    "OrganizationInvitationRole",
     "Customer",
     "Conversation",
     "ConversationMember",
