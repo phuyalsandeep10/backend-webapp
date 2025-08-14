@@ -12,12 +12,14 @@ def user_notification_group(org_id: int):
 def conversation_group(conversationId: int):
     return f"conversation-{conversationId}"
 
+
+def user_conversation_group(conversationId: int):
+    return f"users-conversation-{conversationId}"
+
+
 def get_room_channel(conversation_id: int) -> str:
     print(f"get_room_channel called with conversation_id: {conversation_id}")
     return f"conversation-{conversation_id}"
-
-
-
 
 
 async def save_message_db(conversation_id: int, data: dict, user_id=None):
@@ -42,3 +44,7 @@ async def save_message_db(conversation_id: int, data: dict, user_id=None):
             file_size=file.get("file_size"),
         )
     return msg
+
+
+def user_join_conversation(conversationId: int):
+    return f"user:conversation:{conversationId}"

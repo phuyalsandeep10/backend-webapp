@@ -7,6 +7,7 @@ from src.websocket.chat_utils import (
     user_notification_group,
     customer_notification_group,
     conversation_group,
+    user_conversation_group,
 )
 import socketio
 import json
@@ -50,7 +51,7 @@ async def redis_listener(sio):
         if message["type"] != "pmessage":
             print(f"Received on {message['channel']}: {message['data']}")
         channel = message["channel"]
-        print(f"channel {channel}")
+
         if isinstance(channel, bytes):
             try:
                 channel = channel.decode("utf-8")
@@ -79,41 +80,71 @@ async def redis_listener(sio):
             print("json decorder error")
             # print(f"type of data {data}")
             payload = {"raw": data}
-        if payload.get('raw'):
-            payload = payload.get('raw')
+        if payload.get("raw"):
+            payload = payload.get("raw")
         print(f"payload {payload}")
 
         # print(f" Received from Redis | Channel: {channel} | Data: {payload}")
 
         # Example: route message to all clients in that conversation
 
-  
+        if channel.startswith("customer-message"):
+            conversation_id = payload.get("conversation_id")
+            event = payload.get("event", "message")
+            room_name = user_conversation_group(conversation_id)
+            print(f"sending message to agent with conversation {conversation_id}")
+            await sio.emit(
+                event,
+                payload,
+                room=room_name,
+                namespace="/agent-chat",
+            )
 
+        if channel == "user-message-notification":
+            print("--user message notification--")
+            org_id = payload.get("organization_id")
+            event = payload.get("event")
+            room_name = user_notification_group(org_id)
+            await sio.emit(event, payload, room=room_name, namespace="/agent-chat")
+
+        if channel.startswith("user-message"):
+            conversation_id = payload.get("conversation_id")
+            # conversation_id = channel.replace("conversation-", "")
+            event = payload.get("event", "message")
+            room_name = conversation_group(conversation_id)
+            print(f"sending message to agent with conversation {conversation_id}")
+            await sio.emit(
+                event,
+                payload,
+                room=room_name,
+                namespace="/chat",
+            )
 
         if channel.startswith("conversation-"):
             conversation_id = channel.replace("conversation-", "")
             event = payload.get("event", "message")
             room_name = conversation_group(conversation_id)
-           
 
             # if not is_room_empty(sio, namespace, room_name) or payload.get("event") == "typing":
             print(f"conversation emit to room {room_name}")
             await sio.emit(
-                    event,
-                    payload,
-                    room=room_name,
-                    namespace="/chat",
+                event,
+                payload,
+                room=room_name,
+                namespace="/chat",
             )
-            
-            
 
+        if channel == "sla_notification":
+            organization_id = payload.get("organization_id")
+            room_name = user_notification_group(organization_id)
+            await sio.emit
         # Example: handle org-level notifications
         elif ":user_notification" in channel:
             print("user notification subscribe")
-            
+
             org_id = payload.get("organization_id")
             event = payload.get("event", "notification")
-   
+
             room = user_notification_group(org_id)
             print(f"room {room}")
             print(f"event {event}")
@@ -137,4 +168,4 @@ def is_room_empty(sio, namespace, room_name):
     room_dict = sio.manager.rooms.get(namespace, {})
     # Get the room members set/dict
     members = room_dict.get(room_name)
-    return not members 
+    return not members
