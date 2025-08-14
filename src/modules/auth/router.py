@@ -25,12 +25,18 @@ from .schema import (
     RefreshTokenSchema,
     VerifyTwoFAOtpSchema,
     UserSchema,
+    UserProfileUpdateSchema,
     ValidateEmailSchema,
     VerifyEmailEnum,
     ResendVerificationSchema,
 )
 from src.utils.response import CustomResponse as cr
 from src.utils.common import get_location
+from src.utils.exceptions.auth import (
+    UserNotFoundException,
+    NoDataToUpdateException,
+    UserUpdateFailedException
+)
 from .models import User, EmailVerification, RefreshToken
 from src.utils.common import is_production_env
 
@@ -395,6 +401,35 @@ async def get_invitations(user=Depends(get_current_user)):
     data = await OrganizationInvitation.filter(where={"email": user.email})
     return cr.success(data=data)
 
+@router.patch("/profile")
+async def update_user_profile(
+    profile_data: UserProfileUpdateSchema,
+    user=Depends(get_current_user)
+):
+    """Update user profile information(partial update)"""
+    
+    current_user = await User.find_one(where={"email": user.email})
+    
+    if not current_user:
+        raise UserNotFoundException()
+    
+    # Only update fields that were provided
+    update_data = profile_data.dict(exclude_unset=True)
+
+    if not update_data:
+        raise NoDataToUpdateException()
+        
+    # Updated user
+    updated_user = await User.update(current_user.id, **update_data)
+    
+    if not updated_user:
+        raise UserUpdateFailedException()
+    
+    return cr.success(
+        data={"user": updated_user.to_json(schema=UserSchema)},
+        message="Profile updated successfully"
+    )
+
 
 @router.get("/oauth/{provider}")
 async def oauth_login(request: Request, provider: str):
@@ -427,39 +462,44 @@ async def oauth_callback(request: Request, provider: ProviderEnum):
 
     if provider not in ["google", "apple"]:
         return cr.error(data={"success": False}, message="Unsupported provider")
-    client = getattr(oauth, provider)
+    
+    try:
+        client = getattr(oauth, provider)
 
-    token = await client.authorize_access_token(request)
+        token = await client.authorize_access_token(request)
 
-    userinfo = (
-        await client.parse_id_token(request, token)
-        if provider == "apple"
-        else token.get("userinfo")
-    )
-    # Fallback for Apple: userinfo may be in token['id_token'] (decode if needed)
-    # Fallback for Google: userinfo may be in token['userinfo'] or fetch from userinfo_endpoint
-
-    # Extract user info (adjust as needed)
-    email = userinfo.get("email")
-    name = userinfo.get("name") or userinfo.get("email")
-    image = userinfo.get("picture", "")
-
-    # Your user creation/login logic here
-    user = await User.find_one(where={"email": email})
-
-    if not user:
-        user = await User.create(
-            email=email,
-            name=name,
-            image=image,
-            email_verified_at=datetime.utcnow(),
-            password="",
+        userinfo = (
+            await client.parse_id_token(request, token)
+            if provider == "apple"
+            else token.get("userinfo")
         )
+        # Fallback for Apple: userinfo may be in token['id_token'] (decode if needed)
+        # Fallback for Google: userinfo may be in token['userinfo'] or fetch from userinfo_endpoint
 
-    tokens = await create_token(user)
-    redirect_url = f"{settings.FRONTEND_URL}/login?access_token={tokens.get('access_token')}&refresh_token={tokens.get('refresh_token')}"
+        # Extract user info (adjust as needed)
+        email = userinfo.get("email")
+        name = userinfo.get("name") or userinfo.get("email")
+        image = userinfo.get("picture", "")
 
-    return RedirectResponse(redirect_url)
+        # Your user creation/login logic here
+        user = await User.find_one(where={"email": email})
+
+        if not user:
+            user = await User.create(
+                email=email,
+                name=name,
+                image=image,
+                email_verified_at=datetime.utcnow(),
+                password="",
+            )
+
+        tokens = await create_token(user)
+        redirect_url = f"{settings.FRONTEND_URL}/login?access_token={tokens.get('access_token')}&refresh_token={tokens.get('refresh_token')}"
+
+        return RedirectResponse(redirect_url)
+    except Exception as e:
+        redirect_url = f"{settings.FRONTEND_URL}/login"
+        return RedirectResponse(redirect_url)
 
 
 @router.post("/2fa-otp/generate")

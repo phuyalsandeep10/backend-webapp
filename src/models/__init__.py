@@ -29,6 +29,8 @@ from src.modules.ticket.models.ticket_log import TicketLog
 
 # Import chat models
 
+from .countries import Country
+from .timezones import Timezone
 
 # Import admin models
 # from src.modules.admin.models import Admin
@@ -57,5 +59,7 @@ __all__ = [
     "TicketSLA",
     "TicketLog",
     "CustomerVisitLogs",
+    "Country",
+    "Timezone"
     # "Admin"
 ]

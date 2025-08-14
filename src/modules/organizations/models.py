@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from src.modules.ticket.models.priority import TicketPriority
     from src.modules.ticket.models.status import TicketStatus
     from src.modules.ticket.models.ticket import Ticket
+    from src.modules.common.models import Country, Timezone #type:ignore
 
 
 class Organization(CommonModel, table=True):
@@ -36,6 +37,9 @@ class Organization(CommonModel, table=True):
         default=None,
     )
 
+    country_id: Optional[int] = Field(default=None, foreign_key="sys_countries.id")
+    timezone_id: Optional[int] = Field(default=None, foreign_key="sys_timezones.id")
+
     twitter_username: Optional[str] = Field(default=None, max_length=255, nullable=True)
     facebook_username: Optional[str] = Field(default=None, max_length=255)
     whatsapp_number: Optional[str] = Field(default=None, max_length=255)
@@ -49,6 +53,9 @@ class Organization(CommonModel, table=True):
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
 
+    country: Optional["Country"] = Relationship()
+    timezone: Optional["Timezone"] = Relationship()
+    
     ticket_priorities: List["TicketPriority"] = Relationship(
         back_populates="organization"
     )
