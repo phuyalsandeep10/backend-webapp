@@ -193,7 +193,7 @@ default_ticket_sla2 = [
 
 async def priority_seed():
     for i in priorities:
-        record = await TicketPriority.find_one(
+        record = await TicketPriority.find_one_without_tenant(
             where={
                 "name": {"mode": "insensitive", "value": i["name"]},
                 "organization_id": i["organization_id"],
@@ -233,7 +233,7 @@ async def priority_seed():
 
 async def ticket_status_seed():
     for i in status:
-        record = await TicketStatus.find_one(
+        record = await TicketStatus.find_one_without_tenant(
             where={
                 "name": {"mode": "insensitive", "value": i["name"]},
                 "organization_id": i["organization_id"],
@@ -253,7 +253,7 @@ async def ticket_status_seed():
             print("Status 1 already created")
 
     for i in status2:
-        record = await TicketStatus.find_one(
+        record = await TicketStatus.find_one_without_tenant(
             where={
                 "name": {"mode": "insensitive", "value": i["name"]},
                 "organization_id": i["organization_id"],
@@ -275,7 +275,7 @@ async def ticket_status_seed():
 
 async def sla_seed_dummy():
     for i in default_ticket_sla:
-        record = await TicketSLA.find_one(
+        record = await TicketSLA.find_one_without_tenant(
             where={
                 "name": {"mode": "insensitive", "value": i["name"]},
                 "organization_id": i["organization_id"],
@@ -293,7 +293,7 @@ async def sla_seed_dummy():
         else:
             print("Test TicketSLA 1 already exists")
     for i in default_ticket_sla2:
-        record = await TicketSLA.find_one(
+        record = await TicketSLA.find_one_without_tenant(
             where={
                 "name": {"mode": "insensitive", "value": i["name"]},
                 "organization_id": i["organization_id"],

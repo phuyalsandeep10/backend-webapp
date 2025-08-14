@@ -381,8 +381,10 @@ class TenantModel(CommonModel):
     async def create(cls: Type[T], **kwargs) -> T:
         organization_id = TenantContext.get()
         user_id = UserContext.get()
-        kwargs["organization_id"] = organization_id
-        kwargs["created_by_id"] = user_id
+        if "organization_id" not in kwargs:  # to prevent overriding
+            kwargs["organization_id"] = organization_id
+        if "created_by_id" not in kwargs:
+            kwargs["created_by_id"] = organization_id
 
         obj = await super().create(**kwargs)
         return obj
@@ -424,23 +426,30 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> Optional[T]:
         organization_id = TenantContext.get()
-        user_id = UserContext.get()
         where["organization_id"] = organization_id
-        if (
-            not organization_id and not user_id
-        ):  # email confirmation, the client neither have organization_id nor user_id
-            del where["organization_id"]
 
+        return await super().find_one(where, joins, options, related_items)
+
+    @classmethod
+    async def find_one_without_tenant(
+        cls: Type[T],
+        where: dict = {},
+        joins: Optional[list[Any]] = None,
+        options: Optional[list[Any]] = None,
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
+    ) -> Optional[T]:
         return await super().find_one(where, joins, options, related_items)
 
     @classmethod
     async def update(cls: Type[T], id: int, **kwargs) -> Optional[T]:
         organization_id = TenantContext.get()
         user_id = UserContext.get()
-        if organization_id:
-            kwargs["organization_id"] = organization_id
-        if user_id:
-            kwargs["updated_by_id"] = user_id
+        kwargs["organization_id"] = organization_id
+        kwargs["updated_by_id"] = user_id
+        return await super().update(id, **kwargs)
+
+    @classmethod
+    async def update_without_tenant(cls: Type[T], id: int, **kwargs) -> Optional[T]:
         return await super().update(id, **kwargs)
 
     @classmethod

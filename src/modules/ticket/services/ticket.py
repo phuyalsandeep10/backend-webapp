@@ -187,13 +187,13 @@ class TicketServices:
 
     async def confirm_ticket(self, ticket_id: int, token: str):
         try:
-            ticket = await Ticket.find_one(
+            ticket = await Ticket.find_one_without_tenant(
                 where={"id": ticket_id, "confirmation_token": token}
             )
             if ticket is None:
                 raise TicketNotFound("Invalid credentials")
 
-            already_opened = await Ticket.find_one(
+            already_opened = await Ticket.find_one_without_tenant(
                 where={
                     "id": ticket_id,
                     "confirmation_token": token,
@@ -213,7 +213,7 @@ class TicketServices:
                 "opened_at": datetime.utcnow(),
             }
             # updating and saving to the log
-            await Ticket.update(id=ticket.id, **payload)
+            await Ticket.update_without_tenant(id=ticket.id, **payload)
             await ticket.save_to_log(
                 action=TicketLogActionEnum.TICKET_CONFIRMED,
                 previous_value=extract_subset_from_dict(ticket.to_json(), payload),

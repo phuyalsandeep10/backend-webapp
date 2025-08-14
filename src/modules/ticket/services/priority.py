@@ -37,15 +37,24 @@ class TicketPriorityService:
         try:
             for d in payload:
                 data = d.model_dump()
-                record = await TicketPriority.find_one(
+                same_name = await TicketPriority.find_one(
+                    where={
+                        "name": {"mode": "insensitive", "value": data["name"]},
+                    }
+                )
+                same_name_and_level = await TicketPriority.find_one(
                     where={
                         "name": {"mode": "insensitive", "value": data["name"]},
                         "level": data["level"],
                     }
                 )
-                if record:
+                if same_name:
                     raise TicketPriorityExists(
-                        detail="Ticket priority with this name or level already exists"
+                        detail="Ticket priority with this name already exists"
+                    )
+                if same_name_and_level:
+                    raise TicketPriorityExists(
+                        detail="Ticket priority with this name and level already exists"
                     )
 
                 # saving and logging
@@ -66,7 +75,7 @@ class TicketPriorityService:
             )
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Error while creating priorities", data=str(e))
+            return cr.error(message=f"{e.detail if e.detail else str(e)}", data=str(e))
 
     async def get_priority(self, priority_id: int, user):
         """

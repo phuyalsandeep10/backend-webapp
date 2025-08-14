@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, ClassVar, List
 
-from sqlmodel import Relationship, UniqueConstraint
+from sqlmodel import Relationship, UniqueConstraint, func
 
 import src.modules.ticket.services.mixins as Mixin
 from src.common.models import TenantModel
@@ -18,6 +18,15 @@ class TicketPriority(TenantModel, Mixin.LoggingMixin, table=True):
     """
 
     __tablename__ = "ticket_priority"  # type:ignore
+    entity_type: ClassVar[TicketLogEntityEnum] = TicketLogEntityEnum.TICKET_PRIORITY
+    name: str
+    level: int
+    bg_color: str
+    fg_color: str
+    tickets: List["Ticket"] = Relationship(back_populates="priority")
+    sla: "TicketSLA" = Relationship(back_populates="priority")
+    organization: "Organization" = Relationship(back_populates="ticket_priorities")
+
     __table_args__ = (
         UniqueConstraint(
             "organization_id",
@@ -30,15 +39,12 @@ class TicketPriority(TenantModel, Mixin.LoggingMixin, table=True):
             "level",
             name="uniq_org_ticket_priority_level",
         ),
+        UniqueConstraint(
+            "organization_id",
+            "name",
+            name="uniq_org_ticket_priority_name",
+        ),
     )
-    entity_type: ClassVar[TicketLogEntityEnum] = TicketLogEntityEnum.TICKET_PRIORITY
-    name: str
-    level: int
-    bg_color: str
-    fg_color: str
-    tickets: List["Ticket"] = Relationship(back_populates="priority")
-    sla: "TicketSLA" = Relationship(back_populates="priority")
-    organization: "Organization" = Relationship(back_populates="ticket_priorities")
 
     def __str__(self):
         return f"{self.name}-{self.organization_id}"
