@@ -520,7 +520,10 @@ async def generate_2fa_otp(user=Depends(get_current_user)):
         two_fa_enabled=True,
     )
 
-    return cr.success(data={"otp_secret": otp_secrete, "otp_auth_url": otp_auth_url})
+    return cr.success(
+        data={"otp_secret": otp_secrete, "otp_auth_url": otp_auth_url},
+        message="2 Factor authentication otp generated successfully",
+    )
 
 
 @router.post("/2fa-verify")
@@ -548,7 +551,7 @@ async def verify_two_fa(
 
     # Invalidate the refresh token cache
 
-    return cr.success(data={"message": "2FA verified successfully"})
+    return cr.success(message="2FA verified successfully")
 
 
 @router.post("/2fa-disabled")
@@ -556,4 +559,4 @@ async def disable_two_fa(user=Depends(get_current_user)):
 
     await User.update(user.id, two_fa_enabled=False)
 
-    return cr.success(data={"message": "2FA disabled successfully"})
+    return cr.success(message="2FA disabled successfully")

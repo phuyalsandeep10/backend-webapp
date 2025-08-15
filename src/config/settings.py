@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # Token expiration time in minutes
+    ACCESS_TOKEN_EXPIRE_MINUTES: int  # Token expiration time in minutes
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:29092"
     KAFKA_TOPIC: str = "chatboq-events"
     DB_USER: str = "postgres"
