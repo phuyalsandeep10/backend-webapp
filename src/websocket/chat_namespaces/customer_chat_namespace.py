@@ -9,17 +9,13 @@ from src.common.dependencies import get_user_by_token
 # from src.config.broadcast import broadcast  # Replaced with direct Redis pub/sub
 
 from src.config.settings import settings
-from src.websocket.chat_namespaces.agent_chat_namespace import chat_namespace
-from ..chat_utils import (
-    get_room_channel,
-    user_notification_group,
-    customer_notification_group,
-    conversation_group,
+
+from ..chat_utils import ( 
     user_conversation_group,
 )
-from ..chat_redis import redis_publish
-from src.config.redis.redis_listener import get_redis
+
 from .base_chat_namespace import BaseChatNamespace
+from ..chat_namespace_constants import CUSTOMER_CHAT_NAMESPACE
 
 
 REDIS_URL = settings.REDIS_URL
@@ -34,10 +30,11 @@ REDIS_SID_KEY = "chat:sid:"  # chat:sid:{sid} -> conversation_id
 
 
 class CustomerChatNamespace(BaseChatNamespace):
+    namespace = CUSTOMER_CHAT_NAMESPACE
     
 
     def __init__(self):
-        super().__init__("/chat")
+        super().__init__(self.namespace)
 
  
 
@@ -52,6 +49,7 @@ class CustomerChatNamespace(BaseChatNamespace):
                     "organization_id": org_id,
                 }
             ),
+            namespace=self.namespace
         )
 
 
@@ -95,7 +93,7 @@ class CustomerChatNamespace(BaseChatNamespace):
 
    
 
-    async def on_message(self, sid, data):
+    async def on_message(self, sid, data:dict):
         print(f"on message {data} and sid {sid} and organization")
 
         conversation_id = data.get("conversation_id")

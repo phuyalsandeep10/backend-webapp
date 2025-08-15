@@ -74,7 +74,8 @@ class BaseChatNamespace(BaseNameSpace):
                 "sid": sid,
                 "message": data.get("message", ""),
                 "mode": data.get("mode", "typing"),
-            }
+            },
+      
         )
 
     async def on_stop_typing(self, sid):
@@ -84,6 +85,7 @@ class BaseChatNamespace(BaseNameSpace):
 
         await self.redis_publish(
             channel=get_room_channel(conversation_id),
-            message={"event": self.stop_typing, "sid": sid, "mode": "stop-typing"}
+            message={"event": self.stop_typing, "sid": sid, "mode": "stop-typing"},
+            
         )
 

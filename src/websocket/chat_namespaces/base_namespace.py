@@ -16,7 +16,7 @@ class BaseNameSpace(socketio.AsyncNamespace):
             self.redis = await get_redis()
         return self.redis
 
-    async def redis_publish(self, channel: str, message: dict,namespace=CUSTOMER_CHAT_NAMESPACE):
+    async def redis_publish(self, channel: str, message: dict):
         """Direct Redis pub/sub publish - more reliable than broadcaster library"""
 
         redis_client = await self.get_redis()
@@ -25,7 +25,7 @@ class BaseNameSpace(socketio.AsyncNamespace):
             result = await redis_client.publish(
             channel, 
             json.dumps(message), 
-            namespace=namespace)
+            namespace=self.namespace)
             print(f"📡 Published to Redis channel '{channel}': {result} subscribers")
             return result
         except Exception as e:
