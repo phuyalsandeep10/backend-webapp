@@ -37,6 +37,14 @@ class BaseChatNamespace(BaseNameSpace):
         redis = await self.get_redis()
         return await redis.get(self._conversation_from_sid(sid))
 
+    
+    async def get_converstion_sids(self, conversationId: int):
+        redis = await self.get_redis()
+        sids =  await redis.smembers(self._conversation_add_sid(conversationId))
+        return [sid.decode("utf-8") for sid in sids] if sids else []
+        
+
+
     async def join_conversation(self, conversationId, sid):
 
         redis = await self.get_redis()

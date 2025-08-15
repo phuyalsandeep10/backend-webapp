@@ -507,10 +507,6 @@ async def verify_two_fa(
     print(f'updated user {updated_user.to_json()}')
 
     # Invalidate the refresh token cache
-
-
-
-
     return cr.success(data={"message": "2FA verified successfully"})
 
 

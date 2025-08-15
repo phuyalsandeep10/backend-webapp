@@ -1,16 +1,31 @@
 from src.models import Message, MessageAttachment, Conversation
 
 
-def customer_notification_group(org_id: int):
-    return f"org-{org_id}-customers"
+class ChatUtils:
+    @staticmethod
+    def customer_notification_group(org_id: int):
+        return f"org-{org_id}-customers"
 
 
-def user_notification_group(org_id: int):
-    return f"org-{org_id}-users"
+    @staticmethod
+    def user_notification_group(org_id: int):
+        return f"org-{org_id}-users"
 
 
-def conversation_group(conversationId: int):
-    return f"conversation-{conversationId}"
+    @staticmethod
+    def conversation_group(conversationId: int):
+        return f"conversation-{conversationId}"
+    
+    @staticmethod
+    def user_conversation_group(conversationId: int):
+        return f"users-conversation-{conversationId}"
+    
+    @staticmethod
+    def get_room_channel(conversation_id: int) -> str:
+        return f"conversation-{conversation_id}"
+
+    
+    
 
 
 def user_conversation_group(conversationId: int):

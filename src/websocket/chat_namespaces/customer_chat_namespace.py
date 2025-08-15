@@ -70,8 +70,6 @@ class CustomerChatNamespace(BaseChatNamespace):
         conversation_id = auth.get("conversation_id")
         organization_id = auth.get("organization_id")
 
-
-
         if not conversation_id or not customer_id or not organization_id:
             print(
                 f"❌ Missing customer connection data: customer_id={customer_id}, conversation_id={conversation_id}"
@@ -79,7 +77,6 @@ class CustomerChatNamespace(BaseChatNamespace):
             return False
         
         await self.join_conversation(conversation_id, sid)
-    
 
         # notify users in the same workspace that a customer has connected
         await self._notify_to_users(organization_id)
@@ -107,8 +104,9 @@ class CustomerChatNamespace(BaseChatNamespace):
             # channel_name = user_notification_group(organization_id)
             channel_name = f"user-message-notification"
             event = self.message_notification
+            # Get all sids for the conversation
+            sids = await self.get_conversation_sids(conversationId=conversation_id)
 
-            sids = await self.get_redis().smembers(f"ws:user_conversation_sids:{conversation_id}")
             print(f"sids {sids}")
             if sids:
                 event = self.receive_message
