@@ -94,7 +94,7 @@ class TicketServices:
         except Exception as e:
             logger.exception(e)
             return cr.error(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=getattr(e, "status_code", status.HTTP_400_BAD_REQUEST),
                 message=f"{e.detail if e.detail else str(e)}",
                 data=str(e),
             )
