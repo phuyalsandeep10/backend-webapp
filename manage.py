@@ -35,6 +35,11 @@ def run_celery():
     )
 
 
+def run_arq():
+    print("Running ARQ")
+    subprocess.run(["arq", "src.config.arq.WorkerSettings"])
+
+
 def run_tests():
     print("Starting testing")
     subprocess.run(["pytest", "-v"], check=True)
@@ -107,6 +112,7 @@ def main():
     subparsers.add_parser("seed", help="Run seeder script")
     subparsers.add_parser("migrate", help="Apply all migrations")
     subparsers.add_parser("downgrade", help="Revert last migration")
+    subparsers.add_parser("arq", help="Start ARQ worker")
 
     migration_parser = subparsers.add_parser("migration", help="Create new migration")
     migration_parser.add_argument(
@@ -132,6 +138,8 @@ def main():
             migrate()
         case "downgrade":
             downgrade()
+        case "arq":
+            run_arq()
 
 
 if __name__ == "__main__":
