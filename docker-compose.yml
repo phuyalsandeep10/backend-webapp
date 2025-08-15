@@ -69,6 +69,14 @@ services:
     networks:
       - mynetwork
 
+  arq_woker:
+    build: .
+    command: arq src.config.arq.WorkerSettings
+    depends_on:
+      - redis
+    networks:
+      - mynetwork
+
   celery_beat:
     build: .
     command: celery -A src.config.celery beat --loglevel=info

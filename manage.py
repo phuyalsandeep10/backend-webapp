@@ -14,34 +14,19 @@ def pascal_to_snake(name):
 
 def run_fastapi():
 
-    # Start FastAPI server
-    fastapi_proc = subprocess.Popen(
+    print("Starting FastAPI with uvicorn")
+    subprocess.run(
         [
             "uvicorn",
-            "src.main:socket_app",
+            "src.main:socket_app",  # This is the module:app path
             "--host",
             "0.0.0.0",
             "--port",
             "8000",
             "--reload",
-        ]
+        ],
+        check=True,
     )
-
-    # Start Arq worker
-    arq_proc = subprocess.Popen(
-        [
-            "arq",
-            "src.config.arq.WorkerSettings",  # Adjust to your worker settings path
-        ]
-    )
-
-    try:
-        fastapi_proc.wait()
-        arq_proc.wait()
-    except KeyboardInterrupt:
-        print("Stopping services...")
-        fastapi_proc.terminate()
-        arq_proc.terminate()
 
 
 def run_celery():
