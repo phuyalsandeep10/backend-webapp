@@ -32,10 +32,15 @@ app.add_middleware(
     get_user_by_token,
     extemp_paths=[
         "/auth/login",
+        "/auth/register",
+        "/auth/validate-email",
+        "/auth/refresh-token",
+        "/auth/verify-email",
+        "/auth/forgot-password-request",
+        "/auth/forgot-password-verify",
         "/docs",
         "/openapi.json",
         "/auth/me",
-        "/auth/logout",
         "/tickets/confirm",
     ],
 )

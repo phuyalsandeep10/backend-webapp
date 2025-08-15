@@ -1,62 +1,55 @@
 from datetime import datetime, timedelta
 
+import pyotp
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import RedirectResponse
 from jose import jwt
-from datetime import datetime, timedelta
+from jose.exceptions import JWTError
+
 from src.common.dependencies import (
-    get_current_user,
-    update_user_cache,
+    create_access_token,
     get_bearer_token,
+    get_current_user,
     get_current_user_factory,
+    update_user_cache,
 )
-
-from fastapi import Depends
-from src.common.dependencies import create_access_token
-from src.enums import ProviderEnum
-import pyotp
-from .schema import (
-    LoginSchema,
-    RegisterSchema,
-    VerifyEmailTokenSchema,
-    ForgotPasswordVerifySchema,
-    VerifyEmailSchema,
-    ResetPasswordSchema,
-    RefreshTokenSchema,
-    VerifyTwoFAOtpSchema,
-    UserSchema,
-    UserProfileUpdateSchema,
-    ValidateEmailSchema,
-    VerifyEmailEnum,
-    ResendVerificationSchema,
-)
-from src.utils.response import CustomResponse as cr
-from src.utils.common import get_location
-from src.utils.exceptions.auth import (
-    UserNotFoundException,
-    NoDataToUpdateException,
-    UserUpdateFailedException
-)
-from .models import User, EmailVerification, RefreshToken
-from src.utils.common import is_production_env
-
-
 from src.common.utils import (
-    generate_numeric_token,
     compare_password,
-    hash_password,
+    generate_numeric_token,
     generate_refresh_token,
+    hash_password,
 )
-from src.models import OrganizationInvitation
-from src.tasks import send_verification_email, send_forgot_password_email
-from .social_auth import oauth
 from src.config.settings import settings
+from src.enums import ProviderEnum
+from src.models import OrganizationInvitation
 from src.modules.organizations.models import OrganizationInvitation
 from src.tasks import send_forgot_password_email, send_verification_email
-from .models import EmailVerification, RefreshToken, User
-from jose.exceptions import JWTError
-from fastapi.encoders import jsonable_encoder
+from src.utils.common import get_location, is_production_env
+from src.utils.exceptions.auth import (
+    NoDataToUpdateException,
+    UserNotFoundException,
+    UserUpdateFailedException,
+)
+from src.utils.response import CustomResponse as cr
 
+from .models import EmailVerification, RefreshToken, User
+from .schema import (
+    ForgotPasswordVerifySchema,
+    LoginSchema,
+    RefreshTokenSchema,
+    RegisterSchema,
+    ResendVerificationSchema,
+    ResetPasswordSchema,
+    UserProfileUpdateSchema,
+    UserSchema,
+    ValidateEmailSchema,
+    VerifyEmailEnum,
+    VerifyEmailSchema,
+    VerifyEmailTokenSchema,
+    VerifyTwoFAOtpSchema,
+)
+from .social_auth import oauth
 
 router = APIRouter()
 
@@ -107,7 +100,8 @@ async def user_login(schema: LoginSchema):
     del user.password
     user_schema = UserSchema.model_validate(user, from_attributes=True)
     return cr.success(
-        data=jsonable_encoder({"user": user_schema, "is_2fa_verified": False, **data})
+        data=jsonable_encoder({"user": user_schema, "is_2fa_verified": False, **data}),
+        message="Login Successful",
     )
 
 
@@ -127,7 +121,9 @@ async def logout(user=Depends(get_current_user_factory())):
     # Mark the token as inactive
     await RefreshToken.update(token_data.id, active=False)
 
-    return cr.success(data={"message": "Logged out successfully"})
+    return cr.success(
+        data={"message": "Logged out successfully"}, message="Logout successful"
+    )
 
 
 @router.post("/refresh-token")
@@ -175,11 +171,14 @@ async def validateEmail(body: ValidateEmailSchema):
     user = await User.find_one({"email": body.email})
     if user:
         return cr.error(
-            data={"success": False, "errors": {"email": ["This email has already been registered"]}},
+            data={
+                "success": False,
+                "errors": {"email": ["This email has already been registered"]},
+            },
             message="This email has already been registered",
         )
 
-    return cr.success(data={"success": True})
+    return cr.success(data={"success": True}, message="Email verified successfully")
 
 
 @router.post("/register")
@@ -190,7 +189,9 @@ async def register(request: RegisterSchema):
     # Check if user already exists
 
     if user:
-        return cr.error(data={"success": False}, message="This email has already been registered")
+        return cr.error(
+            data={"success": False}, message="This email has already been registered"
+        )
 
     hashed_password = hash_password(request.password)
     user = await User.create(
@@ -207,11 +208,13 @@ async def register(request: RegisterSchema):
         expires_at=datetime.utcnow() + timedelta(days=1),
         type=VerifyEmailEnum.EmailVerification.value,
     )
-    
 
     send_verification_email.delay(email=request.email, token=token)
 
-    return cr.success(data={"message": "User registered successfully"})
+    return cr.success(
+        data={"message": "User registered successfully"},
+        message="Your OTP has been sent. Please check your registered contact information.",
+    )
 
 
 @router.get("/me")
@@ -260,16 +263,15 @@ async def verify_email_token(body: VerifyEmailTokenSchema):
         return cr.error(
             data={"success": False}, message="Verification token has expired"
         )
-    
+
     # Mark the token as used
     await EmailVerification.update(verification.id, is_used=True)
     # Here you would typically update the user's email verification status
     user = await User.update(user.id, email_verified_at=datetime.utcnow())
     tokens = await create_token(user)
-    print(f'user {user}')
+    print(f"user {user}")
 
     update_user_cache(tokens.get("access_token"), user)
-
 
     return cr.success(
         data={
@@ -401,33 +403,33 @@ async def get_invitations(user=Depends(get_current_user)):
     data = await OrganizationInvitation.filter(where={"email": user.email})
     return cr.success(data=data)
 
+
 @router.patch("/profile")
 async def update_user_profile(
-    profile_data: UserProfileUpdateSchema,
-    user=Depends(get_current_user)
+    profile_data: UserProfileUpdateSchema, user=Depends(get_current_user)
 ):
     """Update user profile information(partial update)"""
-    
+
     current_user = await User.find_one(where={"email": user.email})
-    
+
     if not current_user:
         raise UserNotFoundException()
-    
+
     # Only update fields that were provided
     update_data = profile_data.dict(exclude_unset=True)
 
     if not update_data:
         raise NoDataToUpdateException()
-        
+
     # Updated user
     updated_user = await User.update(current_user.id, **update_data)
-    
+
     if not updated_user:
         raise UserUpdateFailedException()
-    
+
     return cr.success(
         data={"user": updated_user.to_json(schema=UserSchema)},
-        message="Profile updated successfully"
+        message="Profile updated successfully",
     )
 
 
@@ -438,7 +440,6 @@ async def oauth_login(request: Request, provider: str):
 
     if provider not in ["google", "apple"]:
         return cr.error(data={"success": False}, message="Unsupported provider")
-
 
     redirect_uri = request.url_for("oauth_callback", provider=provider)
     print(f"Redirect URI: {redirect_uri}")
@@ -452,7 +453,6 @@ async def oauth_login(request: Request, provider: str):
     # redirect_uri = redirect_uri.replace("http://", "https://")
 
     # redirect_uri = f"{redirect_uri}?frontend_url={origin}" if origin else redirect_uri
-    
 
     return await getattr(oauth, provider).authorize_redirect(request, redirect_uri)
 
@@ -462,7 +462,7 @@ async def oauth_callback(request: Request, provider: ProviderEnum):
 
     if provider not in ["google", "apple"]:
         return cr.error(data={"success": False}, message="Unsupported provider")
-    
+
     try:
         client = getattr(oauth, provider)
 
@@ -520,7 +520,10 @@ async def generate_2fa_otp(user=Depends(get_current_user)):
         two_fa_enabled=True,
     )
 
-    return cr.success(data={"otp_secret": otp_secrete, "otp_auth_url": otp_auth_url})
+    return cr.success(
+        data={"otp_secret": otp_secrete, "otp_auth_url": otp_auth_url},
+        message="2 Factor authentication otp generated successfully",
+    )
 
 
 @router.post("/2fa-verify")
@@ -541,17 +544,14 @@ async def verify_two_fa(
 
     if not totp.verify(body.token):
         return cr.error(message=message)
-    
+
     updated_user = await User.update(user.id, is_2fa_verified=True)
     update_user_cache(token, updated_user)
-    print(f'updated user {updated_user.to_json()}')
+    print(f"updated user {updated_user.to_json()}")
 
     # Invalidate the refresh token cache
 
-
-
-
-    return cr.success(data={"message": "2FA verified successfully"})
+    return cr.success(message="2FA verified successfully")
 
 
 @router.post("/2fa-disabled")
@@ -559,4 +559,4 @@ async def disable_two_fa(user=Depends(get_current_user)):
 
     await User.update(user.id, two_fa_enabled=False)
 
-    return cr.success(data={"message": "2FA disabled successfully"})
+    return cr.success(message="2FA disabled successfully")

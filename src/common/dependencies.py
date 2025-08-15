@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
+from typing import Optional
 
 from cachetools import TTLCache
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from typing import Optional
 
 from src.common.context import TenantContext, UserContext
 from src.config.settings import settings
@@ -42,8 +42,6 @@ async def validate_user(
 ):
     """Get current authenticated user"""
 
-    
-
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -56,15 +54,11 @@ async def validate_user(
             if " " in credentials.credentials
             else credentials.credentials
         )
-        
+
         user = await get_user_by_token(token)
-
-
 
         if user is None:
             raise credentials_exception
-
-        
 
         if not user.is_active:
             raise HTTPException(
@@ -81,7 +75,7 @@ async def validate_user(
             )
 
         if isTwoFaVerifyCheck and user.two_fa_enabled and not user.is_2fa_verified:
-            
+
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Two FA not "
             )

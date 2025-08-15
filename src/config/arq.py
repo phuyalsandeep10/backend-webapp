@@ -6,4 +6,4 @@ from src.tasks import send_email  # the function above
 
 class WorkerSettings:
     functions = [send_email]
-    redis_settings = RedisSettings(host="localhost", port=6379, database=0)
+    redis_settings = RedisSettings(host="redis", port=6379, database=0)
