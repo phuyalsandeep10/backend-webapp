@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class Organization(CommonModel, table=True):
-    __tablename__ = "sys_organizations"  # type:ignore
+    __tablename__ = "sys_organizations"
     name: str = Field(max_length=255, index=True, unique=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     slug: str = Field(
@@ -90,6 +90,10 @@ class OrganizationRole(TenantModel, table=True):
     description: str = Field(default=None, max_length=500, nullable=True)
     identifier: str = Field(default=None, max_length=500, nullable=False, index=True)
 
+    attributes: Optional[dict] = Field(
+        default=None, sa_column=sa.Column(sa.JSON, nullable=True)
+    )
+
     role_permissions: list["RolePermission"] = Relationship(back_populates="org_role")
     member_roles: list["OrganizationMemberRole"] = Relationship(back_populates="role")
     organization: Optional["Organization"] = Relationship(back_populates="roles")
@@ -154,7 +158,7 @@ class OrganizationMemberRole(CommonModel, table=True):
     )
 
 
-class OrganizationInvitation(CommonModel, table=True):
+class OrganizationInvitation(TenantModel, table=True):
     __tablename__ = "org_invitations"
 
     email: str = Field(max_length=255, index=True)
@@ -167,6 +171,8 @@ class OrganizationInvitation(CommonModel, table=True):
     )
 
     status: str = Field(default=InvitationStatus.PENDING, max_length=50, nullable=False)
+
+    role_ids: list[int] = Field(default_factory=list, sa_column=sa.Column(sa.JSON))
 
     invited_by: Optional["User"] = Relationship(
         sa_relationship_kwargs={
@@ -184,7 +190,7 @@ class OrganizationInvitation(CommonModel, table=True):
     )
 
 
-class OrganizationInvitationRole(CommonModel, table=True):
+class OrganizationInvitationRole(TenantModel, table=True):
     __tablename__ = "org_invitation_roles"
 
     invitation_id: int = Field(

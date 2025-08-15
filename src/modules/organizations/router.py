@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, logger, status
 from datetime import datetime, timedelta
 from sqlmodel import text
 from sqlalchemy.orm import selectinload
@@ -227,53 +227,127 @@ async def set_organization(
     return cr.success(data={"message": "Organization set successfully"})
 
 
+# @router.post("/roles")
+# async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
+#     """
+#     Create a New Role for an organization.
+#     """
+#     try:
+#         if not body.name or body.name.strip() == "":
+#             raise HTTPException(status_code=400, detail="Role name cannot be empty")
+
+#         existing_role = await OrganizationRole.find_one(
+#             where={"name": {"mode": "insensitive", "value": body.name}}
+#         )
+
+#         if existing_role:
+#             raise HTTPException(400, "Role name already exists")
+
+#         if not any(
+#             perm.is_changeable or perm.is_deletable or perm.is_viewable
+#             for perm in body.permissions
+#         ):
+#             raise HTTPException(400, "Minimum 1 permission is required")
+
+#         permission_group_id = body.permission_group
+
+#         for perm in body.permissions:
+#             permission = await Permissions.find_one(where={"id": perm.permission_id})
+#             if not permission:
+#                 raise HTTPException(404, "No Such Permission Found")
+#             if permission.group_id != permission_group_id:
+#                 raise HTTPException(400, "Permission_group and Permission do not match")
+
+#         role = await OrganizationRole.create(
+#             **body.model_dump(
+#                 exclude={"permissions", "updated_at", "created_at"}, exclude_none=True
+#             ),
+#             identifier=body.name.lower().replace(" ", "-"),
+#         )
+
+#         for perm in body.permissions:
+#             await RolePermission.create(
+#                 role_id=role.id,
+#                 **perm.model_dump(),
+#             )
+
+#         org = await Organization.find_one(where={"id": role.organization_id})
+
+#         return cr.success(data=org.to_json(CreateRoleOutSchema))
+
+#     except Exception as e:
+#         logger.exception(e)
+#         return cr.error(
+#             status_code=getattr(
+#                 e, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR
+#             ),
+#             message=f"{e.detail if hasattr(e, 'detail') else str(e)}",
+#             data=str(e),
+#         )
+
+
 @router.post("/roles")
 async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
     """
     Create a New Role for an organization.
     """
+    try:
+        if not body.name or body.name.strip() == "":
+            raise HTTPException(status_code=400, detail="Role name cannot be empty")
 
-    if not body.name or body.name.strip() == "":
-        raise HTTPException(status_code=400, detail="Role name cannot be empty")
+        existing_role = await OrganizationRole.find_one(
+            where={"name": {"mode": "insensitive", "value": body.name}}
+        )
+        if existing_role:
+            raise HTTPException(400, "Role name already exists")
 
-    existing_role = await OrganizationRole.find_one(
-        where={"name": {"mode": "insensitive", "value": body.name}}
-    )
+        if not any(
+            perm.is_changeable or perm.is_deletable or perm.is_viewable
+            for perm in body.permissions
+        ):
+            raise HTTPException(400, "Minimum 1 permission is required in each role")
 
-    if existing_role:
-        raise HTTPException(400, "Role name already exists")
+        permission_group_id = body.permission_group
 
-    if not any(
-        perm.is_changeable or perm.is_deletable or perm.is_viewable
-        for perm in body.permissions
-    ):
-        raise HTTPException(400, "minimum 1 permission is required")
+        for perm in body.permissions:
+            permission = await Permissions.find_one(where={"id": perm.permission_id})
+            if not permission:
+                raise HTTPException(404, "No Such Permission Found")
+            if permission.group_id != permission_group_id:
+                raise HTTPException(400, "Permission_group and Permission do not match")
 
-    permission_group_id = body.permission_group
+        attributes = {
+            "no_of_agents": 0,
+            "permissions": [perm.model_dump() for perm in body.permissions],
+        }
 
-    for perm in body.permissions:
-        permission = await Permissions.find_one(where={"id": perm.permission_id})
-        if not permission:
-            raise HTTPException(404, "No Such Permission Found")
-        if permission.group_id != permission_group_id:
-            raise HTTPException(400, "Permission_group and Permission do not match")
-
-    role = await OrganizationRole.create(
-        **body.model_dump(
-            exclude={"permissions", "updated_at", "created_at"}, exclude_none=True
-        ),
-        identifier=body.name.lower().replace(" ", "-"),
-    )
-
-    for perm in body.permissions:
-        await RolePermission.create(
-            role_id=role.id,
-            **perm.model_dump(),
+        role = await OrganizationRole.create(
+            **body.model_dump(
+                exclude={"permissions", "updated_at", "created_at"}, exclude_none=True
+            ),
+            identifier=body.name.lower().replace(" ", "-"),
+            attributes=attributes,
         )
 
-    org = await Organization.find_one(where={"id": role.organization_id})
+        for perm in body.permissions:
+            await RolePermission.create(
+                role_id=role.id,
+                **perm.model_dump(),
+            )
 
-    return cr.success(data=org.to_json(CreateRoleOutSchema))
+        org = await Organization.find_one(where={"id": role.organization_id})
+
+        return cr.success(data=org.to_json(CreateRoleOutSchema))
+
+    except Exception as e:
+        logger.exception(e)
+        return cr.error(
+            status_code=getattr(
+                e, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR
+            ),
+            message=f"{e.detail if hasattr(e, 'detail') else str(e)}",
+            data=str(e),
+        )
 
 
 @router.put("/roles/{role_id}")

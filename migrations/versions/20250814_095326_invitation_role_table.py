@@ -22,7 +22,7 @@ class invitation_rolesMigration(BaseMigration):
     def __init__(self):
         super().__init__(revision="20250814_095326", down_revision="20250804_062017")
         self.create_whole_table = True
-        self.common_columns()
+        self.tenant_columns()
         self.foreign("invitation_id", "org_invitations")
         self.foreign("role_id", "org_roles")
 
