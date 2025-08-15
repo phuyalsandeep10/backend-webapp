@@ -34,6 +34,7 @@ app.add_middleware(
         "/auth/login",
         "/auth/register",
         "/auth/validate-email",
+        "/auth/refresh-token",
         "/auth/verify-email",
         "/docs",
         "/openapi.json",
