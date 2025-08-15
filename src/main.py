@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from apscheduler.triggers.interval import IntervalTrigger
@@ -6,6 +7,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from src.app import app
+from src.config.arq import WorkerSettings
 from src.config.broadcast import broadcast
 from src.config.scheduler import scheduler, start_scheduler
 from src.routers import add_routers
@@ -42,20 +44,14 @@ async def sender(websocket: WebSocket, room: str):
             await websocket.send_text(event.message)
 
 
-
-
 async def receiver(websocket: WebSocket, room: str):
     async for message in websocket.iter_text():
         await broadcast.publish(channel=f"room_{room}", message=message)
 
 
-
-
 @app.get("/")
 def read_root():
     return {"Hello": "Hello Chatboq World"}
-
-
 
 
 @app.get("/chat")
@@ -67,4 +63,3 @@ async def get(request: Request):
 @app.get("/health")
 def read_items():
     return "Health check OK"
-
