@@ -101,7 +101,6 @@ class BaseChatNamespace(BaseNameSpace):
                 "is_customer": is_customer,
                 "sid": sid
             },
-      
         )
 
     async def on_stop_typing(self, sid):
