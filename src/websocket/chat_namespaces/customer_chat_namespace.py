@@ -1,32 +1,12 @@
 import json
 
-import socketio
-from socketio.simple_client import Event
 
 
-from src.common.dependencies import get_user_by_token
-
-# from src.config.broadcast import broadcast  # Replaced with direct Redis pub/sub
-
-from src.config.settings import settings
-
-from ..chat_utils import ( 
-    user_conversation_group,
-)
 
 from .base_chat_namespace import BaseChatNamespace
 from ..chat_namespace_constants import CUSTOMER_CHAT_NAMESPACE
+from ..channel_names import AGENT_NOTIFICATION_CHANNEL, MESSAGE_CHANNEL
 
-
-REDIS_URL = settings.REDIS_URL
-
-
-# Redis keys
-REDIS_ROOM_KEY = "chat:room:"  # chat:room:{conversation_id} -> set of sids
-REDIS_SID_KEY = "chat:sid:"  # chat:sid:{sid} -> conversation_id
-
-
-# Redis helper
 
 
 class CustomerChatNamespace(BaseChatNamespace):
@@ -41,15 +21,15 @@ class CustomerChatNamespace(BaseChatNamespace):
     async def _notify_to_users(self, org_id: int):
         print(f"notify users in the same workspace that a customer has connected")
         await self.redis_publish(
-            channel=f"ws:{org_id}:user_notification",
+            channel=AGENT_NOTIFICATION_CHANNEL,
             message=json.dumps(
                 {
                     "event": self.customer_land,
                     "mode": "online",
                     "organization_id": org_id,
+                    
                 }
             ),
-            namespace=self.namespace
         )
 
 
@@ -82,9 +62,9 @@ class CustomerChatNamespace(BaseChatNamespace):
         await self._notify_to_users(organization_id)
 
         # notify users with a specific customer landing event
-        channel = f"ws:{organization_id}:user_notification"
 
-        print(f"✅ Published customer_land event to {channel}")
+
+        print(f"✅ Published customer_land event to ")
 
         return True
 
@@ -93,26 +73,26 @@ class CustomerChatNamespace(BaseChatNamespace):
     async def on_message(self, sid, data:dict):
         print(f"on message {data} and sid {sid} and organization")
 
-        conversation_id = data.get("conversation_id")
+        conversation_id = await self._get_conversation_id_from_sid(sid)
+        print(f"conversation_id {conversation_id}")
         organization_id = data.get("organization_id")
 
         if not conversation_id:
+            print(f"❌ Missing conversation_id: {conversation_id}")
             return
 
         try:
 
             # channel_name = user_notification_group(organization_id)
-            channel_name = f"user-message-notification"
+            channel_name = AGENT_NOTIFICATION_CHANNEL 
             event = self.message_notification
             # Get all sids for the conversation
             sids = await self.get_conversation_sids(conversationId=conversation_id)
 
             print(f"sids {sids}")
-            if sids:
+            if len(sids) > 1:
                 event = self.receive_message
-                channel_name = user_conversation_group(conversationId=conversation_id)
-
-            print(f"event {event} and channel {channel_name}")
+                channel_name = MESSAGE_CHANNEL 
 
             await self.redis_publish(
                 channel=channel_name,
@@ -129,6 +109,8 @@ class CustomerChatNamespace(BaseChatNamespace):
                         "organization_id": organization_id,
                         "mode": "message",
                         "conversation_id": conversation_id,
+                        "is_customer": True,
+                        "sid": sid
                     }
                 
             )

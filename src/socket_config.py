@@ -42,6 +42,7 @@ async def start_ws_redis_listener():
     print("🚀 Starting WebSocket Redis listener...")
     # Create task with proper error handling
     redis_listener_task = asyncio.create_task(redis_listener(sio))
+    
 
     # Add error callback to catch silent failures
     def task_done_callback(task):

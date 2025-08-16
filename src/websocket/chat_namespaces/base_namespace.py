@@ -1,7 +1,6 @@
 import socketio
 from src.config.redis.redis_listener import get_redis
 import json
-from .chat_namespace_constants import CUSTOMER_CHAT_NAMESPACE
 
 
 class BaseNameSpace(socketio.AsyncNamespace):
@@ -22,10 +21,7 @@ class BaseNameSpace(socketio.AsyncNamespace):
         redis_client = await self.get_redis()
 
         try:
-            result = await redis_client.publish(
-            channel, 
-            json.dumps(message), 
-            namespace=self.namespace)
+            result = await redis_client.publish(channel, json.dumps(message))
             print(f"📡 Published to Redis channel '{channel}': {result} subscribers")
             return result
         except Exception as e:

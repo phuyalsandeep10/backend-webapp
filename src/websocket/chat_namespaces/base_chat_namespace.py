@@ -1,5 +1,7 @@
 from .base_namespace import BaseNameSpace
-from ..chat_utils import user_conversation_group, get_room_channel
+from ..chat_utils import ChatUtils
+from ..channel_names import TYPING_CHANNEL,TYPING_STOP_CHANNEL,MESSAGE_SEEN_CHANNEL
+from ..chat_namespace_constants import CUSTOMER_CHAT_NAMESPACE
 
 
 REDIS_SID_KEY = "ws:chat:sid:"  # chat:sid:{sid} -> conversation_id
@@ -18,9 +20,14 @@ class BaseChatNamespace(BaseNameSpace):
     def __init__(self, namespace: str):
         super().__init__(namespace)
 
-    def on_disconnect(self, sio):
+    async def on_disconnect(self, sid):
         # on disconnect
-        self.disconnect(sio)
+        await self.disconnect(sid)
+        conversation_id = await self._get_conversation_id_from_sid(sid)
+        if not conversation_id:
+            return False
+        await self.leave_conversation(conversation_id, sid)
+
 
     def _conversation_add_sid(self, conversationId: int):
         return f"{REDIS_SID_KEY}:{conversationId}"
@@ -31,14 +38,15 @@ class BaseChatNamespace(BaseNameSpace):
     
     async def _get_conversation_id_from_sid(self, sid: int):
         redis = await self.get_redis()
-        return await redis.get(self._conversation_from_sid(sid))
+        result =  await redis.get(self._conversation_from_sid(sid))
+        return result.decode("utf-8") if result else None
     
     async def get_conversation_sid(self,sid):
         redis = await self.get_redis()
         return await redis.get(self._conversation_from_sid(sid))
 
     
-    async def get_converstion_sids(self, conversationId: int):
+    async def get_conversation_sids(self, conversationId: int):
         redis = await self.get_redis()
         sids =  await redis.smembers(self._conversation_add_sid(conversationId))
         return [sid.decode("utf-8") for sid in sids] if sids else []
@@ -49,7 +57,7 @@ class BaseChatNamespace(BaseNameSpace):
 
         redis = await self.get_redis()
 
-        await self.enter_room(sid=sid, room=user_conversation_group(conversationId))
+        await self.enter_room(sid=sid, room=ChatUtils.conversation_group(conversationId),namespace=self.namespace)
 
         await redis.sadd(self._conversation_add_sid(conversationId), sid)
         await redis.set(self._conversation_from_sid(sid), conversationId)
@@ -57,7 +65,7 @@ class BaseChatNamespace(BaseNameSpace):
     async def leave_conversation(self, conversationId: int, sid: int):
         redis = await self.get_redis()
 
-        await self.leave_room(sid=sid, room=user_conversation_group(conversationId))
+        await self.leave_room(sid=sid, room=ChatUtils.conversation_group(conversationId),namespace=self.namespace)
         await redis.srem(self._conversation_add_sid(conversationId), sid)
 
         await redis.delete(self._conversation_from_sid(sid))
@@ -69,7 +77,7 @@ class BaseChatNamespace(BaseNameSpace):
             return False
 
         await self.redis_publish(
-            channel=get_room_channel(conversation_id),
+            channel=MESSAGE_SEEN_CHANNEL,
             message={"event": self.message_seen, "sid": sid, "uuid": data.get("uuid")}
         )
     
@@ -78,25 +86,35 @@ class BaseChatNamespace(BaseNameSpace):
         if not conversation_id:
             return False
 
+        is_customer = self.namespace == CUSTOMER_CHAT_NAMESPACE
+        
+
         await self.redis_publish(
-            channel=get_room_channel(conversation_id),
+            channel=TYPING_CHANNEL,
             message={
                 "event": self.receive_typing,
                 "sid": sid,
                 "message": data.get("message", ""),
                 "mode": data.get("mode", "typing"),
+                "conversation_id": conversation_id,
+                "organization_id": data.get("organization_id"),
+                "is_customer": is_customer,
+                "sid": sid
             },
       
         )
 
     async def on_stop_typing(self, sid):
         conversation_id = await self._get_conversation_id_from_sid(sid)
+        
         if not conversation_id:
             return False
+        is_customer = self.namespace == CUSTOMER_CHAT_NAMESPACE
+
 
         await self.redis_publish(
-            channel=get_room_channel(conversation_id),
-            message={"event": self.stop_typing, "sid": sid, "mode": "stop-typing"},
+            channel=TYPING_STOP_CHANNEL,
+            message={"event": self.stop_typing, "sid": sid, "mode": "stop-typing","conversation_id": conversation_id,"is_customer": is_customer,"sid": sid},
             
         )
 

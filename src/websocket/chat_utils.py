@@ -13,12 +13,12 @@ class ChatUtils:
 
 
     @staticmethod
-    def conversation_group(conversationId: int):
-        return f"conversation-{conversationId}"
+    def conversation_group(conversation_id: int):
+        return f"conversation-{conversation_id}"
     
     @staticmethod
-    def user_conversation_group(conversationId: int):
-        return f"users-conversation-{conversationId}"
+    def user_conversation_group(conversation_id: int):
+        return f"users-conversation-{conversation_id}"
     
     @staticmethod
     def get_room_channel(conversation_id: int) -> str:
@@ -27,14 +27,6 @@ class ChatUtils:
     
     
 
-
-def user_conversation_group(conversationId: int):
-    return f"users-conversation-{conversationId}"
-
-
-def get_room_channel(conversation_id: int) -> str:
-    print(f"get_room_channel called with conversation_id: {conversation_id}")
-    return f"conversation-{conversation_id}"
 
 
 async def save_message_db(conversation_id: int, data: dict, user_id=None):
