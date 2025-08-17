@@ -1,7 +1,7 @@
 import base64
 import secrets
-
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import selectinload
 
@@ -13,8 +13,6 @@ from src.common.dependencies import (
 from src.common.models import Permission
 from src.common.utils import random_unique_key
 from src.config.settings import settings
-from src.models.countries import Country
-from src.models.timezones import Timezone
 from src.enums import InvitationStatus
 from src.models import (
     Organization,
@@ -24,6 +22,8 @@ from src.models import (
     OrganizationRole,
     User,
 )
+from src.models.countries import Country
+from src.models.timezones import Timezone
 from src.tasks import send_invitation_email
 from src.utils.response import CustomResponse as cr
 
@@ -42,8 +42,8 @@ async def get_organizations(user=Depends(get_current_user)):
     """
     Get the list of organizations the user belongs to.
     """
+    print("The user is", user.id)
     records = await Organization.get_orgs_by_user_id(user_id=user.id)
-    print("The records", records)
     data = [item.to_json() for item in records]
     return cr.success(data=data)
 
@@ -59,20 +59,12 @@ async def create_organization(
     """
     errors = []
     record = await Organization.find_one(
-        where={
-            "name": {"mode": "insensitive", "value": body.name},
-            "owner_id": user.id
-        }
+        where={"name": {"mode": "insensitive", "value": body.name}, "owner_id": user.id}
     )
 
-
-
-
     if record:
-        errors.append({
-            "name": "this organization with this name already exists"
-        })
-    
+        errors.append({"name": "this organization with this name already exists"})
+
     record = await Organization.find_one(
         where={
             "domain": {"mode": "insensitive", "value": body.domain},
@@ -80,19 +72,21 @@ async def create_organization(
     )
 
     if record:
-        errors.append({
-            "domain": "This domain already exists"
-        })
-    
+        errors.append({"domain": "This domain already exists"})
+
     if errors:
         return cr.error(data=errors)
-        
 
     email_alias = ""
     while True:
         # generating the random email
-        token = secrets.token_bytes(9)
-        email_alias_name = base64.urlsafe_b64decode(token).rstrip(b"=").decode("ascii")
+        token_bytes = secrets.token_bytes(9)
+
+        # Encode to Base64 URL-safe string
+        email_alias_name = (
+            base64.urlsafe_b64encode(token_bytes).rstrip(b"=").decode("ascii")
+        )
+
         email_alias = f"{email_alias_name}@{settings.EMAIL_DOMAIN}"
 
         # checking it the email alias exists before
@@ -104,7 +98,6 @@ async def create_organization(
         break
 
     slug = body.name.lower().replace(" ", "-")
-
 
     organization = await Organization.create(
         name=body.name,
@@ -242,7 +235,6 @@ async def set_organization(
     if not organization:
         raise HTTPException(status_code=404, detail="Organization not found")
     update_user_cache(token, user)
-    
 
     return cr.success(data={"message": "Organization set successfully"})
 
@@ -481,29 +473,27 @@ async def get_permissions(user=Depends(get_current_user)):
 @router.get("/countries")
 async def get_countries():
     """Get all countries for selection"""
-    try: 
+    try:
         countries = await Country.filter()
-        
+
         countries_data = [
             {
                 "id": country.id,
                 "name": country.name,
                 "code": country.iso_code_2,
-                "iso_code_2": country.iso_code_2, #US
-                "iso_code_3": country.iso_code_3, #USA
-                "phone_code": country.phone_code #+977
+                "iso_code_2": country.iso_code_2,  # US
+                "iso_code_3": country.iso_code_3,  # USA
+                "phone_code": country.phone_code,  # +977
             }
             for country in countries
         ]
-        
+
         return cr.success(
             data={"countries": countries_data},
-            message="Countries retrieved successfully"
+            message="Countries retrieved successfully",
         )
     except Exception as e:
-        return cr.error(
-            message=f"Failed to retrieve countries: {str(e)}"
-        )
+        return cr.error(message=f"Failed to retrieve countries: {str(e)}")
 
 
 @router.get("/timezones")
@@ -513,30 +503,29 @@ async def get_timezones(country_id: Optional[int] = None):
         where_clause = {}
         if country_id:
             where_clause["country_id"] = country_id
-            
+
         timezones = await Timezone.filter(
             where=where_clause,
-            related_items=[selectinload(Timezone.country)] #for loading countries relationship
+            related_items=[
+                selectinload(Timezone.country)
+            ],  # for loading countries relationship
         )
-        
+
         timezones_data = [
             {
                 "id": tz.id,
                 "name": tz.name,
                 "display_name": tz.display_name,
                 "country_id": tz.country_id,
-                "country_name": tz.country.name if tz.country else None
+                "country_name": tz.country.name if tz.country else None,
             }
             for tz in timezones
         ]
-        
+
         return cr.success(
             data={"timezones": timezones_data},
-            message="Timezones retrieved successfully"
+            message="Timezones retrieved successfully",
         )
-        
+
     except Exception as e:
-        return cr.error(
-            message=f"Failed to retrieve timezones: {str(e)}"
-        )
-        
+        return cr.error(message=f"Failed to retrieve timezones: {str(e)}")
