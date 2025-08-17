@@ -42,6 +42,8 @@ app.add_middleware(
         "/openapi.json",
         "/auth/me",
         "/tickets/confirm",
+        "/chat/",
+        "/"
     ],
 )
 
