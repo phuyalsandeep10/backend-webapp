@@ -173,6 +173,13 @@ class TicketSLAServices:
             if not sla:
                 raise TicketSLANotFound()
 
+            ticket_exists = await self.find_ticket_by_sla(sla)
+            if ticket_exists:
+                raise HTTPException(
+                    status_code=HTTP_403_FORBIDDEN,
+                    detail="Tickets with this sla exists, hence cannot be deleted",
+                )
+
             await TicketSLA.delete(where={"id": sla_id})
             await sla.save_to_log(
                 action=TicketLogActionEnum.TICKET_SLA_DELETED,
@@ -186,7 +193,7 @@ class TicketSLAServices:
             logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                message="Error while deleting the SLA",
+                message=f"{e.detail if e.detail else str(e)}",
                 data=str(e),
             )
 
@@ -344,6 +351,16 @@ class TicketSLAServices:
                 ticket=ticket,
                 mail_type=TicketLogActionEnum.SLA_BREACH_EMAIL_SENT,
             )
+
+    async def find_ticket_by_sla(self, sla: TicketSLA):
+        """
+        Finds the ticket by sla
+        """
+        try:
+            tickets = await Ticket.filter(where={"priority_id": sla.priority_id})
+            return tickets
+        except Exception as e:
+            return None
 
 
 sla_service = TicketSLAServices()
