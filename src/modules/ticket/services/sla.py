@@ -40,7 +40,7 @@ class TicketSLAServices:
     Ticket SLA services methods
     """
 
-    async def register_sla(self, payload: CreateSLASchema, user: User):
+    async def register_sla(self, payload: CreateSLASchema):
         """
         Registers the SLA to the organization
         """
@@ -73,7 +73,7 @@ class TicketSLAServices:
                 data=str(e),
             )
 
-    async def list_slas(self, user):
+    async def list_slas(self):
         """
         List all the SLA of the organization
         """
