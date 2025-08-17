@@ -25,6 +25,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         self.extemp_paths = extemp_paths
 
     async def dispatch(self, request: Request, call_next):
+        print(f"Request path: {request.url.path}")
 
         if request.method == "OPTIONS":
             return await call_next(request)
@@ -33,6 +34,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if self.extemp_paths and any(
             request.url.path.startswith(path) for path in self.extemp_paths
         ):
+            print(f"Exempting path: {request.url.path}")
             return await call_next(request)
 
         try:

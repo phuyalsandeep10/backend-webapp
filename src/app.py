@@ -44,6 +44,8 @@ app.add_middleware(
         "/auth/me",
         "/tickets/confirm",
         "/organizations/countries",
+        "/chat/",
+        "/"
     ],
 )
 
