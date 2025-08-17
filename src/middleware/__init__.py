@@ -47,7 +47,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
             payload = jwt.decode(
                 token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
-            print("The pyalod", payload)
             user_email: str = payload.get("sub", None)
             user = await User.find_one(where={"email": user_email})
 
