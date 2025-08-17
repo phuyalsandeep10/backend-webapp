@@ -23,7 +23,7 @@ async def check_sla_breach():
         where={"status_id": {"ne": closed_ticket_status.id}, "opened_at": {"ne": None}},
         related_items=[selectinload(Ticket.sla), selectinload(Ticket.assignees)],
     )
-    logger.info(f"The tickets {tickets}")
+    # logger.info(f"The tickets {tickets}")
     for ticket in tickets:
         if not ticket.opened_at:
             return
