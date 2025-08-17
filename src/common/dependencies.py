@@ -50,6 +50,7 @@ async def validate_user(
     )
     
 
+
     try:
         token = (
             credentials.credentials.split(" ")[-1]
