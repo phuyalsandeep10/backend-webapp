@@ -41,4 +41,5 @@ dependencies = [
     "sendgrid>=6.12.4",
     "arq>=0.26.3",
     "debugpy>=1.8.16",
+    "pyjwt>=2.10.1",
 ]
