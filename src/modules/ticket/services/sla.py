@@ -3,7 +3,6 @@ from datetime import datetime
 from time import time
 
 from fastapi import HTTPException, status
-from sendgrid import from_email
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
@@ -69,7 +68,7 @@ class TicketSLAServices:
             logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                message="Error while registering Service Level Agreement",
+                message=f"{e.detail if e.detail else str(e)}",
                 data=str(e),
             )
 
@@ -103,7 +102,7 @@ class TicketSLAServices:
             logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                message="Error while fetching Service Level Agreement",
+                message=f"{e.detail if e.detail else str(e)}",
             )
 
     async def get_sla(self, sla_id: int):
@@ -126,7 +125,7 @@ class TicketSLAServices:
             logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                message="Error while fetching Service Level Agreement",
+                message=f"{e.detail if e.detail else str(e)}",
                 data=str(e),
             )
 
@@ -162,7 +161,7 @@ class TicketSLAServices:
             return cr.success(message="Successfully updated the ticket sla")
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Error while updating the sla", data=str(e))
+            return cr.error(message=f"{e.detail if e.detail else str(e)}", data=str(e))
 
     async def delete_sla(self, sla_id: int):
         """
