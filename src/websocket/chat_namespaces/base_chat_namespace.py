@@ -28,6 +28,9 @@ class BaseChatNamespace(BaseNameSpace):
             return False
         await self.leave_conversation(conversation_id, sid)
 
+    async def save_message_db(self, conversation_id: int, data: dict):
+        await ChatUtils.save_message_db(conversation_id, data)
+
 
     def _conversation_add_sid(self, conversationId: int):
         return f"{REDIS_SID_KEY}:{conversationId}"

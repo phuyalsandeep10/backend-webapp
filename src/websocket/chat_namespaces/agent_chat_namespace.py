@@ -91,9 +91,7 @@ class AgentChatNamespace(BaseChatNamespace):
 
         try:
             channel_name = MESSAGE_CHANNEL
-            await self.redis_publish(
-                channel=channel_name,
-                message={
+            payload = {
                         "event": self.receive_message,
                         "sid": sid,
                         "message": data.get("message"),
@@ -105,11 +103,19 @@ class AgentChatNamespace(BaseChatNamespace):
                         "files": data.get("files", []),
                         "organization_id": organization_id,
                         "mode": "message",
+                        "conversation_id": conversation_id,
+                        "is_customer": False,
+                        "sid": sid,
                     }
-                
+            await self.redis_publish(
+                channel=channel_name,
+                message=payload
             )
+            await self.save_message_db(conversation_id, payload)
+            return True
         except Exception as e:
             print(f"Error publishing message to Redis: {e}")
+            return False
 
     
 

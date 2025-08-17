@@ -1,5 +1,7 @@
 import json
 
+from src.websocket.chat_utils import ChatUtils
+
 
 
 
@@ -62,7 +64,7 @@ class CustomerChatNamespace(BaseChatNamespace):
         await self._notify_to_users(organization_id)
 
         # notify users with a specific customer landing event
-
+      
 
         print(f"✅ Published customer_land event to ")
 
@@ -92,11 +94,8 @@ class CustomerChatNamespace(BaseChatNamespace):
             print(f"sids {sids}")
             if len(sids) > 1:
                 event = self.receive_message
-                channel_name = MESSAGE_CHANNEL 
-
-            await self.redis_publish(
-                channel=channel_name,
-                message={
+                channel_name = MESSAGE_CHANNEL
+            payload = {
                         "event": event,
                         "sid": sid,
                         "message": data.get("message"),
@@ -110,12 +109,21 @@ class CustomerChatNamespace(BaseChatNamespace):
                         "mode": "message",
                         "conversation_id": conversation_id,
                         "is_customer": True,
-                        "sid": sid
+                        "sid": sid,
+                        "customer_id":data.get("customer_id")
                     }
-                
+
+            await self.redis_publish(
+                channel=channel_name,
+                message=payload
             )
+            await self.save_message_db(conversation_id, payload)
+            
+            return True
         except Exception as e:
             print(f"Error publishing message to Redis: {e}")
+            return False
+
 
         # await save_message_db(
         #     conversation_id=int(conversation_id), data=data, user_id=data.get("user_id")
