@@ -4,12 +4,11 @@ from typing import Any, List, Optional, Type, TypeVar, Union
 
 import sqlalchemy as sa
 from fastapi import HTTPException
-from fastapi.requests import HTTPConnection
 from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import and_, inspect, or_
-from sqlalchemy.orm import Load, attributes, selectinload
+from sqlalchemy.orm import attributes
 from sqlalchemy.orm.strategy_options import _AbstractLoad
-from sqlmodel import Column, Field, ForeignKey, Relationship, SQLModel, select
+from sqlmodel import Field, SQLModel, select
 from starlette.status import HTTP_404_NOT_FOUND
 
 from src.common.context import TenantContext, UserContext
@@ -382,7 +381,7 @@ class TenantModel(CommonModel):
         if "organization_id" not in kwargs:  # to prevent overriding
             kwargs["organization_id"] = organization_id
         if "created_by_id" not in kwargs:
-            kwargs["created_by_id"] = organization_id
+            kwargs["created_by_id"] = user_id
 
         obj = await super().create(**kwargs)
         return obj
@@ -398,7 +397,8 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ):
         organization_id = TenantContext.get()
-        where["organization_id"] = organization_id
+        if "organization_id" not in where:  # to prevent overriding
+            where["organization_id"] = organization_id
 
         return await super().filter(where, skip, limit, joins, options, related_items)
 
@@ -424,7 +424,8 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> Optional[T]:
         organization_id = TenantContext.get()
-        where["organization_id"] = organization_id
+        if "organization_id" not in where:  # to prevent overriding
+            where["organization_id"] = organization_id
 
         return await super().find_one(where, joins, options, related_items)
 
@@ -442,8 +443,11 @@ class TenantModel(CommonModel):
     async def update(cls: Type[T], id: int, **kwargs) -> Optional[T]:
         organization_id = TenantContext.get()
         user_id = UserContext.get()
-        kwargs["organization_id"] = organization_id
-        kwargs["updated_by_id"] = user_id
+
+        if "organization_id" not in kwargs:  # to prevent overriding
+            kwargs["organization_id"] = organization_id
+        if "created_by_id" not in kwargs:
+            kwargs["updated_by_id"] = user_id
         return await super().update(id, **kwargs)
 
     @classmethod
@@ -453,8 +457,8 @@ class TenantModel(CommonModel):
     @classmethod
     async def delete(cls: Type[T], where: dict = {}) -> None:
         organization_id = TenantContext.get()
-        user_id = UserContext.get()
-        where["organization_id"] = organization_id
+        if "organization_id" not in where:  # to prevent overriding
+            where["organization_id"] = organization_id
         return await super().delete(where)
 
     @classmethod
@@ -464,5 +468,7 @@ class TenantModel(CommonModel):
         """
         organization_id = TenantContext.get()
         user_id = UserContext.get()
-        where["organization_id"] = organization_id
+        if "organization_id" not in where:  # to prevent overriding
+            where["organization_id"] = organization_id
+            where["updated_by_id"] = user_id
         return await super().soft_delete(where)

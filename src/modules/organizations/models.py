@@ -14,10 +14,10 @@ if TYPE_CHECKING:
     from src.modules.auth.models import User
     from src.modules.chat.models.conversation import Conversation
     from src.modules.chat.models.customer import Customer
+    from src.modules.common.models import Country, Timezone  # type:ignore
     from src.modules.ticket.models.priority import TicketPriority
     from src.modules.ticket.models.status import TicketStatus
     from src.modules.ticket.models.ticket import Ticket
-    from src.modules.common.models import Country, Timezone #type:ignore
 
 
 class Organization(CommonModel, table=True):
@@ -55,7 +55,7 @@ class Organization(CommonModel, table=True):
 
     country: Optional["Country"] = Relationship()
     timezone: Optional["Timezone"] = Relationship()
-    
+
     ticket_priorities: List["TicketPriority"] = Relationship(
         back_populates="organization"
     )

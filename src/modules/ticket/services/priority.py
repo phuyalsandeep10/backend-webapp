@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class TicketPriorityService:
 
-    async def list_priorities(self, user):
+    async def list_priorities(self):
         """
         List all the priorites on the basis of the organization
         """
@@ -30,7 +30,7 @@ class TicketPriorityService:
             logger.exception(e)
             return cr.error(message="Error while listing priorities", data=str(e))
 
-    async def create_priorities(self, payload, user):
+    async def create_priorities(self, payload):
         """
         create single priority or list of priorities at the same time
         """
@@ -77,7 +77,7 @@ class TicketPriorityService:
             logger.exception(e)
             return cr.error(message=f"{e.detail if e.detail else str(e)}", data=str(e))
 
-    async def get_priority(self, priority_id: int, user):
+    async def get_priority(self, priority_id: int):
         """
         List particular priority of the organization
         """
@@ -93,7 +93,7 @@ class TicketPriorityService:
             logger.exception(e)
             return cr.error(message="Error while listing priority")
 
-    async def delete_priority(self, priority_id: int, user):
+    async def delete_priority(self, priority_id: int):
         """
         soft delete particular priority of the organization
         """
@@ -124,9 +124,7 @@ class TicketPriorityService:
                 data=str(e),
             )
 
-    async def edit_priority(
-        self, priority_id: int, payload: EditTicketPrioritySchema, user
-    ):
+    async def edit_priority(self, priority_id: int, payload: EditTicketPrioritySchema):
         """
         Edit priority of the organization
         """

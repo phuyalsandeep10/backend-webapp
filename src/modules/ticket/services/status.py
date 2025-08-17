@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class TicketStatusService:
 
-    async def list_ticket_status(self, user):
+    async def list_ticket_status(self):
         """
         List all the ticket status on the basis of the organization
         """
@@ -33,7 +33,7 @@ class TicketStatusService:
             logger.exception(e)
             return cr.error(message="Error while listing status")
 
-    async def create_ticket_status(self, payload: List[CreateTicketStatusSchema], user):
+    async def create_ticket_status(self, payload: List[CreateTicketStatusSchema]):
         """
         create single status or list of ticket status at the same time
         """
@@ -53,7 +53,7 @@ class TicketStatusService:
             logger.exception(e)
             return cr.error(message=f"{e.detail if e.detail else str(e)}")
 
-    async def get_ticket_status(self, ticket_status_id: int, user):
+    async def get_ticket_status(self, ticket_status_id: int):
         """
         List particular ticket status of the organization
         """
@@ -69,7 +69,7 @@ class TicketStatusService:
             logger.exception(e)
             return cr.error(message="Error while listing ticket status")
 
-    async def delete_ticket_status(self, ticket_status_id: int, user):
+    async def delete_ticket_status(self, ticket_status_id: int):
         """
         Delete ticket status by id
         """
@@ -98,7 +98,7 @@ class TicketStatusService:
             return cr.error(message=f"{e.detail if e.detail else str(e)}")
 
     async def edit_ticket_status(
-        self, ticket_status_id: int, payload: EditTicketStatusSchema, user
+        self, ticket_status_id: int, payload: EditTicketStatusSchema
     ):
         """
         Edit ticket status of the organization

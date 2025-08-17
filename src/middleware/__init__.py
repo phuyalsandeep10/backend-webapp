@@ -1,7 +1,11 @@
 import logging
 from typing import List, Optional
 
+import jwt
+
 from src.common.context import TenantContext, UserContext
+from src.config.settings import settings
+from src.modules.auth.models import User
 from src.utils.response import CustomResponse as cr
 
 logger = logging.getLogger(__name__)
@@ -34,24 +38,28 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         try:
-            auth_header = request.headers.get("Authorization")
-            if not auth_header or not auth_header.startswith("Bearer "):
+            auth_header = request.headers.get("Authorization", None)
+            if not auth_header or not auth_header.startswith("Bearer"):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Missing or invalid Authorization header",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
             token = auth_header.split(" ")[1]
-            user = await self.get_user_by_token(token)
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
+            user_email: str = payload.get("sub", None)
+            user = await User.find_one(where={"email": user_email})
+
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token or user not found",
+                    detail="User not found",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
             UserContext.set(user.id)
             organization_id = user.attributes.get("organization_id")
-            print("Organization_id", organization_id)
             if organization_id:
                 TenantContext.set(organization_id)
             else:
@@ -61,6 +69,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return response
 
         except Exception as e:
+            logging.exception(e)
             return cr.error(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 message="Authentication required",

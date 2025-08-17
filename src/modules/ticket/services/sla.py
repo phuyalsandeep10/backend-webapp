@@ -3,7 +3,6 @@ from datetime import datetime
 from time import time
 
 from fastapi import HTTPException, status
-from sendgrid import from_email
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
@@ -40,7 +39,7 @@ class TicketSLAServices:
     Ticket SLA services methods
     """
 
-    async def register_sla(self, payload: CreateSLASchema, user: User):
+    async def register_sla(self, payload: CreateSLASchema):
         """
         Registers the SLA to the organization
         """
@@ -69,11 +68,11 @@ class TicketSLAServices:
             logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                message="Error while registering Service Level Agreement",
+                message=f"{e.detail if e.detail else str(e)}",
                 data=str(e),
             )
 
-    async def list_slas(self, user):
+    async def list_slas(self):
         """
         List all the SLA of the organization
         """
@@ -103,7 +102,7 @@ class TicketSLAServices:
             logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                message="Error while fetching Service Level Agreement",
+                message=f"{e.detail if e.detail else str(e)}",
             )
 
     async def get_sla(self, sla_id: int):
@@ -126,7 +125,7 @@ class TicketSLAServices:
             logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                message="Error while fetching Service Level Agreement",
+                message=f"{e.detail if e.detail else str(e)}",
                 data=str(e),
             )
 
@@ -162,7 +161,7 @@ class TicketSLAServices:
             return cr.success(message="Successfully updated the ticket sla")
         except Exception as e:
             logger.exception(e)
-            return cr.error(message="Error while updating the sla", data=str(e))
+            return cr.error(message=f"{e.detail if e.detail else str(e)}", data=str(e))
 
     async def delete_sla(self, sla_id: int):
         """
@@ -172,6 +171,13 @@ class TicketSLAServices:
             sla = await TicketSLA.find_one(where={"id": sla_id})
             if not sla:
                 raise TicketSLANotFound()
+
+            ticket_exists = await self.find_ticket_by_sla(sla)
+            if ticket_exists:
+                raise HTTPException(
+                    status_code=HTTP_403_FORBIDDEN,
+                    detail="Tickets with this sla exists, hence cannot be deleted",
+                )
 
             await TicketSLA.delete(where={"id": sla_id})
             await sla.save_to_log(
@@ -186,7 +192,7 @@ class TicketSLAServices:
             logger.exception(e)
             return cr.error(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                message="Error while deleting the SLA",
+                message=f"{e.detail if e.detail else str(e)}",
                 data=str(e),
             )
 
@@ -344,6 +350,16 @@ class TicketSLAServices:
                 ticket=ticket,
                 mail_type=TicketLogActionEnum.SLA_BREACH_EMAIL_SENT,
             )
+
+    async def find_ticket_by_sla(self, sla: TicketSLA):
+        """
+        Finds the ticket by sla
+        """
+        try:
+            tickets = await Ticket.filter(where={"priority_id": sla.priority_id})
+            return tickets
+        except Exception as e:
+            return None
 
 
 sla_service = TicketSLAServices()
