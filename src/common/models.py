@@ -4,12 +4,11 @@ from typing import Any, List, Optional, Type, TypeVar, Union
 
 import sqlalchemy as sa
 from fastapi import HTTPException
-from fastapi.requests import HTTPConnection
 from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import and_, inspect, or_
-from sqlalchemy.orm import Load, attributes, selectinload
+from sqlalchemy.orm import attributes
 from sqlalchemy.orm.strategy_options import _AbstractLoad
-from sqlmodel import Column, Field, ForeignKey, Relationship, SQLModel, select
+from sqlmodel import Field, SQLModel, select
 from starlette.status import HTTP_404_NOT_FOUND
 
 from src.common.context import TenantContext, UserContext
@@ -458,7 +457,6 @@ class TenantModel(CommonModel):
     @classmethod
     async def delete(cls: Type[T], where: dict = {}) -> None:
         organization_id = TenantContext.get()
-        user_id = UserContext.get()
         if "organization_id" not in where:  # to prevent overriding
             where["organization_id"] = organization_id
         return await super().delete(where)
