@@ -13,6 +13,7 @@ from src.modules.ticket.enums import (
     WarningLevelEnum,
 )
 from src.modules.ticket.schemas import (
+    AssigneeOut,
     PriorityOut,
     SLAOut,
     TicketAttachmentOut,
@@ -140,7 +141,7 @@ class Ticket(TenantModel, Mixin.LoggingMixin, table=True):
             "sla": self.sla.to_json(SLAOut) if self.sla else None,
             "department": self.department.to_json() if self.department else None,
             "created_by": self.created_by.to_dict() if self.created_by else None,
-            "assignees": [assignee.to_json() for assignee in self.assignees],
+            "assignees": [assignee.to_json(AssigneeOut) for assignee in self.assignees],
             "created_at": self.created_at.isoformat(),
             "opened_at": self.opened_at.isoformat() if self.opened_at else None,
             "is_spam": self.is_spam,
