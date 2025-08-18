@@ -1,5 +1,5 @@
-from src.app import app
 import socketio
+<<<<<<< HEAD
 from src.websocket.chat_namespaces.customer_chat_namespace import CustomerChatNamespace
 from src.websocket.chat_namespaces.agent_chat_namespace import AgentChatNamespace
 from src.config.redis.redis_listener import redis_listener
@@ -10,6 +10,12 @@ from socketio import AsyncRedisManager
 redis_url = settings.REDIS_URL
 mgr = AsyncRedisManager(redis_url)
 
+=======
+
+from src.app import app
+from src.modules.chat.websocket import ChatNamespace
+from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
+>>>>>>> main
 
 # Create the Socket.IO Async server (ASGI mode)
 sio = socketio.AsyncServer(
@@ -25,6 +31,7 @@ socket_app = socketio.ASGIApp(
 )
 
 
+<<<<<<< HEAD
 sio.register_namespace(CustomerChatNamespace())
 sio.register_namespace(AgentChatNamespace())
 
@@ -74,3 +81,9 @@ async def stop_ws_redis_listener():
             print("✅ Redis listener task cancelled")
         except Exception as e:
             print(f"⚠️ Error stopping Redis listener: {e}")
+=======
+alert_ns = AlertNameSpace("/alert")
+
+sio.register_namespace(ChatNamespace())
+sio.register_namespace(alert_ns)
+>>>>>>> main

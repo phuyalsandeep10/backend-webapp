@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, List, Optional
 
 import sqlalchemy as sa
+from pydantic import EmailStr
 from sqlmodel import Field, Relationship, Session, SQLModel, select
 
 from src.common.models import CommonModel
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
     from src.modules.auth.models import User
     from src.modules.chat.models.conversation import Conversation
     from src.modules.chat.models.customer import Customer
+    from src.modules.common.models import Country, Timezone  # type:ignore
     from src.modules.ticket.models.priority import TicketPriority
     from src.modules.ticket.models.status import TicketStatus
     from src.modules.ticket.models.ticket import Ticket
@@ -26,6 +28,7 @@ class Organization(CommonModel, table=True):
 
     domain: str = Field(default=None, max_length=255)
     logo: str = Field(default=None, max_length=255, nullable=True)
+    email_alias: EmailStr = Field(nullable=False, unique=True)
 
     identifier: str = Field(default=None, max_length=255, nullable=True)
 
@@ -33,6 +36,9 @@ class Organization(CommonModel, table=True):
     contact_email: str = Field(
         default=None,
     )
+
+    country_id: Optional[int] = Field(default=None, foreign_key="sys_countries.id")
+    timezone_id: Optional[int] = Field(default=None, foreign_key="sys_timezones.id")
 
     twitter_username: Optional[str] = Field(default=None, max_length=255, nullable=True)
     facebook_username: Optional[str] = Field(default=None, max_length=255)
@@ -46,6 +52,9 @@ class Organization(CommonModel, table=True):
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
+
+    country: Optional["Country"] = Relationship()
+    timezone: Optional["Timezone"] = Relationship()
 
     ticket_priorities: List["TicketPriority"] = Relationship(
         back_populates="organization"

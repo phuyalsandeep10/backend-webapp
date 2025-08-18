@@ -1,18 +1,47 @@
 import logging
+from contextvars import ContextVar
 
-from src.config.celery import celery_app
-from src.config.mail import mail_sender
-from src.config.settings import settings
+from src.modules.sendgrid.services import send_sendgrid_email
+from src.modules.ticket.enums import TicketLogActionEnum, TicketLogEntityEnum
+from src.modules.ticket.models.ticket import Ticket
+from src.modules.ticket.models.ticket_log import TicketLog
 
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task
-def send_ticket_verification_email(email: str, token: str, ticket_id: str):
-    logger.info(f"Sending ticket verification email to {email}")
-    mail_sender.send(
-        subject="Ticket Email Verification",
-        recipients=[email],
-        body_html=f"<div><h1>Please verify the ticket confirmation</h1><a href='{settings.FRONTEND_URL}/ticket-confirm/{ticket_id}/{token}'>Verify ticket</a></div>",
-        body_text="Ticket verification email",
-    )
+async def send_email(
+    ctx,
+    subject: str,
+    recipients: str,
+    body_html: str,
+    from_email: tuple[str, str],
+    ticket_id: int,
+    organization_id: int,
+    mail_type: TicketLogActionEnum,
+):
+    try:
+        logger.info(f"Sending {subject} email")
+        send_sendgrid_email(
+            from_email=from_email,
+            to_email=recipients,
+            subject=subject,
+            html_content=body_html,
+        )
+        # saving to the log
+        log_data = {
+            "ticket_id": ticket_id,
+            "organization_id": organization_id,
+            "entity_type": TicketLogEntityEnum.TICKET,
+            "action": mail_type,
+        }
+        await TicketLog.create(**log_data)
+    except Exception as e:
+        logger.exception(e)
+        log_data = {
+            "ticket_id": ticket_id,
+            "organization_id": organization_id,
+            "entity_type": TicketLogEntityEnum.TICKET,
+            "action": TicketLogActionEnum.EMAIL_SENT_FAILED,
+            "description": f"Error while sending {mail_type}",
+        }
+        await TicketLog.create(**log_data)

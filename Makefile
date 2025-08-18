@@ -3,7 +3,10 @@ run:
 		fastapi dev src/main.py --host 0.0.0.0
 celery:
 		@echo "Starting celery"
-		celery -A src.config.celery worker --loglevel=INFO
+		celery -A src.config.celery worker --beat --loglevel=INFO
+arq:
+		@echo "Starting arq"
+		arq src.config.arq.WorkerSettings
 test:
 	@echo "Starting testing"
 	pytest -v

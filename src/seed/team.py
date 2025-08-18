@@ -1,4 +1,5 @@
-from src.models import Team, Organization
+from src.models import Organization, Team
+
 
 async def department_team_seed_dummy():
     org = await Organization.find_one(where={"name": "test"})
@@ -26,7 +27,7 @@ async def department_team_seed_dummy():
         await Team.create(
             name="test2",
             description="THis is test team2",
-            organization_id=org.id,
+            organization_id=2,
         )
         print("Test Team 2 created")
     else:

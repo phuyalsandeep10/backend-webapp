@@ -1,3 +1,4 @@
+from src.config.settings import settings
 from src.models import Organization, OrganizationMember, TicketPriority, User
 
 
@@ -23,6 +24,7 @@ async def organization_seed_dummy():
             owner_id=user.id,
             domain="https://test.com",
             identifier="test1",
+            email_alias=f"jfajejcja@{settings.EMAIL_DOMAIN}",
         )
 
         print("Organization 1 created")
@@ -38,6 +40,7 @@ async def organization_seed_dummy():
             owner_id=user.id,
             domain="https://test2.com",
             identifier="test2",
+            email_alias=f"qyrusenca@{settings.EMAIL_DOMAIN}",
         )
 
         print("Organization 2 created")

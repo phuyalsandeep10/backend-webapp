@@ -187,7 +187,9 @@ class BaseMigration:
         """
         self.common_columns()
         self.fields.append(
-            self.foreign(name="organization_id", table="sys_organizations")
+            self.foreign(
+                name="organization_id", table="sys_organizations", nullable=False
+            )
         )
 
     def bulk_insert_data(self, rows: List[dict]):

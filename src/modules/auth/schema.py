@@ -59,6 +59,9 @@ class UserSchema(BaseModel):
     name: Optional[str] = None
     image: Optional[str] = None
     mobile: Optional[str] = None
+    address: Optional[str] = None
+    country: Optional[str] = None
+    language: Optional[str] = None
     is_active: bool
     two_fa_enabled: bool
     two_fa_secret: Optional[str] = None
@@ -73,3 +76,13 @@ class UserSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+class UserProfileUpdateSchema(BaseModel):
+    """Schema for updating user profile - only allows safe fields"""
+    name: Optional[str] = None
+    image: Optional[str] = None
+    mobile: Optional[str] = None
+    address: Optional[str] = None
+    country: Optional[str] = None
+    language: Optional[str] = None
+    

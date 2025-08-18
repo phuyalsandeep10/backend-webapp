@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 # Token expiration time in minutes
+    ACCESS_TOKEN_EXPIRE_MINUTES: int  # Token expiration time in minutes
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:29092"
     KAFKA_TOPIC: str = "chatboq-events"
     DB_USER: str = "postgres"
@@ -51,8 +51,10 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str = ""
     CLOUDINARY_API_SECRET: str = ""
     ENV: str = "development"
+    EMAIL_DOMAIN: str = ""
+    SENDGRID_API_KEY: str = ""
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()  # type:ignore

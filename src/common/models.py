@@ -3,11 +3,13 @@ from datetime import datetime
 from typing import Any, List, Optional, Type, TypeVar, Union
 
 import sqlalchemy as sa
+from fastapi import HTTPException
 from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import and_, inspect, or_
-from sqlalchemy.orm import Load, selectinload
+from sqlalchemy.orm import attributes
 from sqlalchemy.orm.strategy_options import _AbstractLoad
-from sqlmodel import Column, Field, ForeignKey, SQLModel, select
+from sqlmodel import Field, SQLModel, select
+from starlette.status import HTTP_404_NOT_FOUND
 
 from src.common.context import TenantContext, UserContext
 from src.db.config import async_session
@@ -40,12 +42,69 @@ class BaseModel(SQLModel):
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
-    def to_json(self, schema: Optional[Type[PydanticBaseModel]] = None) -> dict:
+    def serialize_for_json(self, value: Any) -> Any:
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if isinstance(value, list):
+            return [self.serialize_for_json(item) for item in value]
+        if isinstance(value, dict):
+            return {k: self.serialize_for_json(v) for k, v in value.items()}
+        return value
+
+    def to_json(
+        self,
+        schema: Optional[Type[PydanticBaseModel]] = None,
+        include_relationships: bool = False,
+        related_schemas: Optional[dict[str, Type[PydanticBaseModel]]] = None,
+    ) -> dict:
         try:
+            # Base dict from model fields only
+            base_dict = self.model_dump()
+
+            # Add relationships dynamically if requested
+            if include_relationships:
+                state = attributes.instance_state(self)
+                for rel in self.__mapper__.relationships:
+                    if rel.key in state.dict:
+                        attr = getattr(self, rel.key)
+                        rel_schema = None
+                        if related_schemas:
+                            rel_schema = related_schemas.get(rel.key)
+
+                        if attr is not None:
+                            if rel.uselist:
+                                base_dict[rel.key] = [
+                                    (
+                                        item.to_json(
+                                            schema=rel_schema,
+                                            include_relationships=include_relationships,
+                                            related_schemas=related_schemas,
+                                        )
+                                        if hasattr(item, "to_json")
+                                        else item
+                                    )
+                                    for item in attr
+                                ]
+                            else:
+                                base_dict[rel.key] = (
+                                    attr.to_json(
+                                        schema=rel_schema,
+                                        include_relationships=include_relationships,
+                                        related_schemas=related_schemas,
+                                    )
+                                    if hasattr(attr, "to_json")
+                                    else attr
+                                )
+                        else:
+                            base_dict[rel.key] = None
+
             if schema:
                 field_names = set(schema.model_fields.keys())  # Pydantic v2
-                return json.loads(self.model_dump_json(include=field_names))
-            return json.loads(self.model_dump_json())
+                filtered_dict = {k: v for k, v in base_dict.items() if k in field_names}
+                return self.serialize_for_json(filtered_dict)
+
+            return self.serialize_for_json(base_dict)
+
         except Exception as e:
             raise e
 
@@ -108,7 +167,7 @@ class BaseModel(SQLModel):
             return obj
 
     @classmethod
-    async def delete(cls: Type[T], where: Optional[dict] = None) -> None:
+    async def delete(cls: Type[T], where: dict = {}) -> None:
         async with async_session() as session:
             statement = query_statement(
                 cls,
@@ -116,12 +175,15 @@ class BaseModel(SQLModel):
             )
             result = await session.execute(statement)
             obj = result.scalars().first()
+            print("The obj", obj)
+            if not obj:
+                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Not found")
             if obj:
                 await session.delete(obj)
                 await session.commit()
 
     @classmethod
-    async def soft_delete(cls: Type[T], where: Optional[dict] = None) -> None:
+    async def soft_delete(cls: Type[T], where: dict = {}) -> None:
         """
         This function is used for soft delete by setting the current time at deleted_at field
         """
@@ -316,8 +378,10 @@ class TenantModel(CommonModel):
     async def create(cls: Type[T], **kwargs) -> T:
         organization_id = TenantContext.get()
         user_id = UserContext.get()
-        kwargs.setdefault("organization_id", organization_id)
-        kwargs.setdefault("created_by_id", user_id)
+        if "organization_id" not in kwargs:  # to prevent overriding
+            kwargs["organization_id"] = organization_id
+        if "created_by_id" not in kwargs:
+            kwargs["created_by_id"] = user_id
 
         obj = await super().create(**kwargs)
         return obj
@@ -333,10 +397,21 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ):
         organization_id = TenantContext.get()
-        if organization_id:
-            where.setdefault("organization_id", organization_id)
+        if "organization_id" not in where:  # to prevent overriding
+            where["organization_id"] = organization_id
 
-        print("Here is", where)
+        return await super().filter(where, skip, limit, joins, options, related_items)
+
+    @classmethod
+    async def filter_without_tenant(
+        cls: Type[T],
+        where: dict = {},
+        skip: int = 0,
+        limit: Optional[int] = None,
+        joins: Optional[list[Any]] = None,
+        options: Optional[list[Any]] = None,
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
+    ):
 
         return await super().filter(where, skip, limit, joins, options, related_items)
 
@@ -349,15 +424,51 @@ class TenantModel(CommonModel):
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ) -> Optional[T]:
         organization_id = TenantContext.get()
-        if organization_id:
-            where.setdefault("organization_id", organization_id)
+        if "organization_id" not in where:  # to prevent overriding
+            where["organization_id"] = organization_id
 
+        return await super().find_one(where, joins, options, related_items)
+
+    @classmethod
+    async def find_one_without_tenant(
+        cls: Type[T],
+        where: dict = {},
+        joins: Optional[list[Any]] = None,
+        options: Optional[list[Any]] = None,
+        related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
+    ) -> Optional[T]:
         return await super().find_one(where, joins, options, related_items)
 
     @classmethod
     async def update(cls: Type[T], id: int, **kwargs) -> Optional[T]:
         organization_id = TenantContext.get()
         user_id = UserContext.get()
-        kwargs.setdefault("organization_id", organization_id)
-        kwargs.setdefault("updated_by_id", user_id)
+
+        if "organization_id" not in kwargs:  # to prevent overriding
+            kwargs["organization_id"] = organization_id
+        if "created_by_id" not in kwargs:
+            kwargs["updated_by_id"] = user_id
         return await super().update(id, **kwargs)
+
+    @classmethod
+    async def update_without_tenant(cls: Type[T], id: int, **kwargs) -> Optional[T]:
+        return await super().update(id, **kwargs)
+
+    @classmethod
+    async def delete(cls: Type[T], where: dict = {}) -> None:
+        organization_id = TenantContext.get()
+        if "organization_id" not in where:  # to prevent overriding
+            where["organization_id"] = organization_id
+        return await super().delete(where)
+
+    @classmethod
+    async def soft_delete(cls: Type[T], where: dict = {}) -> None:
+        """
+        This function is used for soft delete by setting the current time at deleted_at field
+        """
+        organization_id = TenantContext.get()
+        user_id = UserContext.get()
+        if "organization_id" not in where:  # to prevent overriding
+            where["organization_id"] = organization_id
+            where["updated_by_id"] = user_id
+        return await super().soft_delete(where)
