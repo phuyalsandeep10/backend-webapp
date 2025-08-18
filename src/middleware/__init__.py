@@ -34,7 +34,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if self.extemp_paths and any(
             request.url.path.startswith(path) for path in self.extemp_paths
         ):
-            print(f"Exempting path: {request.url.path}")
             return await call_next(request)
 
         try:
@@ -62,8 +61,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
             organization_id = user.attributes.get("organization_id")
             if organization_id:
                 TenantContext.set(organization_id)
-            else:
-                TenantContext.set(None)
 
             response = await call_next(request)
             return response
@@ -73,5 +70,5 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return cr.error(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 message="Authentication required",
-                data=str(e),
+                data={"error": str(e) or repr(e)},
             )
