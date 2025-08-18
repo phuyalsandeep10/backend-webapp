@@ -41,7 +41,7 @@ app.add_middleware(
         "/auth/forgot-password-verify",
         "/docs",
         "/openapi.json",
-        "/auth/me",
+        # "/auth/me",
         "/tickets/confirm",
         "/organizations/countries",
         "/chat/",
