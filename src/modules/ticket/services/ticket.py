@@ -162,16 +162,17 @@ class TicketServices:
                 message="Error while listing ticket",
             )
 
-    async def delete_ticket(self, ticket_id: int, user):
+    async def delete_ticket(self, ticket_id: int):
         try:
             ticket = await Ticket.find_one(where={"id": ticket_id})
             if not ticket:
                 raise TicketNotFound()
             await Ticket.soft_delete(
                 where={
-                    "id": ticket.id,
+                    "id": ticket_id,
                 }
             )
+
             # saving to the log
             await ticket.save_to_log(action=TicketLogActionEnum.TICKET_SOFT_DELETED)
             return cr.success(
