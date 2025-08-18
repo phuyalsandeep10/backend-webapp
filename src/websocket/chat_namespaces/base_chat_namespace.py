@@ -91,7 +91,6 @@ class BaseChatNamespace(BaseNameSpace):
 
         is_customer = self.namespace == CUSTOMER_CHAT_NAMESPACE
         
-
         await self.redis_publish(
             channel=TYPING_CHANNEL,
             message={

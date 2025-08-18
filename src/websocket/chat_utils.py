@@ -29,7 +29,6 @@ class ChatUtils:
         print(f"save message in db and payload {payload}")
     
        
-
     
         data = {}
         data["content"] = payload.get("message")
@@ -42,10 +41,11 @@ class ChatUtils:
             data["reply_id"] = payload.get("reply_id")
         if payload.get('organization_id'):
             data["organization_id"] = payload.get("organization_id")
-        print(f"data {data}")        
+        print(f"data {data}")   
         
         
         msg = await Message.create(**data)
+
         for file in payload.get("files", []):
             await MessageAttachment.create(
                 message_id=msg.id,
@@ -54,6 +54,7 @@ class ChatUtils:
                 file_type=file.get("file_type"),
                 file_size=file.get("file_size"),
             )
+        await Conversation.update(id=int(conversation_id), attributes={"last_message":msg.to_json()})
         return msg
 
     

@@ -99,7 +99,7 @@ class CustomerChatNamespace(BaseChatNamespace):
                         "event": event,
                         "sid": sid,
                         "message": data.get("message"),
-                        "uuid": data.get("uuid"),
+                        "messageId": data.get("messageId"),
                         "status": data.get(
                             "status", "SENT"
                         ),  # delivered, SENT and seen

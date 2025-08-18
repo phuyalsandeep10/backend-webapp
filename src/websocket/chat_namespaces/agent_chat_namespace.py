@@ -88,14 +88,13 @@ class AgentChatNamespace(BaseChatNamespace):
 
         if not conversation_id:
             return False
-
         try:
             channel_name = MESSAGE_CHANNEL
             payload = {
                         "event": self.receive_message,
                         "sid": sid,
                         "message": data.get("message"),
-                        "uuid": data.get("uuid"),
+                        "messageId": data.get("messageId"),
                         "status": data.get(
                             "status", "SENT"
                         ),  # delivered, SENT and seen
