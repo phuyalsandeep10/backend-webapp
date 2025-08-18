@@ -1,9 +1,12 @@
 import socketio
-from src.websocket.chat_namespaces.customer_chat_namespace import CustomerChatNamespace
-from src.websocket.chat_namespaces.agent_chat_namespace import AgentChatNamespace
+from socketio import AsyncRedisManager
+from socketio.redis_manager import redis
+
 from src.config.redis.redis_listener import redis_listener
 from src.config.settings import settings
-from socketio import AsyncRedisManager
+from src.websocket.chat_namespaces.agent_chat_namespace import AgentChatNamespace
+from src.websocket.chat_namespaces.customer_chat_namespace import CustomerChatNamespace
+from src.websocket.namespace.ticket.ticket_namespace import TicketNameSpace
 
 # ✅ Correct: Initialize once
 redis_url = settings.REDIS_URL
@@ -40,12 +43,12 @@ redis_listener_task = None
 @app.on_event("startup")
 async def start_ws_redis_listener():
     import asyncio
+
     global redis_listener_task
 
     print("🚀 Starting WebSocket Redis listener...")
     # Create task with proper error handling
     redis_listener_task = asyncio.create_task(redis_listener(sio))
-    
 
     # Add error callback to catch silent failures
     def task_done_callback(task):
@@ -78,5 +81,9 @@ async def stop_ws_redis_listener():
         except Exception as e:
             print(f"⚠️ Error stopping Redis listener: {e}")
 
+
 alert_ns = AlertNameSpace("/alert")
+ticket_ns = TicketNameSpace("/tickets", sio, redis)
 sio.register_namespace(alert_ns)
+sio.register_namespace(ticket_ns)
+
