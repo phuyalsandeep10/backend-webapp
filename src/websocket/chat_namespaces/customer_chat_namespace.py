@@ -16,7 +16,7 @@ class CustomerChatNamespace(BaseChatNamespace):
     
 
     def __init__(self):
-        super().__init__(self.namespace)
+        super().__init__(self.namespace,is_customer=True)
 
  
 
@@ -99,7 +99,7 @@ class CustomerChatNamespace(BaseChatNamespace):
                         "event": event,
                         "sid": sid,
                         "message": data.get("message"),
-                        "messageId": data.get("messageId"),
+                        "message_id": data.get("message_id"),
                         "status": data.get(
                             "status", "SENT"
                         ),  # delivered, SENT and seen

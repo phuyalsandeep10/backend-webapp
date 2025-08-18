@@ -16,9 +16,11 @@ class BaseChatNamespace(BaseNameSpace):
     chat_online = "chat_online"
     customer_land = "customer_land"
     message_notification = "message-notification"
+    is_customer:bool=False
 
-    def __init__(self, namespace: str):
+    def __init__(self, namespace: str,is_customer:bool=False):
         super().__init__(namespace)
+        self.is_customer = is_customer
 
     async def on_disconnect(self, sid):
         # on disconnect
@@ -74,22 +76,14 @@ class BaseChatNamespace(BaseNameSpace):
         await redis.delete(self._conversation_from_sid(sid))
 
     
-    async def on_message_seen(self, sid, data:dict):
-        conversation_id = await self._get_conversation_id_from_sid(sid)
-        if not conversation_id:
-            return False
 
-        await self.redis_publish(
-            channel=MESSAGE_SEEN_CHANNEL,
-            message={"event": self.message_seen, "sid": sid, "uuid": data.get("uuid")}
-        )
     
     async def on_typing(self, sid,data:dict):
         conversation_id = await self._get_conversation_id_from_sid(sid)
         if not conversation_id:
             return False
 
-        is_customer = self.namespace == CUSTOMER_CHAT_NAMESPACE
+        
         
         await self.redis_publish(
             channel=TYPING_CHANNEL,
@@ -100,7 +94,7 @@ class BaseChatNamespace(BaseNameSpace):
                 "mode": data.get("mode", "typing"),
                 "conversation_id": conversation_id,
                 "organization_id": data.get("organization_id"),
-                "is_customer": is_customer,
+                "is_customer": self.is_customer,
                 "sid": sid
             },
         )
@@ -110,12 +104,24 @@ class BaseChatNamespace(BaseNameSpace):
         
         if not conversation_id:
             return False
-        is_customer = self.namespace == CUSTOMER_CHAT_NAMESPACE
+       
 
 
         await self.redis_publish(
             channel=TYPING_STOP_CHANNEL,
-            message={"event": self.stop_typing, "sid": sid, "mode": "stop-typing","conversation_id": conversation_id,"is_customer": is_customer,"sid": sid},
+            message={"event": self.stop_typing, "sid": sid, "mode": "stop-typing","conversation_id": conversation_id,"is_customer": self.is_customer,"sid": sid},
             
+        )
+    async def on_message_seen(self, sid,data:dict):
+        conversation_id = await self._get_conversation_id_from_sid(sid)
+        messageId = data.get("message_id")
+
+        if not conversation_id or not messageId:
+            return False
+        
+
+        await self.redis_publish(
+            channel=MESSAGE_SEEN_CHANNEL,
+            message={"event": self.message_seen, "sid": sid, "message_id": messageId,"conversation_id":conversation_id}
         )
 

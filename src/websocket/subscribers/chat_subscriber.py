@@ -68,6 +68,7 @@ class ChatSubscriber:
     
     async def message_seen(self):
         room_name = ChatUtils.conversation_group(conversation_id=self.payload.get("conversation_id"))
+
         await self.emit(room_name)
     
         

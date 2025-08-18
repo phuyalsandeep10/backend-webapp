@@ -94,7 +94,7 @@ class AgentChatNamespace(BaseChatNamespace):
                         "event": self.receive_message,
                         "sid": sid,
                         "message": data.get("message"),
-                        "messageId": data.get("messageId"),
+                        "message_id": data.get("message_id"),
                         "status": data.get(
                             "status", "SENT"
                         ),  # delivered, SENT and seen
