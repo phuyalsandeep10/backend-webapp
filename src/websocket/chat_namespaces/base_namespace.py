@@ -1,11 +1,11 @@
-import socketio
-from src.config.redis.redis_listener import get_redis
 import json
+
+import socketio
+
+from src.config.redis.redis_listener import get_redis
 
 
 class BaseNameSpace(socketio.AsyncNamespace):
-
-
     def __init__(self, namespace: str):
         super().__init__(namespace=namespace)
         self.redis = None
