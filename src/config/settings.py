@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api/v1"
     CELEREY_BROKER_URL: str = "redis://localhost:6379"
 
+    SOCKETIO_PATH: str = "/ws/socket.io"
+    CORS_ORIGINS: List[str] = ["*"]
+
+    REDIS_URL: str = "redis://localhost:6379"
+
+
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int  # Token expiration time in minutes
