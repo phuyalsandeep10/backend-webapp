@@ -77,3 +77,6 @@ async def stop_ws_redis_listener():
             print("✅ Redis listener task cancelled")
         except Exception as e:
             print(f"⚠️ Error stopping Redis listener: {e}")
+
+alert_ns = AlertNameSpace("/alert")
+sio.register_namespace(alert_ns)
