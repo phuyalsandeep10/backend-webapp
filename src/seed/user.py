@@ -8,19 +8,19 @@ user_data = [
     {
         "email": "test@gmail.com",
         "password": "test12345",
-        "name": "test",
+        "name": "test1",
         "organization_id": 1,
     },
     {
         "email": "test2@gmail.com",
         "password": "test12345",
-        "name": "test",
+        "name": "test2",
         "organization_id": 2,
     },
-    {"email": "test3@gmail.com", "password": "test12345", "name": "test"},
-    {"email": "test4@gmail.com", "password": "test12345", "name": "test"},
-    {"email": "test5@gmail.com", "password": "test12345", "name": "test"},
-    {"email": "test6@gmail.com", "password": "test12345", "name": "test"},
+    {"email": "test3@gmail.com", "password": "test12345", "name": "test3"},
+    {"email": "test4@gmail.com", "password": "test12345", "name": "test4"},
+    {"email": "test5@gmail.com", "password": "test12345", "name": "test5"},
+    {"email": "test6@gmail.com", "password": "test12345", "name": "test6"},
 ]
 
 
