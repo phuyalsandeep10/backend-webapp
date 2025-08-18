@@ -15,8 +15,14 @@ from src.modules.ticket.enums import (
 
 
 class AssigneeOut(BaseModel):
+    id: int
     email: EmailStr
     name: str
+    address: str
+    country: str
+    language: str
+    image: str
+    mobile: str
 
 
 class CreateTicketSchema(BaseModel):

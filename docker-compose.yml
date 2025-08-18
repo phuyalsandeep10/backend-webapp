@@ -28,7 +28,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: chatboq_backend
-  
+
     command:
       [
         "uvicorn",
@@ -54,7 +54,7 @@ services:
       # - kafka
     networks:
       - mynetwork
-  
+
   celery_worker:
     build: .
     command: celery -A src.config.celery worker --loglevel=info
@@ -72,6 +72,19 @@ services:
   arq_worker:
     build: .
     command: arq src.config.arq.WorkerSettings
+    environment:
+      - REDIS_URL=redis://localhost:6379
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
+      - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
+    depends_on:
+      - redis
+      - db
+    networks:
+      - mynetwork
+
+  apscheduler:
+    build: .
+    command: python -m src.config.scheduler
     environment:
       - REDIS_URL=redis://localhost:6379
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
