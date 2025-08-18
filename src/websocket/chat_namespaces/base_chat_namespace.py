@@ -112,6 +112,7 @@ class BaseChatNamespace(BaseNameSpace):
             message={"event": self.stop_typing, "sid": sid, "mode": "stop-typing","conversation_id": conversation_id,"is_customer": self.is_customer,"sid": sid},
             
         )
+
     async def on_message_seen(self, sid,data:dict):
         conversation_id = await self._get_conversation_id_from_sid(sid)
         messageId = data.get("message_id")
@@ -124,4 +125,7 @@ class BaseChatNamespace(BaseNameSpace):
             channel=MESSAGE_SEEN_CHANNEL,
             message={"event": self.message_seen, "sid": sid, "message_id": messageId,"conversation_id":conversation_id}
         )
+        
+        
+        await ChatUtils.save_message_seen(int(conversation_id), messageId)
 
