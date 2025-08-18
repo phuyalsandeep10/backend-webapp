@@ -467,8 +467,6 @@ class TenantModel(CommonModel):
         This function is used for soft delete by setting the current time at deleted_at field
         """
         organization_id = TenantContext.get()
-        user_id = UserContext.get()
         if "organization_id" not in where:  # to prevent overriding
             where["organization_id"] = organization_id
-            where["updated_by_id"] = user_id
         return await super().soft_delete(where)
