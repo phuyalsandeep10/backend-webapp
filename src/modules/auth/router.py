@@ -359,7 +359,7 @@ async def resend_verification_token(body: ResendVerificationSchema, request: Req
             email=user.email, token=token, frontend_url=origin
         )
 
-    return cr.success(data={"message": "Verification token resent successfully"})
+    return cr.success(message="Verification token resent successfully")
 
 
 @router.post("/forgot-password-verify")
