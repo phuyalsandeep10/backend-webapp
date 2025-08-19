@@ -1,27 +1,29 @@
 import asyncio
+import json
 import logging
 from typing import Any
 
+import redis.asyncio as redis
 import socketio
 
 from src.common.dependencies import get_user_by_token
+from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
 class BaseNameSpace(socketio.AsyncNamespace):
-    def __init__(self, namespace: str, sio: socketio.AsyncServer, redis):
+    def __init__(self, namespace: str, sio: socketio.AsyncServer):
         super().__init__(namespace)
         self.namespace = namespace
         self.sio = sio
-        self.redis = redis
+        self.redis = redis.from_url(settings.REDIS_URL, decode_responses=False)
 
     async def on_connect(self, sid, environ, auth):
         token = auth.get("token")
         if not token:
             return False  # reject the connection
         user = await get_user_by_token(token)
-        print("The user", user)
         if not user:
             return False  # reject the connection
         await self.sio.save_session(sid, {"user": user}, namespace=self.namespace)
@@ -39,10 +41,16 @@ class BaseNameSpace(socketio.AsyncNamespace):
     async def leave_room(self, sid, room):
         await self.sio.leave_room(sid, room, namespace=self.namespace)
 
-    async def publish(self, channel: str, message: dict[str, Any]):
-        await self.redis.publish(channel, message)
+    async def redis_publish(self, channel: str, message: dict[str, Any]):
+        try:
+            result = await self.redis.publish(channel, json.dumps(message))
+            logger.info(f"Published to Redis channel '{channel}': {result} subscribers")
+            return result
+        except Exception as e:
+            logger.exception(f" Redis publish failed: {e}")
 
-    async def subscribe(self, channel: str):
+    async def redis_subscribe(self, channel: str):
+        logger.info(f"Subscribing to {channel}")
         pubsub = self.redis.subscribe()
         await pubsub.subscribe(channel)
 

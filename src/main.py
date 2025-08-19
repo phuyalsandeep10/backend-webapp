@@ -3,11 +3,12 @@ import logging
 from fastapi import Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel, EmailStr
 
 from src.app import app
 from src.config.broadcast import broadcast
 from src.routers import add_routers
-from src.socket_config import socket_app
+from src.socket_config import socket_app, ticket_ns
 from src.utils.exceptions import add_exceptions_handler
 
 # custom exceptions
@@ -50,3 +51,17 @@ async def get(request: Request):
 @app.get("/health")
 def read_items():
     return "Health check OK"
+
+
+class DemoSchema(BaseModel):
+    message: str
+    email: EmailStr
+    ticket_id: int
+
+
+@app.post("/demo")
+async def demo(payload: DemoSchema):
+    await ticket_ns.broadcast_message(
+        message=payload.message, ticket_id=payload.ticket_id, user_email=payload.email
+    )
+    return f"S>uccess"
