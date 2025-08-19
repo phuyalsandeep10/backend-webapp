@@ -11,6 +11,7 @@ from src.common.dependencies import (
     get_bearer_token,
     get_current_user,
     update_user_cache,
+    validate_role_data,
 )
 
 from src.common.models import Permission
@@ -237,47 +238,13 @@ async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
     Create a New Role for an organization.
     """
     try:
-        print(f"body of this request is: {body}")
-        if not body.name or body.name.strip() == "":
-            raise HTTPException(
-                status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="Role name cannot be empty",
-            )
-
-        existing_role = await OrganizationRole.find_one(
-            where={"name": {"mode": "insensitive", "value": body.name}}
+        await validate_role_data(
+            name=body.name,
+            permissions=body.permissions,
+            permission_group_id=body.permission_group,
         )
-        if existing_role:
-            raise HTTPException(
-                status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="Role name already exists",
-            )
 
-        if not any(
-            perm.is_changeable or perm.is_deletable or perm.is_viewable
-            for perm in body.permissions
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="Minimum of one permission is required",
-            )
-
-        permission_group_id = body.permission_group
-
-        for perm in body.permissions:
-            permission = await Permissions.find_one(where={"id": perm.permission_id})
-            if not permission:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="No Such Permission Found",
-                )
-            if permission.group_id != permission_group_id:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Permission_group and Permission do not match",
-                )
-
-        # create roles
+        # Create on Organzation Role
         role = await OrganizationRole.create(
             **body.model_dump(
                 exclude={"permissions", "updated_at", "created_at"}, exclude_none=True
@@ -285,7 +252,7 @@ async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
             identifier=body.name.lower().replace(" ", "-"),
         )
 
-        # Create Role permission
+        # Create on role Permission Table
         role_permission_ids = []
         for perm in body.permissions:
             role_perm = await RolePermission.create(
@@ -294,6 +261,7 @@ async def create_role(body: CreateRoleSchema, user=Depends(get_current_user)):
             )
             role_permission_ids.append(role_perm.id)
 
+        # update the attributes Column of Org_role
         await OrganizationRole.update(
             id=role.id,
             attributes={"no_of_agents": 0, "permissions": role_permission_ids},
@@ -394,53 +362,18 @@ async def updte_role(
     role_id: int, body: UpdateRoleInfoSchema, user=Depends(get_current_user)
 ):
     try:
-        print(f"Update ko part of body bhaneko: {body}")
-
         role = await OrganizationRole.find_one(where={"id": role_id})
-
         if not role:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
             )
 
-        if not body.name or body.name.strip() == "":
-            raise HTTPException(
-                status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="Role name cannot be empty",
-            )
-
-        if not any(
-            perm.is_changeable or perm.is_deletable or perm.is_viewable
-            for perm in body.permissions
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="Minimum of one permission is required",
-            )
-
-        existing = await OrganizationRole.find_one(
-            where={"name": {"value": body.name, "mode": "insensitive"}}
+        await validate_role_data(
+            name=body.name,
+            permissions=body.permissions,
+            role_id=role_id,
+            permission_group_id=body.permission_group,
         )
-
-        if existing and existing.id != role.id:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Role name already exists"
-            )
-
-        # Validate permission group
-        permission_group_id = body.permission_group
-        for perm in body.permissions:
-            permission = await Permissions.find_one(where={"id": perm.permission_id})
-            if not permission:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"No such permission with id {perm.permission_id}",
-                )
-            if permission.group_id != permission_group_id:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Permission {perm.permission_id} does not belong to group {permission_group_id}",
-                )
 
         await OrganizationRole.update(
             role_id,
@@ -450,43 +383,29 @@ async def updte_role(
 
         role_permission_ids = []
 
-        try:
-            for perm in body.permissions:
-                role_perm = await RolePermission.find_one(
-                    where={"role_id": role.id, "permission_id": perm.permission_id}
+        for perm in body.permissions:
+            role_perm = await RolePermission.find_one(
+                where={"role_id": role.id, "permission_id": perm.permission_id}
+            )
+
+            if role_perm:
+                data = perm.model_dump(exclude={"permission_id"})
+                await RolePermission.update(role_perm.id, **data)
+                role_permission_ids.append(role_perm.id)
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Permission {perm.permission_id} does not exist for this role.",
                 )
 
-                data = perm.model_dump(exclude={"permission_id"})
-
-                if role_perm:
-                    await RolePermission.update(role_perm.id, **data)
-                    role_permission_ids.append(role_perm.id)
-                else:
-                    new_role_perm = await RolePermission.create(
-                        role_id=role.id,
-                        permission_id=perm.permission_id,
-                        **data,
-                    )
-                    role_permission_ids.append(new_role_perm.id)
-
-            no_of_agents = (role.attributes or {}).get("no_of_agents")
-            await OrganizationRole.update(
-                id=role.id,
-                attributes={
-                    "no_of_agents": no_of_agents,
-                    "permissions": role_permission_ids,
-                },
-            )
-
-        except Exception as e:
-            logger.exception(e)
-            return cr.error(
-                status_code=getattr(
-                    e, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR
-                ),
-                message=f"{e.detail if hasattr(e, 'detail') else str(e)}",
-                dataaina=str(e),
-            )
+        no_of_agents = (role.attributes or {}).get("no_of_agents")
+        await OrganizationRole.update(
+            id=role.id,
+            attributes={
+                "no_of_agents": no_of_agents,
+                "permissions": role_permission_ids,
+            },
+        )
 
         return cr.success(data=None, message="Role Updated Successfully")
 
@@ -638,21 +557,21 @@ async def reject_invitation(invitation_id: int, user=Depends(get_current_user)):
 
 @router.post("/invitation/{invitation_id}/accept")
 async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
-    invitation = await OrganizationInvitation.find_one(
-        where={"id": invitation_id},
-        related_items=[selectinload(OrganizationInvitation.role_ids)],
-    )
+
+    invitation = await OrganizationInvitation.find_one(where={"id": invitation_id})
 
     if not invitation:
-        raise HTTPException(404, "Invitation not found")
+        raise HTTPException(status_code=404, detail="Invitation not found")
 
     if user.email != invitation.email:
-        raise HTTPException(403, "Unauthorized to accept this invitation")
+        raise HTTPException(
+            status_code=403, detail="Unauthorized to accept this invitation"
+        )
 
     await OrganizationInvitation.update(invitation.id, status=InvitationStatus.ACCEPTED)
 
     member = await OrganizationMember.find_one(
-        {"organization_id": invitation.organization_id, "user_id": user.id}
+        where={"organization_id": invitation.organization_id, "user_id": user.id}
     )
     if not member:
         member = await OrganizationMember.create(
@@ -661,9 +580,15 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
 
     if invitation.role_ids:
         for role_id in invitation.role_ids:
-            await OrganizationMemberRole.create(role_id=role_id, member_id=member.id)
+            # Make sure RolePermission entry does not duplicate if it already exists
+            existing = await OrganizationMemberRole.find_one(
+                where={"role_id": role_id, "member_id": member.id}
+            )
+            if not existing:
+                await OrganizationMemberRole.create(
+                    role_id=role_id, member_id=member.id
+                )
 
-    # Update user info
     await User.update(user.id, name=invitation.name)
 
     return cr.success(data={"message": "Invitation successfully accepted"})
