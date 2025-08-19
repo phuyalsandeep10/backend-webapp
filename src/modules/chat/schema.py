@@ -30,11 +30,8 @@ class MessageAttachment(BaseModel):
     created_at: str
     updated_at: str
 
-class Message(BaseModel):
+class MessageSchema(BaseModel):
     id: int
     conversation_id: int
-    sender_id: int
     content: str
-    created_at: str
-    updated_at: str
     attachments: list[MessageAttachment]

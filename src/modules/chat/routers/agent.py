@@ -3,8 +3,13 @@ from src.common.dependencies import get_current_user
 from src.utils.response import CustomResponse as cr
 from src.models import Conversation, Customer, Message, MessageAttachment
 from src.common.context import UserContext, TenantContext
-from ..schema import ConversationSchema,CustomerSchema
+from ..schema import ConversationSchema,CustomerSchema, MessageSchema
+
 from sqlalchemy.orm import selectinload
+from ..models.conversation import get_conversation_list
+
+from src.config.redis.redis_listener import get_redis
+import json
 
 router = APIRouter()
 
@@ -12,24 +17,8 @@ router = APIRouter()
 @router.get("/conversations")
 async def get_conversations():
     organizationId = TenantContext.get()
-   
-    conversations = await Conversation.filter({"organization_id": organizationId},
-    related_items=[selectinload(Conversation.customer)])
-    records = [
-                c.to_json(
-                    schema=ConversationSchema,
-                    include_relationships=True,
-                    related_schemas={"customer": CustomerSchema},
-                )
-                for c in conversations
-            ]
 
-
-
-
-
-    print(f"Fetched conversations: {conversations}")
-
+    records = await get_conversation_list(organizationId)
 
     return cr.success(data=records)
 
@@ -65,3 +54,22 @@ async def get_conversation_messages(conversation_id: int):
 
     
     return cr.success(data={"messages": [msg.to_json() for msg in messages]})
+
+@router.post('/conversations/{conversation_id}/messages')
+async def create_conversation_message(conversation_id: int, message: MessageSchema):
+    organizationId = TenantContext.get()
+
+    record = await Conversation.find_one({
+        "id": conversation_id,
+        "organization_id": organizationId
+    })
+
+
+    if not record:
+        return cr.error(message='Conversation Not found')
+    data = json.dumps({**message.dict(),"event":"receive-message"})
+
+    new_message = await Message.create(**message.dict(), conversation_id=conversation_id)
+    await redis_publish(channel=MESSAGE_CHANNEL, message=data)
+
+    return cr.success(data=new_message.to_json())
