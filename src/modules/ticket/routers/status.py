@@ -19,21 +19,19 @@ router = APIRouter()
     summary="List all the status",
     response_model=CustomResponseSchema[List[TicketStatusOut]],
 )
-async def list_ticket_status(user=Depends(get_current_user)):
+async def list_ticket_status():
     """
     List all the priorities defined by the organization
     """
-    return await ticket_status_service.list_ticket_status(user)
+    return await ticket_status_service.list_ticket_status()
 
 
 @router.post("/status", summary="Create a status", response_model=CustomResponseSchema)
-async def register_ticket_status(
-    payload: List[CreateTicketStatusSchema], user=Depends(get_current_user)
-):
+async def register_ticket_status(payload: List[CreateTicketStatusSchema]):
     """
     Create priorities for the particular organization
     """
-    return await ticket_status_service.create_ticket_status(payload, user)
+    return await ticket_status_service.create_ticket_status(payload)
 
 
 @router.get(
@@ -41,11 +39,11 @@ async def register_ticket_status(
     summary="List particular status",
     response_model=CustomResponseSchema[TicketStatusOut],
 )
-async def get_ticket_status(ticket_status_id: int, user=Depends(get_current_user)):
+async def get_ticket_status(ticket_status_id: int):
     """
     List particular ticket status defined by the organization
     """
-    return await ticket_status_service.get_ticket_status(ticket_status_id, user)
+    return await ticket_status_service.get_ticket_status(ticket_status_id)
 
 
 @router.patch(
@@ -56,14 +54,11 @@ async def get_ticket_status(ticket_status_id: int, user=Depends(get_current_user
 async def edit_ticket_status(
     ticket_status_id: int,
     payload: EditTicketStatusSchema,
-    user=Depends(get_current_user),
 ):
     """
     Edit particular ticket status defined by the organization
     """
-    return await ticket_status_service.edit_ticket_status(
-        ticket_status_id, payload, user
-    )
+    return await ticket_status_service.edit_ticket_status(ticket_status_id, payload)
 
 
 @router.delete(
@@ -71,8 +66,8 @@ async def edit_ticket_status(
     summary="Delete particular status",
     response_model=CustomResponseSchema[TicketStatusOut],
 )
-async def delete_ticket_status(ticket_status_id: int, user=Depends(get_current_user)):
+async def delete_ticket_status(ticket_status_id: int):
     """
     Delete particular ticket status defined by the organization
     """
-    return await ticket_status_service.delete_ticket_status(ticket_status_id, user)
+    return await ticket_status_service.delete_ticket_status(ticket_status_id)

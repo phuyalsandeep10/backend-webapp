@@ -1,3 +1,4 @@
+from src.config.settings import settings
 from src.models import Organization, OrganizationMember, TicketPriority, User
 
 
@@ -20,9 +21,10 @@ async def organization_seed_dummy():
             description="test description",
             slug="test".lower().replace(" ", "-"),  # Simple slug generation
             logo="test",
-            owner_id=user.id,
+            owner_id=1,
             domain="https://test.com",
             identifier="test1",
+            email_alias=f"jfajejcja@{settings.EMAIL_DOMAIN}",
         )
 
         print("Organization 1 created")
@@ -35,9 +37,10 @@ async def organization_seed_dummy():
             description="test2 description",
             slug="test2".lower().replace(" ", "-"),  # Simple slug generation
             logo="test2",
-            owner_id=user.id,
+            owner_id=2,
             domain="https://test2.com",
             identifier="test2",
+            email_alias=f"qyrusenca@{settings.EMAIL_DOMAIN}",
         )
 
         print("Organization 2 created")

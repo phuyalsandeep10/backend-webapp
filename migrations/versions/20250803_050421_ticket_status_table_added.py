@@ -30,7 +30,6 @@ class TicketStatusMigration(BaseMigration):
         self.string(name="name")
         self.string(name="bg_color")
         self.string(name="fg_color")
-        self.boolean(name="is_default", default=False)
         self.string(name="status_category")
         self.unique_constraint(
             "organization_id",
@@ -43,49 +42,6 @@ def upgrade() -> None:
     Function to create a table
     """
     TicketStatusMigration().upgrade()
-    default_ticket_status = [
-        {
-            "id": 1,
-            "name": "Unassigned",
-            "bg_color": "#F61818",
-            "fg_color": "#ffffff",
-            "organization_id": None,
-            "status_category": "pending",
-            "is_default": True,
-        },
-        {
-            "id": 2,
-            "name": "Assigned",
-            "bg_color": "#FFF0D2",
-            "fg_color": "#ffffff",
-            "organization_id": None,
-            "status_category": "open",
-            "is_default": False,
-        },
-        {
-            "id": 3,
-            "name": "Solved",
-            "bg_color": "#009959",
-            "fg_color": "#ffffff",
-            "organization_id": None,
-            "status_category": "closed",
-            "is_default": False,
-        },
-        {
-            "id": 4,
-            "name": "Reopened",
-            "bg_color": "#DAE8FA",
-            "fg_color": "#ffffff",
-            "organization_id": None,
-            "status_category": "open",
-            "is_default": False,
-        },
-    ]
-    TicketStatusMigration().bulk_insert_data(rows=default_ticket_status)
-
-    op.execute(
-        "SELECT setval('ticket_status_id_seq', (SELECT MAX(id) FROM ticket_status))"
-    )
 
 
 def downgrade() -> None:

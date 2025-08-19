@@ -1,0 +1,2 @@
+CUSTOMER_CHAT_NAMESPACE = "/chat"
+AGENT_CHAT_NAMESPACE = "/agent-chat"

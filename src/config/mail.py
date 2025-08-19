@@ -1,17 +1,11 @@
+import os
 import smtplib
 import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Optional, List
-from dotenv import load_dotenv
-import os
+from typing import List, Optional
 
-load_dotenv()
-
-SMTP_SERVER = os.getenv("SMTP_SERVER")
-SMTP_PORT = os.getenv("SMTP_PORT")
-SMTP_USERNAME = os.getenv("SMTP_USERNAME")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+from src.config.settings import settings
 
 
 class EmailSender:
@@ -59,24 +53,26 @@ class EmailSender:
 
         if self.use_ssl:
             context = ssl.create_default_context()
-            server = smtplib.SMTP_SSL(self.smtp_server, self.smtp_port, context=context)
+            server = smtplib.SMTP_SSL(
+                self.smtp_server, self.smtp_port, context=context, timeout=10
+            )
         else:
             server = smtplib.SMTP(self.smtp_server, self.smtp_port)
 
         with server:
             if self.use_tls and not self.use_ssl:
-                server.starttls()
+                server.starttls(context=ssl.create_default_context())
             if self.username and self.password:
                 server.login(self.username, self.password)
             server.sendmail(self.sender, all_recipients, msg.as_string())
 
 
 mail_sender = EmailSender(
-    smtp_server=SMTP_SERVER,
-    sender="sirjantmg99@gmail.com",
-    smtp_port=SMTP_PORT,
-    username=SMTP_USERNAME,
-    password=SMTP_PASSWORD,
-    use_tls=True,
-    use_ssl=False,
+    smtp_server=settings.SMTP_SERVER,
+    sender="info@chatboq.com",
+    smtp_port=settings.SMTP_PORT,
+    username=settings.SMTP_USERNAME,
+    password=settings.SMTP_PASSWORD,
+    use_tls=False,
+    use_ssl=True,
 )

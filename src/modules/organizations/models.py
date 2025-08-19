@@ -3,7 +3,9 @@ from typing import TYPE_CHECKING, List, Optional
 from datetime import datetime
 
 import sqlalchemy as sa
-from sqlmodel import Field, Relationship, select, Column, Integer, ForeignKey
+from sqlmodel import Field, Relationship, select, Column, Integer, ForeignKey,SQLModel,Session
+from pydantic import EmailStr
+
 
 from src.common.models import CommonModel, TenantModel
 from src.db.config import async_session
@@ -15,6 +17,7 @@ if TYPE_CHECKING:
     from src.modules.auth.models import User
     from src.modules.chat.models.conversation import Conversation
     from src.modules.chat.models.customer import Customer
+    from src.modules.common.models import Country, Timezone  # type:ignore
     from src.modules.ticket.models.priority import TicketPriority
     from src.modules.ticket.models.status import TicketStatus
     from src.modules.staff_managemet.models.role_permission import RolePermission
@@ -31,6 +34,7 @@ class Organization(CommonModel, table=True):
 
     domain: str = Field(default=None, max_length=255, nullable=False, index=True)
     logo: str = Field(default=None, max_length=255, nullable=True)
+    email_alias: EmailStr = Field(nullable=False, unique=True)
 
     identifier: str = Field(default=None, max_length=255, nullable=True)
 
@@ -38,6 +42,9 @@ class Organization(CommonModel, table=True):
     contact_email: str = Field(
         default=None,
     )
+
+    country_id: Optional[int] = Field(default=None, foreign_key="sys_countries.id")
+    timezone_id: Optional[int] = Field(default=None, foreign_key="sys_timezones.id")
 
     twitter_username: Optional[str] = Field(default=None, max_length=255, nullable=True)
     facebook_username: Optional[str] = Field(default=None, max_length=255)
@@ -52,6 +59,9 @@ class Organization(CommonModel, table=True):
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
     roles: List["OrganizationRole"] = Relationship(back_populates="organization")
+
+    country: Optional["Country"] = Relationship()
+    timezone: Optional["Timezone"] = Relationship()
 
     ticket_priorities: List["TicketPriority"] = Relationship(
         back_populates="organization"

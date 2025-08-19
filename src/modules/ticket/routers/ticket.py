@@ -3,7 +3,12 @@ from typing import List
 from fastapi import APIRouter, Depends
 
 from src.common.dependencies import get_current_user
-from src.modules.ticket.schemas import CreateTicketSchema, EditTicketSchema, TicketOut
+from src.modules.ticket.schemas import (
+    CreateTicketSchema,
+    EditTicketSchema,
+    TicketByStatusSchema,
+    TicketOut,
+)
 from src.modules.ticket.services.ticket import ticket_services
 from src.utils.response import CustomResponseSchema
 
@@ -23,11 +28,25 @@ async def register_ticket(payload: CreateTicketSchema, user=Depends(get_current_
     summary="List all tickets",
     response_model=CustomResponseSchema[List[TicketOut]],
 )
-async def list_tickets(user=Depends(get_current_user)):
+async def list_tickets():
     """
     List all the tickets of the organization
     """
-    return await ticket_services.list_tickets(user)
+    return await ticket_services.list_tickets()
+
+
+@router.post(
+    "/by-status",
+    summary="List tickets by status",
+    response_model=CustomResponseSchema[List[TicketOut]],
+)
+async def list_tickets_by_status(
+    payload: TicketByStatusSchema, user=Depends(get_current_user)
+):
+    """
+    List all the tickets of the organization by id
+    """
+    return await ticket_services.list_tickets_by_status(payload)
 
 
 @router.get(

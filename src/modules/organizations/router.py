@@ -4,8 +4,14 @@ from datetime import datetime, timedelta
 from sqlmodel import text
 from sqlalchemy.orm import selectinload
 from src.modules.organizations.models import OrganizationRole, OrganizationMemberRole
-from typing import List
+from typing import List, Optional
 from fastapi.logger import logger
+import base64
+import secrets
+
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import selectinload
 
 from src.common.dependencies import (
     get_bearer_token,
@@ -13,8 +19,9 @@ from src.common.dependencies import (
     update_user_cache,
     validate_role_data,
 )
-
 from src.common.models import Permission
+from src.common.utils import random_unique_key
+from src.config.settings import settings
 from src.enums import InvitationStatus
 from src.models import (
     Organization,
@@ -25,11 +32,9 @@ from src.models import (
     User,
     OrganizationInvitationRole,
 )
-
-from src.db.config import async_session
-from sqlmodel import select
+from src.models.countries import Country
+from src.models.timezones import Timezone
 from src.tasks import send_invitation_email
-from src.common.utils import random_unique_key
 from src.utils.response import CustomResponse as cr
 from src.modules.staff_managemet.models import RolePermission
 from src.modules.staff_managemet.models import Permissions
@@ -43,9 +48,11 @@ from .schema import (
     UpdateRoleInfoSchema,
     CreateRoleSchema,
     InvitationOut,
+    OrganizationRoleSchema,
 )
 
 logger = logging.getLogger(__name__)
+
 
 router = APIRouter()
 
@@ -55,6 +62,7 @@ async def get_organizations(user=Depends(get_current_user)):
     """
     Get the list of organizations the user belongs to.
     """
+    print("The user is", user.id)
     records = await Organization.get_orgs_by_user_id(user_id=user.id)
     data = [item.to_json() for item in records]
     return cr.success(data=data)
@@ -69,16 +77,13 @@ async def create_organization(
     """
     Create a new organization.
     """
+    errors = []
     record = await Organization.find_one(
-        where={
-            "name": {"mode": "insensitive", "value": body.name},
-        }
+        where={"name": {"mode": "insensitive", "value": body.name}, "owner_id": user.id}
     )
 
     if record:
-        return cr.error(
-            data={"success": False}, message="This domain is already exists"
-        )
+        errors.append({"name": "this organization with this name already exists"})
 
     record = await Organization.find_one(
         where={
@@ -87,9 +92,30 @@ async def create_organization(
     )
 
     if record:
-        return cr.error(
-            data={"success": False}, message="This domain is already exists"
+        errors.append({"domain": "This domain already exists"})
+
+    if errors:
+        return cr.error(data=errors)
+
+    email_alias = ""
+    while True:
+        # generating the random email
+        token_bytes = secrets.token_bytes(9)
+
+        # Encode to Base64 URL-safe string
+        email_alias_name = (
+            base64.urlsafe_b64encode(token_bytes).rstrip(b"=").decode("ascii")
         )
+
+        email_alias = f"{email_alias_name}@{settings.EMAIL_DOMAIN}"
+
+        # checking it the email alias exists before
+        record = await Organization.find_one(
+            where={"email_alias": {"mode": "insensitive", "value": email_alias}}
+        )
+        if record:
+            continue
+        break
 
     slug = body.name.lower().replace(" ", "-")
 
@@ -102,6 +128,7 @@ async def create_organization(
         purpose=body.purpose,
         identifier=f"{slug}-{random_unique_key()}",
         owner_id=user.id,
+        email_alias=email_alias,
     )
 
     await OrganizationMember.create(
@@ -175,7 +202,7 @@ async def update_organization(
         )
 
     if not organization:
-        return cr.error(data={"success": False}, message="Organization not found")
+        raise HTTPException(status_code=404, detail="Organization not found")
 
     if organization.name != body.name:
         existing_org = await Organization.find_one(
@@ -223,10 +250,10 @@ async def set_organization(
     user = await User.update(user.id, attributes={"organization_id": organization_id})
 
     if not user:
-        return cr.error(data={"success": False}, message="Not found User")
+        raise HTTPException(404, "Not found User")
 
     if not organization:
-        return cr.error(data={"success": False}, message="Organization not found")
+        raise HTTPException(status_code=404, detail="Organization not found")
     update_user_cache(token, user)
 
     return cr.success(data={"message": "Organization set successfully"})
@@ -651,3 +678,64 @@ async def remove_assign_role(body: AssignRoleSchema, user=Depends(get_current_us
 async def get_permissions(user=Depends(get_current_user)):
     permissions = await Permission.filter()
     return cr.success(data=permissions)
+
+
+@router.get("/countries")
+async def get_countries():
+    """Get all countries for selection"""
+    try:
+        countries = await Country.filter()
+
+        countries_data = [
+            {
+                "id": country.id,
+                "name": country.name,
+                "code": country.iso_code_2,
+                "iso_code_2": country.iso_code_2,  # US
+                "iso_code_3": country.iso_code_3,  # USA
+                "phone_code": country.phone_code,  # +977
+            }
+            for country in countries
+        ]
+
+        return cr.success(
+            data={"countries": countries_data},
+            message="Countries retrieved successfully",
+        )
+    except Exception as e:
+        return cr.error(message=f"Failed to retrieve countries: {str(e)}")
+
+
+@router.get("/timezones")
+async def get_timezones(country_id: Optional[int] = None):
+    """Get all timezones, optionally filtered by country_id"""
+    try:
+        where_clause = {}
+        if country_id:
+            where_clause["country_id"] = country_id
+
+        timezones = await Timezone.filter(
+            where=where_clause,
+            related_items=[
+                selectinload(Timezone.country)
+            ],  # for loading countries relationship
+        )
+
+        timezones_data = [
+            {
+                "id": tz.id,
+                "name": tz.name,
+                "display_name": tz.display_name,
+                "country_id": tz.country_id,
+                "country_name": tz.country.name if tz.country else None,
+            }
+            for tz in timezones
+        ]
+
+        return cr.success(
+            data={"timezones": timezones_data},
+            message="Timezones retrieved successfully",
+        )
+
+    except Exception as e:
+        return cr.error(message=f"Failed to retrieve timezones: {str(e)}")

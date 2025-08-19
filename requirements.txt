@@ -47,3 +47,4 @@ watchfiles==1.1.0
 websockets==15.0.1
 python-socketio==5.13.0
 confluent-kafka==2.3.0
+redis>=5.0.0

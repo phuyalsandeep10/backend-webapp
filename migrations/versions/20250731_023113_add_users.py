@@ -27,6 +27,9 @@ class add_users_tableMigration(BaseMigration):
         self.string("email", unique=True, index=True)
         self.string("mobile", unique=True, index=True)
         self.string("image", nullable=True)
+        self.string("address", nullable=True)
+        self.string("country", nullable=True)
+        self.string("language", nullable=True, default="English")
         self.string("password", nullable=True)
         self.date_time("email_verified_at", nullable=True)
         self.date_time("mobile_verified_at", nullable=True)
@@ -36,11 +39,12 @@ class add_users_tableMigration(BaseMigration):
         self.boolean("is_staff", default=False)
         self.json("attributes", nullable=True, default={})
 
-        self.boolean('two_fa_enabled', default=False)
-        self.string('two_fa_secret')
-        self.string('two_fa_auth_url', nullable=True)
+        self.boolean("two_fa_enabled", default=False)
+        self.string("two_fa_secret")
+        self.string("two_fa_auth_url", nullable=True)
 
         self.timestamp_columns()
+        self.date_time("deleted_at")
 
 
 def upgrade() -> None:

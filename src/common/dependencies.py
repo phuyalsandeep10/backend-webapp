@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
+from typing import Optional
 
 from cachetools import TTLCache
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from typing import Optional
 
 from src.common.context import TenantContext, UserContext
 from src.config.settings import settings
@@ -44,11 +44,14 @@ async def validate_user(
 ):
     """Get current authenticated user"""
 
+    print("couldn't validate user")
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+
 
     try:
         token = (
@@ -69,18 +72,20 @@ async def validate_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        if isEmailVerifyCheck and not user.email_verified_at:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Email not verified",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        #@Todo: we need to enable this after adding email verification
+        
+        # if isEmailVerifyCheck and not user.email_verified_at:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_403_FORBIDDEN,
+        #         detail="Email not verified",
+        #         headers={"WWW-Authenticate": "Bearer"},
+        #     )
 
-        if isTwoFaVerifyCheck and user.two_fa_enabled and not user.is_2fa_verified:
+        # if isTwoFaVerifyCheck and user.two_fa_enabled and not user.is_2fa_verified:
 
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Two FA not "
-            )
+        #     raise HTTPException(
+        #         status_code=status.HTTP_401_UNAUTHORIZED, detail="Two FA not "
+        #     )
 
         user_cache[token] = user  # Cache the user object
 

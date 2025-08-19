@@ -1,13 +1,19 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, ClassVar, List, Optional
 
 from pydantic import EmailStr
 from sqlalchemy import Column, ForeignKey
 from sqlmodel import Field, Relationship
 
+import src.modules.ticket.services.mixins as Mixin
 from src.common.models import BaseModel, CommonModel, TenantModel
-from src.modules.ticket.enums import TicketAlertTypeEnum, WarningLevelEnum
+from src.modules.ticket.enums import (
+    TicketAlertTypeEnum,
+    TicketLogEntityEnum,
+    WarningLevelEnum,
+)
 from src.modules.ticket.schemas import (
+    AssigneeOut,
     PriorityOut,
     SLAOut,
     TicketAttachmentOut,
@@ -61,12 +67,13 @@ class TicketAlert(BaseModel, table=True):
     ticket: Optional["Ticket"] = Relationship(back_populates="alerts")
 
 
-class Ticket(TenantModel, table=True):
+class Ticket(TenantModel, Mixin.LoggingMixin, table=True):
     """
     Ticket model
     """
 
     __tablename__ = "org_tickets"  # type:ignore
+    entity_type: ClassVar[TicketLogEntityEnum] = TicketLogEntityEnum.TICKET
 
     title: str
     description: str
@@ -129,12 +136,12 @@ class Ticket(TenantModel, table=True):
                 attachment.to_json(TicketAttachmentOut)
                 for attachment in self.attachments
             ],
-            "priority": self.priority.to_json(PriorityOut),
-            "status": self.status.to_json(TicketStatusOut),
-            "sla": self.sla.to_json(SLAOut),
-            "department": self.department.to_dict(),
-            "created_by": self.created_by.to_dict(),
-            "assignees": [assignee.to_dict() for assignee in self.assignees],
+            "priority": self.priority.to_json(PriorityOut) if self.priority else None,
+            "status": self.status.to_json(TicketStatusOut) if self.status else None,
+            "sla": self.sla.to_json(SLAOut) if self.sla else None,
+            "department": self.department.to_json() if self.department else None,
+            "created_by": self.created_by.to_dict() if self.created_by else None,
+            "assignees": [assignee.to_json(AssigneeOut) for assignee in self.assignees],
             "created_at": self.created_at.isoformat(),
             "opened_at": self.opened_at.isoformat() if self.opened_at else None,
             "is_spam": self.is_spam,
@@ -151,25 +158,3 @@ class Ticket(TenantModel, table=True):
 
     def __str__(self):
         return self.title
-
-
-class TicketLog(TenantModel, table=True):
-    """
-    The model to audit logs of ticket
-    """
-
-    __tablename__ = "org_tickets_logs"  # type:ignore
-
-    actor_id: int = Field(
-        sa_column=Column(ForeignKey("sys_users.id", ondelete="SET NULL"))
-    )
-    ticket_id: int = Field(
-        sa_column=Column(ForeignKey("org_tickets.id", ondelete="SET NULL"))
-    )
-    action: str = Field(nullable=False)
-    description: str = Field(nullable=True)
-    previous_value: str = Field(nullable=True)
-    new_value: str = Field(nullable=True)
-
-    def __str__(self):
-        return self.action

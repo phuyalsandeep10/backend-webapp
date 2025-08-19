@@ -1,6 +1,9 @@
 from typing import Optional
 from pydantic import BaseModel, Field, EmailStr
 
+
+from src.modules.auth.schema import UserOutSchema
+
 from src.common.models import TenantModel
 
 
@@ -17,3 +20,7 @@ class TeamResponseOutSchema(BaseModel):
     id: int
     name: str
     description: str | None
+    
+class TeamMemberOutSchema(BaseModel):
+    team_id: int
+    user: UserOutSchema

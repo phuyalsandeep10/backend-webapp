@@ -9,6 +9,7 @@ Create Date: 2025-08-03 10:32:30.150870
 from typing import Sequence, Union
 
 from alembic import op
+from sqlmodel import func
 
 from migrations.base import BaseMigration
 from src.modules.ticket.models.priority import TicketPriority
@@ -37,6 +38,11 @@ class TicketPriorityMigration(BaseMigration):
             "name",
             "level",
         )
+        self.unique_constraint(
+            "organization_id",
+            "level",
+        )
+        self.unique_constraint("organization_id", "name")
 
 
 def upgrade() -> None:

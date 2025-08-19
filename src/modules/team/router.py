@@ -3,10 +3,11 @@ from sqlalchemy.orm import selectinload
 
 from src.common.context import TenantContext
 from src.common.permissions import get_current_user
+from src.modules.auth.schema import UserOutSchema
 from src.utils.response import CustomResponse as cr
 
 from .models import Team, TeamMember
-from .schema import TeamMemberSchema, TeamSchema, TeamResponseOutSchema
+from .schema import TeamMemberSchema, TeamSchema, TeamResponseOutSchema,TeamMemberOutSchema
 from typing import List
 
 router = APIRouter()
@@ -127,8 +128,16 @@ async def assign_team_member(
 async def get_team_members(team_id: int):
 
     members = await TeamMember.filter(
-        where={"team_id": team_id},
-        options=[selectinload(TeamMember.user)],  # type:ignore
+        where={"team_id": team_id}, related_items=[selectinload(TeamMember.user)]
     )
 
-    return cr.success(data=[member.to_json() for member in members])
+    return cr.success(
+        data=[
+            member.to_json(
+                schema=TeamMemberOutSchema,
+                include_relationships=True,
+                related_schemas={"user": UserOutSchema},
+            )
+            for member in members
+        ]
+    )

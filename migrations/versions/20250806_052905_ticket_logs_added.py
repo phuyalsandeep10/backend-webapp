@@ -25,12 +25,14 @@ class TicketLogMigration(BaseMigration):
         self.create_whole_table = True
         # describe your schemas here
         self.tenant_columns()
-        self.foreign(name="actor_id", table="sys_users", ondelete="SET NULL")
-        self.foreign(name="ticket_id", table="org_tickets", ondelete="SET NULL")
+        self.foreign(
+            name="ticket_id", table="org_tickets", ondelete="SET NULL", nullable=True
+        )
+        self.string(name="entity_type", nullable=False)
         self.string(name="action", nullable=False)
         self.string(name="description", nullable=True)
-        self.string(name="previous_value", nullable=True)
-        self.string(name="new_value", nullable=True)
+        self.json(name="previous_value", nullable=True)
+        self.json(name="new_value", nullable=True)
 
 
 def upgrade() -> None:

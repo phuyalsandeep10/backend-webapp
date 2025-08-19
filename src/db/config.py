@@ -8,7 +8,7 @@ DATABASE_URL = settings.ASYNC_DATABASE_URL
 SYNC_DATABASE_URL = settings.DATABASE_URL
 
 
-engine = create_async_engine(url=DATABASE_URL)
+engine = create_async_engine(url=DATABASE_URL, pool_size=10)
 
 async_session = async_sessionmaker(
     bind=engine, class_=AsyncSession, expire_on_commit=False

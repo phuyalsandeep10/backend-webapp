@@ -1,3 +1,4 @@
+
 import asyncio
 
 from src.modules.organizations.models import Organization
@@ -17,19 +18,25 @@ from src.seed.permission_group import permission_group_seed_dummy
 async def seed_func():
     await user_seed_dummy()
     await organization_seed_dummy()
-    await organization_user_seed_dummy()
+    # await organization_user_seed_dummy()
+    await organizaiton_members_seed_dummy()
     await department_team_seed_dummy()
+    await team_members_seed_dummy()
     await permission_group_seed_dummy()
+
+    await priority_seed()
+    await ticket_status_seed()
+    await sla_seed_dummy()
+    
+    await create_customer_seed()
+    await create_customer_logs_seed()
+    
     await permission_seed_dummy_group1()
     await permission_seed_dummy_group2()
-    # await create_customer_seed()
-    await create_customer_logs_seed()
-    # await priority_seed()
-    # await ticket_status_seed()
-    # await sla_seed_dummy()
-
+    
 
 print(f"__name__ {__name__}")
 if __name__ == "__main__":
     print("Running seed main script")
     asyncio.run(seed_func())
+
