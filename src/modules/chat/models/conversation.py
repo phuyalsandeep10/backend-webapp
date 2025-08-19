@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy.orm import foreign
-from sqlalchemy.util.langhelpers import clsname_as_plain_name
 from sqlmodel import Field, Relationship
 from sqlalchemy.orm import joinedload
 
@@ -51,8 +49,8 @@ async def get_conversation_list(organization_id:int):
             "customer":conversation.customer.to_json(),
             "organization_id":conversation.organization_id, 
             "members":[],
-            # "created_at":conversation.created_at,
-            # "updated_at":conversation.updated_at,
+            "created_at":conversation.created_at.isoformat(),
+            "updated_at":conversation.updated_at.isoformat(),
         }
         members = []
         for member in conversation.members:
