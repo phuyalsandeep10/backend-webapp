@@ -13,7 +13,8 @@ from src.seed.permissions import (
     permission_seed_dummy_group2,
 )
 from src.seed.permission_group import permission_group_seed_dummy
-
+from src.seed.organization_members import organizaiton_members_seed_dummy
+from src.seed.team import team_members_seed_dummy
 
 async def seed_func():
     await user_seed_dummy()
