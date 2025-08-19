@@ -1,0 +1,27 @@
+from typing import ClassVar, List
+
+from pydantic import EmailStr
+from sqlalchemy import Column, ForeignKey
+from sqlmodel import Field
+
+import src.modules.ticket.services.mixins as Mixin
+from src.common.models import TenantModel
+from src.modules.ticket.enums import TicketLogEntityEnum, TicketMessageDirectionEnum
+
+
+class TicketMessage(TenantModel, Mixin.LoggingMixin, table=True):
+    """Ticket Message table"""
+
+    __tablename__ = "ticket_messages"
+    entity_type: ClassVar[TicketLogEntityEnum] = TicketLogEntityEnum.TICKET_MESSAGE
+
+    ticket_id: int = Field(
+        sa_column=Column(ForeignKey("org_tickets.id", ondelete="CASCADE"))
+    )
+    sender_id: int = Field(
+        sa_column=Column(ForeignKey("sys_users.id", ondelete="SET NULL"))
+    )
+    receiver: EmailStr = Field(nullable=False)
+    direction: str
+    content: str
+    attachments: str = Field(nullable=True)

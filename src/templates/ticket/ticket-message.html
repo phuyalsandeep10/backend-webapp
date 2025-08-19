@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Transcript</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+      .chat-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 500px;
+        overflow: hidden;
+      }
+      .header {
+        padding: 20px;
+        text-align: center;
+        border-bottom: 1px solid #e9ecef;
+      }
+      .header-icon {
+        width: 40px;
+        height: 40px;
+        background: #4285f4;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+      }
+      .header-icon::before {
+        content: ":speech_balloon:";
+        color: white;
+        font-size: 20px;
+      }
+      .header-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+      }
+      .header-subtitle {
+        color: #666;
+        font-size: 14px;
+      }
+      .header-subtitle .highlight {
+        color: #f59e0b;
+        font-weight: 500;
+      }
+      .thanks-section {
+        padding: 30px 20px;
+        text-align: center;
+        border-bottom: 1px solid #e9ecef;
+      }
+      .thanks-title {
+        font-size: 20px;
+        color: #9ca3af;
+        margin-bottom: 12px;
+        font-weight: 400;
+      }
+      .thanks-text {
+        color: #6b7280;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .chat-section {
+        padding: 20px;
+        min-height: 200px;
+      }
+      .message {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: flex-end;
+      }
+      .message.left {
+        justify-content: flex-start;
+      }
+      .message.right {
+        justify-content: flex-end;
+      }
+      .message-bubble {
+        max-width: 100%;
+        padding: 14px 18px;
+        border-radius: 18px;
+        font-size: 16px;
+        line-height: 1.5;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        text-align: left;
+      }
+      .message.left .message-bubble {
+        background: #8b5cf6;
+        color: white;
+        border-bottom-left-radius: 4px;
+      }
+      .message.right .message-bubble {
+        background: #f3f4f6;
+        color: #374151;
+        border-bottom-right-radius: 4px;
+      }
+      .message-sender {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-bottom: 4px;
+        margin-left: 4px;
+      }
+      .footer {
+        padding: 20px;
+        text-align: center;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+      }
+      .footer-text {
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+      .view-conversation-btn {
+        background: transparent;
+        border: 1px solid #8b5cf6;
+        color: #8b5cf6;
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .view-conversation-btn:hover {
+        background: #8b5cf6;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <table width="100%" height="100%">
+      <tr>
+        <td align="center">
+          <div class="chat-container">
+            <div class="header">
+              <div class="header-icon"></div>
+              <div class="header-title">{{ticket.organization.name}}</div>
+              <div class="header-subtitle">
+                <span class="highlight">Chat</span> transcript
+              </div>
+            </div>
+            <div class="thanks-section">
+              <h2 class="thanks-title">Thanks for chatting with us!</h2>
+              <p class="thanks-text">
+                This is your <span class="highlight">chat</span> history with
+                {{ticket.organization.name}} - keep it for your archives.
+              </p>
+            </div>
+            <div class="chat-section">
+              {% for message in messages %} {% if message.direction ==
+              "outgoing" %}
+              <div class="message left">
+                <div>
+                  <div class="message-bubble">{{message.content}}</div>
+                  <div class="message-sender">
+                    {{ticket.organization.name}} sent this
+                  </div>
+                </div>
+              </div>
+              {% else %}
+              <div class="message right">
+                <div class="message-bubble">{{message.content}}</div>
+              </div>
+              {% endif %} {% endfor %}
+            </div>
+            <div class="footer">
+              <p class="footer-text">
+                Your conversation is still available online.
+              </p>
+              <button class="view-conversation-btn">view conversation</button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
