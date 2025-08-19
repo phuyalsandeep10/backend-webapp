@@ -60,6 +60,8 @@ __all__ = [
     "TicketLog",
     "CustomerVisitLogs",
     "Country",
-    "Timezone"
+    "Timezone",
+    "Message",
+
     # "Admin"
 ]

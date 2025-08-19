@@ -32,6 +32,8 @@ async def create_customer(organizationId: int, request: Request):
     customer_count = await Customer.sql(
         f"select count(*) from org_customers where organization_id={organizationId}"
     )
+
+    
     customer_count += 1
 
 
@@ -45,6 +47,7 @@ async def create_customer(organizationId: int, request: Request):
         ip_address=ip,
         organization_id=organizationId,
     )
+
 
     await save_log(ip, customer.id, request)
 
@@ -101,6 +104,12 @@ async def customer_visit(customer_id: int, request: Request):
     log = await save_log(ip, customer_id, request)
 
     return cr.success(data=log.to_json())
+
+
+@router.get("/{conversation_id}/messages")
+async def get_conversation_messages(conversation_id: int):
+    messages = await Message.filter(where={"conversation_id": conversation_id})
+    return cr.success(data={"messages": [msg.to_json() for msg in messages]})
 
 
 @router.get("")

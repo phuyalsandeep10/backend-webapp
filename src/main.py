@@ -19,6 +19,9 @@ from src.utils.get_templates import get_templates
 # custom exceptions
 add_exceptions_handler(app)
 
+
+
+
 # logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s -%(name)s - %(message)s"

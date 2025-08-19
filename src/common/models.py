@@ -14,6 +14,7 @@ from starlette.status import HTTP_404_NOT_FOUND
 from src.common.context import TenantContext, UserContext
 from src.db.config import async_session
 
+
 T = TypeVar("T")
 
 
@@ -251,13 +252,29 @@ class BaseModel(SQLModel):
         async with async_session() as session:
             result = await session.execute(statement)
             return result.scalars().first() if result else None
+    
+    @classmethod
+    async def sql(cls: Type[T], query: str) -> list[dict]:
+        async with async_session() as session:
+            result = await session.execute(sa.text(query))
+            rows = result.mappings().all() if result else []
 
+            serialized = []
+            for row in rows:
+                r = dict(row)
+                for k, v in r.items():
+                    if isinstance(v, datetime):
+                        r[k] = v.isoformat()  # or str(v) if you prefer
+                serialized.append(r)
+            return serialized
 
 class CommonModel(BaseModel):
     active: bool = Field(default=True)
     created_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
     updated_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
     deleted_at: Optional[datetime] = None
+
+
 
 
 def query_statement(

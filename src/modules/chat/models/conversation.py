@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional,Any
 
 from sqlalchemy.orm import foreign
 from sqlmodel import Field, Relationship
+from sqlalchemy import Column,JSON
 
 from src.common.models import CommonModel
 
@@ -14,13 +15,20 @@ if TYPE_CHECKING:
 class Conversation(CommonModel, table=True):
     __tablename__ = "org_conversations"  # type:ignore
     name: str = Field(max_length=255, index=True, nullable=True)
+    
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
     customer_id: int = Field(foreign_key="org_customers.id", nullable=False)
+
     organization: Optional["Organization"] = Relationship(
         back_populates="conversations"
     )
+
     customer: Optional["Customer"] = Relationship(back_populates="conversations")
     members: List["ConversationMember"] = Relationship(back_populates="conversation")
+    attributes: Optional[dict] = Field(default={}, sa_column=Column(JSON))
+    is_resolved: bool = Field(default=False)
+
+
 
 
 class ConversationMember(CommonModel, table=True):
