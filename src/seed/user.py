@@ -1,7 +1,8 @@
+from src.models import User
+from src.common.utils import hash_password
 from datetime import datetime
 from typing import Any, List
 
-from src.common.utils import hash_password
 from src.models import User
 
 user_data = [
@@ -22,6 +23,7 @@ user_data = [
     {"email": "test5@gmail.com", "password": "test12345", "name": "test5"},
     {"email": "test6@gmail.com", "password": "test12345", "name": "test6"},
 ]
+
 
 
 async def user_seed_dummy():

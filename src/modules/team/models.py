@@ -2,28 +2,28 @@ from typing import TYPE_CHECKING, List, Optional
 
 from sqlmodel import Field, Relationship
 
-from src.common.models import CommonModel
+from src.common.models import CommonModel, TenantModel
 
 if TYPE_CHECKING:
     from src.modules.auth.models import User
     from src.modules.ticket.models.ticket import Ticket
 
 
-class Team(CommonModel, table=True):
+class Team(TenantModel, table=True):
     __tablename__ = "org_teams"  # type:ignore
 
     name: str = Field(..., max_length=255)
-    organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
+    # organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
     description: str | None = Field(None, max_length=300)
 
     tickets: List["Ticket"] = Relationship(back_populates="department")
 
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-        }
+    # def to_dict(self):
+    #     return {
+    #         "id": self.id,
+    #         "name": self.name,
+    #         "description": self.description,
+    #     }
 
 
 class TeamMember(CommonModel, table=True):
