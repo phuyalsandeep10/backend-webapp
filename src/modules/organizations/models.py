@@ -1,10 +1,13 @@
+from operator import index
 from typing import TYPE_CHECKING, List, Optional
+from datetime import datetime
 
 import sqlalchemy as sa
+from sqlmodel import Field, Relationship, select, Column, Integer, ForeignKey,SQLModel,Session
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, Session, SQLModel, select
 
-from src.common.models import CommonModel
+
+from src.common.models import CommonModel, TenantModel
 from src.db.config import async_session
 
 # from src.modules.auth.models import User
@@ -17,16 +20,19 @@ if TYPE_CHECKING:
     from src.modules.common.models import Country, Timezone  # type:ignore
     from src.modules.ticket.models.priority import TicketPriority
     from src.modules.ticket.models.status import TicketStatus
+    from src.modules.staff_managemet.models.role_permission import RolePermission
     from src.modules.ticket.models.ticket import Ticket
 
 
 class Organization(CommonModel, table=True):
-    __tablename__ = "sys_organizations"  # type:ignore
-    name: str = Field(max_length=255, index=True)
+    __tablename__ = "sys_organizations"
+    name: str = Field(max_length=255, index=True, unique=True)
     description: str = Field(default=None, max_length=500, nullable=True)
-    slug: str = Field(default=None, max_length=255, nullable=False, index=True)
+    slug: str = Field(
+        default=None, max_length=255, nullable=False, index=True, unique=True
+    )
 
-    domain: str = Field(default=None, max_length=255)
+    domain: str = Field(default=None, max_length=255, nullable=False, index=True)
     logo: str = Field(default=None, max_length=255, nullable=True)
     email_alias: EmailStr = Field(nullable=False, unique=True)
 
@@ -52,6 +58,7 @@ class Organization(CommonModel, table=True):
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
     customers: list["Customer"] = Relationship(back_populates="organization")
+    roles: List["OrganizationRole"] = Relationship(back_populates="organization")
 
     country: Optional["Country"] = Relationship()
     timezone: Optional["Timezone"] = Relationship()
@@ -64,7 +71,12 @@ class Organization(CommonModel, table=True):
     tickets: List["Ticket"] = Relationship(back_populates="organization")
     purpose: str = Field(default=None, max_length=250, nullable=True)
 
-    owner_id: int = Field(foreign_key="sys_users.id", nullable=False)
+    # owner_id: int = Field(foreign_key="sys_users.id", nullable=False)
+    owner_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("sys_users.id", ondelete="CASCADE"), nullable=True
+        )
+    )
     owner: Optional["User"] = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[Organization.owner_id]"}
     )
@@ -81,51 +93,133 @@ class Organization(CommonModel, table=True):
             return list(result.scalars().all())
 
 
-class OrganizationRole(CommonModel, table=True):
-    __tablename__ = "org_roles"  # type:ignore
+class OrganizationRole(TenantModel, table=True):
+    __tablename__ = "org_roles"
+
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     identifier: str = Field(default=None, max_length=500, nullable=False, index=True)
-    organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
-    permissions: list[str] = Field(default=[], sa_column=sa.Column(sa.JSON))
 
-    member_roles: list["OrganizationMemberRole"] = Relationship(back_populates="role")
-
-
-class OrganizationMember(CommonModel, table=True):
-    __tablename__ = "org_members"  # type:ignore
-    user_id: int = Field(foreign_key="sys_users.id", nullable=False)
-    organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
-
-    organization: Optional[Organization] = Relationship(back_populates="members")
-    user: Optional["User"] = Relationship(
-        back_populates="members",
-        sa_relationship_kwargs={"foreign_keys": "[OrganizationMember.user_id]"},
+    attributes: Optional[dict] = Field(
+        default=None, sa_column=sa.Column(sa.JSON, nullable=True)
     )
 
-    member_roles: List["OrganizationMemberRole"] = Relationship(back_populates="member")
+    role_permissions: list["RolePermission"] = Relationship(back_populates="org_role")
+    member_roles: list["OrganizationMemberRole"] = Relationship(back_populates="role")
+    organization: Optional["Organization"] = Relationship(back_populates="roles")
+
+    invitation_roles: List["OrganizationInvitationRole"] = Relationship(
+        back_populates="role", sa_relationship_kwargs={"passive_deletes": True}
+    )
+
+
+class OrganizationMember(TenantModel, table=True):
+    __tablename__ = "org_members"  # type:ignore
+
+    user_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("sys_users.id", ondelete="CASCADE"), nullable=False
+        )
+    )
+
+    organization_id: int = Field(
+        sa_column=Column(
+            Integer,
+            ForeignKey("sys_organizations.id", ondelete="CASCADE"),
+            nullable=False,
+        )
+    )
+
+    organization: Optional[Organization] = Relationship(
+        back_populates="members", sa_relationship_kwargs={"passive_deletes": True}
+    )
+    user: Optional["User"] = Relationship(
+        back_populates="members",
+        sa_relationship_kwargs={
+            "foreign_keys": "[OrganizationMember.user_id]",
+            "passive_deletes": True,
+        },
+    )
+
+    member_roles: List["OrganizationMemberRole"] = Relationship(
+        back_populates="member", sa_relationship_kwargs={"passive_deletes": True}
+    )
 
 
 class OrganizationMemberRole(CommonModel, table=True):
     __tablename__ = "org_member_roles"  # type:ignore
-    member_id: int = Field(foreign_key="org_members.id", nullable=False)
-    role_id: int = Field(foreign_key="org_roles.id", nullable=False)
-    member: Optional[OrganizationMember] = Relationship(back_populates="member_roles")
-    role: Optional[OrganizationRole] = Relationship(back_populates="member_roles")
+
+    member_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("org_members.id", ondelete="CASCADE"), nullable=False
+        )
+    )
+
+    role_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("org_roles.id", ondelete="CASCADE"), nullable=False
+        )
+    )
+    member: Optional[OrganizationMember] = Relationship(
+        back_populates="member_roles", passive_deletes=True
+    )
+    role: Optional[OrganizationRole] = Relationship(
+        back_populates="member_roles", passive_deletes=True
+    )
 
 
-class OrganizationInvitation(CommonModel, table=True):
-    __tablename__ = "org_invitations"  # type:ignore
+class OrganizationInvitation(TenantModel, table=True):
+    __tablename__ = "org_invitations"
+
     email: str = Field(max_length=255, index=True)
-    organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
+    name: str = Field(max_length=255, nullable=False)
 
-    invited_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
+    invited_by_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("sys_users.id", ondelete="CASCADE"), nullable=False
+        )
+    )
+
     status: str = Field(default=InvitationStatus.PENDING, max_length=50, nullable=False)
 
     role_ids: list[int] = Field(default_factory=list, sa_column=sa.Column(sa.JSON))
 
     invited_by: Optional["User"] = Relationship(
         sa_relationship_kwargs={
-            "foreign_keys": "[OrganizationInvitation.invited_by_id]"
+            "foreign_keys": "[OrganizationInvitation.invited_by_id]",
+            "passive_deletes": True,
         }
+    )
+
+    expires_at: datetime = Field(nullable=True)
+    activity_at: Optional[datetime] = Field(default=None, nullable=True)
+    token: str = Field(max_length=255, nullable=False)
+
+    invitation_roles: List["OrganizationInvitationRole"] = Relationship(
+        back_populates="invitation", sa_relationship_kwargs={"passive_deletes": True}
+    )
+
+
+class OrganizationInvitationRole(TenantModel, table=True):
+    __tablename__ = "org_invitation_roles"
+
+    invitation_id: int = Field(
+        sa_column=Column(
+            Integer,
+            ForeignKey("org_invitations.id", ondelete="CASCADE"),
+            nullable=False,
+        )
+    )
+
+    role_id: int = Field(
+        sa_column=Column(
+            Integer, ForeignKey("org_roles.id", ondelete="SETNULL"), nullable=False
+        )
+    )
+
+    invitation: Optional["OrganizationInvitation"] = Relationship(
+        back_populates="invitation_roles", passive_deletes=True
+    )
+    role: Optional["OrganizationRole"] = Relationship(
+        back_populates="invitation_roles", passive_deletes=True
     )

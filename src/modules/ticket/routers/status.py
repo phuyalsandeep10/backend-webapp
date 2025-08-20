@@ -31,7 +31,7 @@ async def register_ticket_status(payload: List[CreateTicketStatusSchema]):
     """
     Create priorities for the particular organization
     """
-    return await ticket_status_service.create_ticket_status(payload, user)
+    return await ticket_status_service.create_ticket_status(payload)
 
 
 @router.get(

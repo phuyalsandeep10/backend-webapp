@@ -17,6 +17,13 @@ from src.modules.organizations.models import (
     OrganizationMember,
     OrganizationMemberRole,
     OrganizationRole,
+    OrganizationInvitationRole,
+)
+
+from src.modules.staff_managemet.models import (
+    Permissions,
+    PermissionGroup,
+    RolePermission,
 )
 
 # Import team models
@@ -44,6 +51,7 @@ __all__ = [
     "OrganizationMember",
     "OrganizationMemberRole",
     "OrganizationInvitation",
+    "OrganizationInvitationRole",
     "Customer",
     "Conversation",
     "ConversationMember",
@@ -57,11 +65,13 @@ __all__ = [
     "TicketAlert",
     "TicketPriority",
     "TicketSLA",
+    # "Admin",
+    "Permissions",
+    "PermissionGroup",
+    "RolePermission",
     "TicketLog",
     "CustomerVisitLogs",
     "Country",
-    "Timezone",
-    "Message",
-
+    "Timezone"
     # "Admin"
 ]

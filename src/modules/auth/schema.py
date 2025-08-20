@@ -1,12 +1,13 @@
-from typing import Optional
-from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel, EmailStr
+
 
 class VerifyEmailEnum(str, Enum):
     ForgotPassword = "forgot_password"
     EmailVerification = "email_verification"
-  
 
 
 class ResendVerificationSchema(BaseModel):
@@ -77,12 +78,24 @@ class UserSchema(BaseModel):
     class Config:
         orm_mode = True
 
+
 class UserProfileUpdateSchema(BaseModel):
     """Schema for updating user profile - only allows safe fields"""
+
     name: Optional[str] = None
     image: Optional[str] = None
     mobile: Optional[str] = None
     address: Optional[str] = None
     country: Optional[str] = None
     language: Optional[str] = None
-    
+
+
+class UserOutSchema(BaseModel):
+    id: int
+    email: EmailStr
+    name: Optional[str] = None
+    image: Optional[str] = None
+    mobile: Optional[str] = None
+    address: Optional[str] = None
+    country: Optional[str] = None
+    language: Optional[str] = None

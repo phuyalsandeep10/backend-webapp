@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from asgiref.sync import async_to_sync
 from sqlalchemy.orm import selectinload
@@ -9,6 +10,11 @@ from src.modules.ticket.services.sla import sla_service
 from src.modules.ticket.services.status import ticket_status_service
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stdout)  # print to stdout
+formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 async def check_sla_breach():
@@ -44,8 +50,8 @@ async def check_sla_breach():
                 ticket.sla.resolution_time, int(ticket.opened_at.timestamp())
             )
         )
-        logging.error(f"Response time {response_remaining_time}")
-        logging.error(f"Resolution time {resolution_remaining_time}")
+        logger.error(f"Response time {response_remaining_time}")
+        logger.error(f"Resolution time {resolution_remaining_time}")
         await sla_service.sla_breach_notification(
             ticket, response_remaining_time, resolution_remaining_time
         )
