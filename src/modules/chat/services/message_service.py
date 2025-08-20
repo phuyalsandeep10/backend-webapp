@@ -29,3 +29,20 @@ class MessageService:
         await RedisService.redis_publish(channel=MESSAGE_CHANNEL, message={"event":"receive-message",**data})
 
         return cr.success(data=new_message.to_json())
+    
+    #edit message service
+    async def edit_message(self, message_id: int):
+        record = await Message.find_one({
+            "id": message_id,
+            "organization_id": self.organization_id
+        })
+
+        if not record:
+            return cr.error(message='Message Not found')
+
+        updated_data = {**self.payload.dict()}
+        await Message.update(message_id, **updated_data)
+
+        await RedisService.redis_publish(channel=MESSAGE_CHANNEL, message={"event": "edit-message", **updated_data})
+
+        return cr.success(data=record.to_json())  
