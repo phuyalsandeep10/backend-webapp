@@ -7,6 +7,7 @@ from src.config.broadcast import broadcast
 from src.config.settings import settings
 from src.middleware import AuthMiddleware
 
+
 # Replace with your friend's IP or use "*" for all origins (less secure)
 
 app = FastAPI(

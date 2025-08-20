@@ -6,6 +6,7 @@ from src.websocket.channel_names import MESSAGE_CHANNEL
 from ..schema import MessageSchema
 from typing import Optional
 
+
 class MessageService:
     def __init__(self,organization_id,payload:MessageSchema,user_id:Optional[int]=None):
         self.organization_id = organization_id
@@ -14,6 +15,7 @@ class MessageService:
     
 
     async def create_conversation_message(self,conversation_id: int):
+
         record = await Conversation.find_one({
             "id": conversation_id,
             "organization_id": self.organization_id

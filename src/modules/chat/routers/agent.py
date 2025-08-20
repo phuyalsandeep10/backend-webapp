@@ -49,7 +49,6 @@ async def get_conversation_messages(conversation_id: int):
         "organization_id": organizationId
     })
 
-
     if not record:
         return cr.error(message='Conversation Not found')
     

@@ -16,6 +16,7 @@ from src.tasks.sla_task import check_sla_breach
 from src.utils.exceptions import add_exceptions_handler
 from src.utils.get_templates import get_templates
 
+
 # custom exceptions
 add_exceptions_handler(app)
 
