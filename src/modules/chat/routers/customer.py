@@ -5,6 +5,10 @@ from src.common.dependencies import get_current_user
 from src.models import Conversation, Customer, CustomerVisitLogs
 from src.utils.response import CustomResponse as cr
 from src.utils.common import get_location
+from ..services.message_service import MessageService
+from ..schema import MessageSchema
+from src.common.context import UserContext, TenantContext
+from src.models import Message
 
 router = APIRouter()
 
@@ -109,6 +113,7 @@ async def customer_visit(customer_id: int, request: Request):
 @router.get("/{conversation_id}/messages")
 async def get_conversation_messages(conversation_id: int):
     messages = await Message.filter(where={"conversation_id": conversation_id})
+    
     return cr.success(data={"messages": [msg.to_json() for msg in messages]})
 
 
@@ -119,3 +124,10 @@ async def get_customers(organizationId: int, user=Depends(get_current_user)):
     new_customers = [cus.to_json() for cus in customers]
 
     return cr.success(data=new_customers)
+
+@router.post('/conversations/{conversation_id}/messages')
+async def create_conversation_message(conversation_id: int, payload: MessageSchema):
+    organizationId = TenantContext.get()
+    userId = UserContext.get()
+    service = MessageService(organizationId,userId,payload)
+    return await service.create_conversation_message(conversation_id)

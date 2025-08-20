@@ -1,5 +1,6 @@
 
 from pydantic import BaseModel
+from typing import Optional
 # from typing import datetime
 class CustomerSchema(BaseModel):
     id: int
@@ -8,8 +9,7 @@ class CustomerSchema(BaseModel):
     phone: str
     created_at: str
     updated_at: str
-
-
+    
 class ConversationSchema(BaseModel):
     id: int
     customer_id: int
@@ -31,7 +31,7 @@ class MessageAttachment(BaseModel):
     updated_at: str
 
 class MessageSchema(BaseModel):
-    id: int
-    conversation_id: int
+    
     content: str
-    attachments: list[MessageAttachment]
+    customer_id:Optional[int] = None
+    attachments: Optional[list[MessageAttachment]]=[]
