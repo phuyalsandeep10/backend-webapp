@@ -1,6 +1,8 @@
 import logging
 from typing import Any
 
+from arq import create_pool
+from arq.connections import RedisSettings
 from pydantic import EmailStr
 from sqlalchemy.orm import selectinload
 from starlette.status import HTTP_201_CREATED
@@ -67,6 +69,9 @@ class TicketConversationServices:
             }
             await TicketMessage.create(**payload)
             logger.info("Successfully saved message from email")
+            await self.broadcast_ticket_message(
+                user_email=from_email, message=recent_reply, ticket_id=ticket_id
+            )
         except Exception as e:
             logging.exception("Error while saving message from email")
 
@@ -100,6 +105,20 @@ class TicketConversationServices:
             )
         except Exception as e:
             logger.exception(e)
+
+    async def broadcast_ticket_message(self, user_email, message, ticket_id):
+
+        try:
+            redis = await create_pool(RedisSettings())
+            await redis.enqueue_job(
+                "broadcast_ticket_message",
+                user_email=user_email,
+                message=message,
+                ticket_id=ticket_id,
+            )
+            logger.info(f"Enqueued async broadcast job for TicketMessage")
+        except Exception as e:
+            logger.exception(f"Failed to enqueue broadcast job for TicketMessage : {e}")
 
 
 ticket_conversation_service = TicketConversationServices()

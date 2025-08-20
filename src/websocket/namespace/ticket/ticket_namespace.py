@@ -2,6 +2,9 @@ import logging
 
 from socketio import AsyncServer
 
+from src.modules.auth.models import User
+from src.modules.auth.schema import UserOutSchema
+
 from ..base import BaseNameSpace
 
 logger = logging.getLogger(__name__)
@@ -39,8 +42,9 @@ class TicketNameSpace(BaseNameSpace):
             return
 
         room = f"ticket_{ticket_id}"
+        email = user_email.split("<")[1].split(">")[0]
 
-        payload = {"user": user_email, "room": room, "message": message}
+        payload = {"user": email, "message": message}
         await self.redis_publish(channel=room, message=payload)
 
         await self.sio.emit(

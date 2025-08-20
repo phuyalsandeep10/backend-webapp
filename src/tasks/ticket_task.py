@@ -1,9 +1,12 @@
 import logging
 
+from pydantic import EmailStr
+
 from src.modules.sendgrid.services import send_sendgrid_email
 from src.modules.ticket.enums import TicketLogActionEnum, TicketLogEntityEnum
 from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.models.ticket_log import TicketLog
+from src.socket_config import ticket_ns
 
 logger = logging.getLogger(__name__)
 
@@ -47,3 +50,16 @@ async def send_ticket_task_email(
             "description": f"Error while sending {mail_type}",
         }
         await TicketLog.create(**log_data)
+
+
+async def broadcast_ticket_message(
+    ctx, user_email: EmailStr, message: str, ticket_id: int
+):
+    try:
+        logger.info("Broadcasting ticket message")
+        await ticket_ns.broadcast_message(
+            user_email=user_email, message=message, ticket_id=ticket_id
+        )
+    except Exception as e:
+        logger.error(e)
+        logger.error("Error while broadcasting ticket message")

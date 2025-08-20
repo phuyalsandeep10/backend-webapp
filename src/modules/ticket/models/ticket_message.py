@@ -1,8 +1,9 @@
+import asyncio
 import logging
 from typing import ClassVar, List
 
 from pydantic import EmailStr
-from sqlalchemy import Column, ForeignKey, event
+from sqlalchemy import Column, ForeignKey
 from sqlmodel import Field
 
 import src.modules.ticket.services.mixins as Mixin
@@ -26,8 +27,3 @@ class TicketMessage(TenantModel, Mixin.LoggingMixin, table=True):
     direction: str
     content: str
     attachments: str = Field(nullable=True)
-
-
-@event.listens_for(TicketMessage, "after_insert")
-def ticket_message_created(mapper, connection, target):
-    logger.info("The ticket message has beeen created")
