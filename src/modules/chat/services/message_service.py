@@ -1,6 +1,6 @@
 
 from src.services.redis_service import RedisService
-from src.models import Conversation, Message
+from src.models import Conversation, Message, MessageAttachment
 from src.utils.response import CustomResponse as cr
 from src.websocket.channel_names import MESSAGE_CHANNEL
 from ..schema import MessageSchema
@@ -26,6 +26,10 @@ class MessageService:
         data = {**self.payload.dict(),"user_id":self.user_id,"conversation_id":conversation_id}
 
         new_message = await Message.create(**data)
+
+        for file in self.payload.files:
+            await MessageAttachment.create(message_id=new_message.id, **file.dict())
+
         await RedisService.redis_publish(channel=MESSAGE_CHANNEL, message={"event":"receive-message",**data})
 
         return new_message
@@ -44,5 +48,6 @@ class MessageService:
         await Message.update(message_id, **updated_data)
 
         await RedisService.redis_publish(channel=MESSAGE_CHANNEL, message={"event": "edit-message", **updated_data})
+        
 
         return record

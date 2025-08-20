@@ -14,8 +14,9 @@ router = APIRouter()
 
 
 @router.post("/{organizationId}")
-async def create_customer(organizationId: int, request: Request):
+async def create_customer( request: Request):
     header = request.headers.get("X-Forwarded-For")
+    organizationId = TenantContext.get()
 
     ip = header.split(",")[0].strip() if header else request.client.host
 
@@ -117,13 +118,7 @@ async def get_conversation_messages(conversation_id: int):
     return cr.success(data={"messages": [msg.to_json() for msg in messages]})
 
 
-@router.get("")
-async def get_customers(organizationId: int, user=Depends(get_current_user)):
 
-    customers = await Customer.filter(where={"organization_id": organizationId})
-    new_customers = [cus.to_json() for cus in customers]
-
-    return cr.success(data=new_customers)
 
 @router.post('/conversations/{conversation_id}/messages')
 async def create_conversation_message(conversation_id: int, payload: MessageSchema):

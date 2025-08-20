@@ -9,6 +9,7 @@ ALLOWED_ORIGINS = settings.CORS_ORIGINS
 class CORSMiddleware(BaseHTTPMiddleware):
 
     def setHeaders(self,response,origin:str):
+
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Authorization,Content-Type"
@@ -17,6 +18,7 @@ class CORSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         origin = request.headers.get("origin")
         path = request.url.path
+        
         print(f"Request to: {method} {path}")  # <-- log or check endpoint
         response: Response = await call_next(request)
         

@@ -11,7 +11,6 @@ mgr = AsyncRedisManager(redis_url)
 
 
 from src.app import app
-from src.modules.chat.websocket import ChatNamespace
 from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 
 # Create the Socket.IO Async server (ASGI mode)

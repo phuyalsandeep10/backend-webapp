@@ -22,13 +22,11 @@ class ConversationSchema(BaseModel):
 
 
 class MessageAttachment(BaseModel):
-    id: int
-    message_id: int
     file_name: str
     file_size: int
     file_type: str
-    created_at: str
-    updated_at: str
+    file_url: str
+
 
 class MessageSchema(BaseModel):
     content: str

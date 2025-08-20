@@ -60,11 +60,10 @@ async def create_conversation_message(conversation_id: int, payload: MessageSche
     userId = UserContext.get()
     
     del payload.customer_id
-    
+
     service = MessageService(organizationId,payload,userId)
     record = await service.create(conversation_id)
-
-
+    
     return cr.success(data=record.to_json())
 
 #edit the message
