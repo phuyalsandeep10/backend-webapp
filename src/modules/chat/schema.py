@@ -35,3 +35,7 @@ class MessageSchema(BaseModel):
     customer_id:Optional[int] = None
     reply_id:Optional[int] = None
     attachments: Optional[list[MessageAttachment]]=[]
+
+
+class EditMessageSchema(BaseModel):
+    content: str

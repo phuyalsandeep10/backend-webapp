@@ -2,11 +2,9 @@ from fastapi import APIRouter
 from src.utils.response import CustomResponse as cr
 from src.models import Conversation, Customer, Message
 from src.common.context import UserContext, TenantContext
-from ..schema import  MessageSchema
+from ..schema import  MessageSchema, EditMessageSchema
 
 from ..services.message_service import MessageService
-
-
 from ..models.conversation import get_conversation_list
 
 
@@ -60,32 +58,39 @@ async def get_conversation_messages(conversation_id: int):
 async def create_conversation_message(conversation_id: int, payload: MessageSchema):
     organizationId = TenantContext.get()
     userId = UserContext.get()
+    
     del payload.customer_id
+    
     service = MessageService(organizationId,payload,userId)
-    record = await service.create_conversation_message(conversation_id)
+    record = await service.create(conversation_id)
+
+
     return cr.success(data=record.to_json())
 
 #edit the message
-@router.post('/messages/{message_id}')
-async def edit_message(message_id: int, payload: MessageSchema):
+@router.put('/messages/{message_id}')
+async def edit_message(message_id: int, payload: EditMessageSchema):
     organizationId = TenantContext.get()
+    print(f"organizationId {organizationId}")
+
     userId = UserContext.get()
+
     service = MessageService(organizationId, payload, userId)
-    record = await service.edit_message(message_id)
+    record = await service.edit(message_id)
+
     return cr.success(data=record.to_json())
 
 
 #resolved conversations
-@router.post('/conversations/{conversation_id}/resolved')
-async def resolved_conversation(conversation_id: int, message_id: int, payload: MessageSchema):
+@router.put('/conversations/{conversation_id}/resolved')
+async def resolved_conversation(conversation_id: int):
     organizationId = TenantContext.get()
-
+    
     # Find the conversation
     record = await Conversation.find_one({
         "id": conversation_id,
         "organization_id": organizationId
     })
-
 
     if not record:
         return cr.error(message='Failed to resolve conversation')

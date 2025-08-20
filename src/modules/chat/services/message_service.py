@@ -14,7 +14,7 @@ class MessageService:
         self.user_id = user_id
     
 
-    async def create_conversation_message(self,conversation_id: int):
+    async def create(self,conversation_id: int):
 
         record = await Conversation.find_one({
             "id": conversation_id,
@@ -28,13 +28,13 @@ class MessageService:
         new_message = await Message.create(**data)
         await RedisService.redis_publish(channel=MESSAGE_CHANNEL, message={"event":"receive-message",**data})
 
-        return cr.success(data=new_message.to_json())
+        return new_message
     
     #edit message service
-    async def edit_message(self, message_id: int):
+    async def edit(self, message_id: int):
         record = await Message.find_one({
-            "id": message_id,
-            "organization_id": self.organization_id
+            "id": message_id
+       
         })
 
         if not record:
@@ -45,4 +45,4 @@ class MessageService:
 
         await RedisService.redis_publish(channel=MESSAGE_CHANNEL, message={"event": "edit-message", **updated_data})
 
-        return cr.success(data=record.to_json())  
+        return record

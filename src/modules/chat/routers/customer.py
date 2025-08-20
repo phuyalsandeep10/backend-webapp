@@ -6,7 +6,7 @@ from src.models import Conversation, Customer, CustomerVisitLogs
 from src.utils.response import CustomResponse as cr
 from src.utils.common import get_location
 from ..services.message_service import MessageService
-from ..schema import MessageSchema
+from ..schema import MessageSchema, EditMessageSchema
 from src.common.context import UserContext, TenantContext
 from src.models import Message
 
@@ -131,3 +131,16 @@ async def create_conversation_message(conversation_id: int, payload: MessageSche
     userId = UserContext.get()
     service = MessageService(organizationId,userId,payload)
     return await service.create_conversation_message(conversation_id)
+
+#edit the message
+@router.put('/{organization_id}/messages/{message_id}')
+async def edit_message(message_id: int, payload: EditMessageSchema):
+    organizationId = TenantContext.get()
+    print(f"organizationId {organizationId}")
+
+    userId = UserContext.get()
+
+    service = MessageService(organizationId, payload, userId)
+    record = await service.edit(message_id)
+
+    return cr.success(data=record.to_json())
