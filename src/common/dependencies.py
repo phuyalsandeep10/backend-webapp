@@ -50,8 +50,6 @@ async def validate_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
-
 
     try:
         token = (
@@ -72,8 +70,8 @@ async def validate_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        #@Todo: we need to enable this after adding email verification
-        
+        # @Todo: we need to enable this after adding email verification
+
         # if isEmailVerifyCheck and not user.email_verified_at:
         #     raise HTTPException(
         #         status_code=status.HTTP_403_FORBIDDEN,

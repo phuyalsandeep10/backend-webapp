@@ -3,10 +3,7 @@ from src.config.redis.redis_listener import get_redis
 from src.services.redis_service import RedisService
 
 
-
 class BaseNameSpace(socketio.AsyncNamespace):
-
-
     def __init__(self, namespace: str):
         super().__init__(namespace=namespace)
         self.redis = None
@@ -20,5 +17,3 @@ class BaseNameSpace(socketio.AsyncNamespace):
         """Direct Redis pub/sub publish - more reliable than broadcaster library"""
 
         await RedisService.redis_publish(channel=channel, message=message)
-
-

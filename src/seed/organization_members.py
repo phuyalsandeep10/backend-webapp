@@ -23,12 +23,10 @@ organization_members = [
 async def organizaiton_members_seed_dummy():
     # checking if test user exists or not
     for user in organization_members:
-
         user_exist = await OrganizationMember.find_one(
             where={"user_id": user["user_id"]}
         )
 
         if not user_exist:
-
             usr = await OrganizationMember.create(**user)
             print("Organization member created")

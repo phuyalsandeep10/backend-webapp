@@ -66,4 +66,3 @@ def update_permission(
         description=body.description,
         identifier=body.identifier,
     )
-

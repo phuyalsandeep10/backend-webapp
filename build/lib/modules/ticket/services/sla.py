@@ -11,10 +11,8 @@ from src.utils.response import CustomResponse as cr
 
 
 class TicketSLAServices:
-
     async def register_sla(self, payload: CreateSLASchema, user: User):
         try:
-
             user_id = user.id
             data = dict(payload)
             data["issued_by"] = user_id
@@ -49,7 +47,6 @@ class TicketSLAServices:
             )
 
         except HTTPException:
-
             raise
 
         except Exception as e:

@@ -1,8 +1,7 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from src.common.dependencies import get_current_user
 from src.modules.ticket.schemas import (
     CreatePrioriySchema,
     EditTicketPrioritySchema,

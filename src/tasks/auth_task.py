@@ -2,7 +2,6 @@ import logging
 
 from src.config.celery import celery_app
 from src.config.mail import mail_sender
-from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
 

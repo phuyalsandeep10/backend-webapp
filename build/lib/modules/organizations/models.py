@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, List, Optional
 
 import sqlalchemy as sa
-from sqlmodel import Field, Relationship, Session, SQLModel, select
+from sqlmodel import Field, Relationship, select
 
 from src.common.models import CommonModel
 from src.db.config import async_session
@@ -23,8 +23,8 @@ class Organization(CommonModel, table=True):
     name: str = Field(max_length=255, index=True)
     description: str = Field(default=None, max_length=500, nullable=True)
     slug: str = Field(default=None, max_length=255, nullable=False, index=True)
-    identifier:str = Field(default=None,max_length=255)
-    domain:str = Field(default=None,max_length=255)
+    identifier: str = Field(default=None, max_length=255)
+    domain: str = Field(default=None, max_length=255)
     logo: str = Field(default=None, max_length=255, nullable=True)
     members: list["OrganizationMember"] = Relationship(back_populates="organization")
     conversations: list["Conversation"] = Relationship(back_populates="organization")
@@ -34,14 +34,10 @@ class Organization(CommonModel, table=True):
     tickets: List["Ticket"] = Relationship(back_populates="organization")
     purpose: str = Field(default=None, max_length=250, nullable=True)
 
-    owner_id:int =  Field(foreign_key="sys_users.id", nullable=False)
+    owner_id: int = Field(foreign_key="sys_users.id", nullable=False)
     owner: Optional["User"] = Relationship(
-        sa_relationship_kwargs={
-            "foreign_keys": "[Organization.owner_id]"
-        }
+        sa_relationship_kwargs={"foreign_keys": "[Organization.owner_id]"}
     )
-
-
 
     @classmethod
     async def get_orgs_by_user_id(cls, user_id: int):
@@ -70,7 +66,7 @@ class OrganizationMember(CommonModel, table=True):
     __tablename__ = "org_members"  # type:ignore
     user_id: int = Field(foreign_key="sys_users.id", nullable=False)
     organization_id: int = Field(foreign_key="sys_organizations.id", nullable=False)
- 
+
     organization: Optional[Organization] = Relationship(back_populates="members")
     user: Optional["User"] = Relationship(
         back_populates="members",
@@ -86,7 +82,6 @@ class OrganizationMemberRole(CommonModel, table=True):
     role_id: int = Field(foreign_key="org_roles.id", nullable=False)
     member: Optional[OrganizationMember] = Relationship(back_populates="member_roles")
     role: Optional[OrganizationRole] = Relationship(back_populates="member_roles")
-
 
 
 class OrganizationInvitation(CommonModel, table=True):

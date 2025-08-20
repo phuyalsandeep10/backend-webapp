@@ -1,10 +1,9 @@
-from datetime import datetime
 from typing import List
 
 from sqlalchemy import Column, ForeignKey
 from sqlmodel import BigInteger, Field, Relationship
 
-from src.common.models import BaseModel, CommonModel
+from src.common.models import CommonModel
 
 from .ticket import Ticket
 

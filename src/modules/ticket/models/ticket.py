@@ -8,9 +8,7 @@ from sqlmodel import Field, Relationship
 import src.modules.ticket.services.mixins as Mixin
 from src.common.models import BaseModel, CommonModel, TenantModel
 from src.modules.ticket.enums import (
-    TicketAlertTypeEnum,
     TicketLogEntityEnum,
-    WarningLevelEnum,
 )
 from src.modules.ticket.schemas import (
     AssigneeOut,

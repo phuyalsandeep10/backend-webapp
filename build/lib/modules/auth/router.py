@@ -2,15 +2,12 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from jose import jwt
-from datetime import datetime, timedelta
 from src.common.dependencies import (
     get_current_user,
     update_user_cache,
     get_bearer_token,
 )
 
-from fastapi import Depends
 from src.common.dependencies import create_access_token
 from src.enums import ProviderEnum
 import pyotp
@@ -24,7 +21,7 @@ from .schema import (
     RefreshTokenSchema,
     VerifyTwoFAOtpSchema,
     UserSchema,
-    ValidateEmailSchema
+    ValidateEmailSchema,
 )
 from src.utils.response import CustomResponse as cr
 
@@ -42,11 +39,8 @@ from src.tasks import send_verification_email, send_forgot_password_email
 from .social_auth import oauth
 from src.config.settings import settings
 from src.modules.organizations.models import OrganizationInvitation
-from src.tasks import send_forgot_password_email, send_verification_email
 
 
-from .models import EmailVerification, RefreshToken, User
-from .social_auth import oauth
 from jose.exceptions import JWTError
 from fastapi.encoders import jsonable_encoder
 
@@ -71,7 +65,6 @@ async def create_token(user):
 
 @router.post("/login")
 async def user_login(request: LoginSchema):
-
     user = await User.find_one(where={"email": request.email})
 
     # Check if user exists
@@ -97,7 +90,6 @@ async def user_login(request: LoginSchema):
 
 @router.post("/logout")
 async def logout(user=Depends(get_current_user)):
-
     token_data = await RefreshToken.find_one(where={"user_id": user.id, "active": True})
 
     if not token_data:
@@ -143,20 +135,19 @@ async def refresh_token(body: RefreshTokenSchema):
 async def validateEmail(body: ValidateEmailSchema):
     user = await User.find_one({"email": body.email})
     if user:
-        return cr.error(data={"success": False},message='Email already registered')
-       
+        return cr.error(data={"success": False}, message="Email already registered")
+
     return cr.success(data={"success": True})
 
 
 @router.post("/register")
 async def register(request: RegisterSchema):
-
     user = await User.find_one({"email": request.email})
 
     # Check if user already exists
 
     if user:
-        return cr.error(data={"success": False},message='Email already registered') 
+        return cr.error(data={"success": False}, message="Email already registered")
 
     hashed_password = hash_password(request.password)
     user = await User.create(
@@ -202,19 +193,19 @@ async def get_auth_user(user=Depends(get_current_user)):
 
 @router.post("/verify-email")
 async def verify_email_token(body: VerifyEmailTokenSchema):
-
     user = await User.find_one({"email": body.email})
 
     if not user:
-        return cr.error(data={"success": False},message='User not found')
+        return cr.error(data={"success": False}, message="User not found")
 
     verification = await EmailVerification.find_one(
         {"token": body.token, "is_used": False, "user_id": user.id}
     )
 
     if not verification:
-        return cr.error(data={"success": False},message='Invalid or expired verification token')
-      
+        return cr.error(
+            data={"success": False}, message="Invalid or expired verification token"
+        )
 
     expires_at = verification.expires_at
     if isinstance(expires_at, str):
@@ -233,7 +224,6 @@ async def verify_email_token(body: VerifyEmailTokenSchema):
 
 @router.post("/reset-password")
 async def reset_password(body: ResetPasswordSchema, user=Depends(get_current_user)):
-
     user = await User.find_one({"email": user.email})
 
     if not user:
@@ -278,7 +268,6 @@ async def forgot_password_request(body: VerifyEmailSchema):
 
 @router.post("/forgot-password-verify")
 async def forgot_password_verify(body: ForgotPasswordVerifySchema):
-
     user = await User.find_one({"email": body.email})
 
     if not user:
@@ -289,8 +278,9 @@ async def forgot_password_verify(body: ForgotPasswordVerifySchema):
     )
 
     if not verification:
-        return cr.error(data={"success": False},message='Invalid or expired verification token')
-      
+        return cr.error(
+            data={"success": False}, message="Invalid or expired verification token"
+        )
 
     expires_at = verification.expires_at
     if isinstance(expires_at, str):
@@ -298,7 +288,9 @@ async def forgot_password_verify(body: ForgotPasswordVerifySchema):
 
     # Check if the token has expired
     if expires_at < datetime.utcnow():
-        return cr.error(data={"success": False},message='Verification token has expired')
+        return cr.error(
+            data={"success": False}, message="Verification token has expired"
+        )
 
     # Mark the token as used
     await EmailVerification.update(verification.id, is_used=True)
@@ -310,7 +302,6 @@ async def forgot_password_verify(body: ForgotPasswordVerifySchema):
 
 @router.get("/invitations")
 async def get_invitations(user=Depends(get_current_user)):
-    
     data = await OrganizationInvitation.filter(where={"email": user.email})
     return cr.success(data=data)
 
@@ -406,7 +397,6 @@ async def verify_two_fa(
 
 @router.post("/2fa-disabled")
 async def disable_two_fa(user=Depends(get_current_user)):
-
     await User.update(user.id, two_fa_enabled=False)
 
     return cr.success(data={"message": "2FA disabled successfully"})

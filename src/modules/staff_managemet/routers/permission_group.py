@@ -1,6 +1,6 @@
 from typing import Dict, List, Any
-from fastapi import APIRouter, Depends, HTTPException
-from src.models import PermissionGroup, Permissions, RolePermission, OrganizationRole
+from fastapi import APIRouter, Depends
+from src.models import PermissionGroup, Permissions, RolePermission
 from src.modules.staff_managemet.schemas.permission_group import (
     PermissionOutSchema,
 )

@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Optional, Union
+from typing import ClassVar, Optional
 
 import src.modules.ticket.models as TicketModel
 from src.modules.ticket.enums import TicketLogActionEnum, TicketLogEntityEnum
@@ -23,7 +23,6 @@ class LoggingMixin:
         new_value: Optional[dict] = None,
     ):
         try:
-
             if not self.entity_type:
                 raise ValueError(f"{self.__class__.__name__} must define entity_type")
 

@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from typing import Any, List, Optional, Type, TypeVar, Union
 
@@ -252,7 +251,7 @@ class BaseModel(SQLModel):
         async with async_session() as session:
             result = await session.execute(statement)
             return result.scalars().first() if result else None
-    
+
     @classmethod
     async def sql(cls: Type[T], query: str) -> list[dict]:
         async with async_session() as session:
@@ -268,13 +267,12 @@ class BaseModel(SQLModel):
                 serialized.append(r)
             return serialized
 
+
 class CommonModel(BaseModel):
     active: bool = Field(default=True)
     created_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
     updated_by_id: int = Field(foreign_key="sys_users.id", nullable=False)
     deleted_at: Optional[datetime] = None
-
-
 
 
 def query_statement(
@@ -321,7 +319,6 @@ def parse_where(cls, where_dict):
                 expressions.append(and_(*and_conditions))
 
         elif isinstance(value, dict):
-
             if "mode" in value:
                 if value["mode"] == "insensitive":
                     # Handle case-insensitive conditions
@@ -332,7 +329,6 @@ def parse_where(cls, where_dict):
             # Support for contains, gt, lt, etc.
 
             for op, v in value.items():
-
                 col = getattr(cls, key)
 
                 if op == "contains":
@@ -429,7 +425,6 @@ class TenantModel(CommonModel):
         options: Optional[list[Any]] = None,
         related_items: Optional[Union[_AbstractLoad, list[_AbstractLoad]]] = None,
     ):
-
         return await super().filter(where, skip, limit, joins, options, related_items)
 
     @classmethod

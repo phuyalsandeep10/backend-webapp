@@ -1,7 +1,7 @@
 """add users
 
 Revision ID: 20250731_023113
-Revises: 
+Revises:
 Create Date: 2025-07-31 08:16:13.360813
 
 """
@@ -16,7 +16,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class add_users_tableMigration(BaseMigration):
-
     table_name = "sys_users"
 
     def __init__(self):

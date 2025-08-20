@@ -1,13 +1,10 @@
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import status
-from fastapi.exceptions import HTTPException
-from pydantic import BaseModel, EmailStr, Field, ValidationError, model_validator
+from pydantic import BaseModel, EmailStr, model_validator
 from pydantic_core import PydanticCustomError
 
 from src.modules.ticket.enums import (
-    PriorityEnum,
     TicketLogActionEnum,
     TicketLogEntityEnum,
     TicketStatusEnum,
@@ -139,7 +136,6 @@ class EditTicketStatusSchema(BaseModel):
 
 
 class CreateContactSchema(BaseModel):
-
     email: EmailStr
     first_name: str
     last_name: str
@@ -149,7 +145,6 @@ class CreateContactSchema(BaseModel):
 
 
 class CreateSLASchema(BaseModel):
-
     name: str
     response_time: int
     resolution_time: int

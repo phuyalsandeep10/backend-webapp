@@ -1,16 +1,13 @@
 from typing import List
 
-from kombu import message
 from starlette.status import HTTP_400_BAD_REQUEST
 
-from src.modules.auth.models import User
 from src.modules.ticket.models import TicketStatus
 from src.modules.ticket.schemas import CreateTicketStatusSchema, EditTicketStatusSchema
 from src.utils.response import CustomResponse as cr
 
 
 class TicketStatusService:
-
     async def list_ticket_status(self, user):
         """
         List all the ticket status on the basis of the organization

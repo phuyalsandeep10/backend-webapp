@@ -1,4 +1,3 @@
-from kombu import message
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from src.modules.ticket.models import TicketPriority
@@ -7,7 +6,6 @@ from src.utils.response import CustomResponse as cr
 
 
 class TicketPriorityService:
-
     async def list_priorities(self, user):
         """
         List all the priorites on the basis of the organization

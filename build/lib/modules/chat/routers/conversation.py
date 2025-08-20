@@ -1,7 +1,6 @@
-from fastapi import APIRouter,status,Depends, HTTPException
+from fastapi import APIRouter, status, Depends, HTTPException
 from src.common.dependencies import get_current_user
 from src.models import Conversation, Customer, Message
-
 
 
 router = APIRouter()
@@ -27,6 +26,7 @@ async def conversation_detail(conversation_id: int, user=Depends(get_current_use
 
     return {"conversation": record, "customer": customer}
 
+
 @router.get("/{conversation_id}/customer_messages")
 async def customer_messages(conversation_id: int, limit: int = 20):
     messages = await Message.filter(
@@ -42,5 +42,5 @@ async def user_messages(
     messages = await Message.filter(
         where={"conversation_id": conversation_id}, limit=limit
     )
-    
+
     return {"messages": messages}

@@ -2,19 +2,15 @@ import logging
 import secrets
 from datetime import datetime
 
-from fastapi import HTTPException, status
-from kombu import message
+from fastapi import status
 from sqlalchemy.orm import selectinload
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
-from src.common.dependencies import get_user_by_token
 from src.config.settings import settings
 from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
 from src.modules.team.models import Team
 from src.modules.ticket.enums import TicketLogActionEnum, TicketStatusEnum
 from src.modules.ticket.models import TicketPriority
-from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket, TicketAttachment
@@ -22,7 +18,6 @@ from src.modules.ticket.schemas import (
     CreateTicketSchema,
     EditTicketSchema,
     TicketByStatusSchema,
-    TicketOut,
 )
 from src.modules.ticket.services.status import ticket_status_service
 from src.utils.common import extract_subset_from_dict
@@ -40,7 +35,6 @@ logger = logging.getLogger(__name__)
 
 
 class TicketServices:
-
     async def create_ticket(self, payload: CreateTicketSchema, user):
         """
         Create ticket for the organization
@@ -225,7 +219,7 @@ class TicketServices:
 
         except Exception as e:
             logger.exception(e)
-            return cr.error(message=f"{e.detail if e.detail else str(e) }", data=str(e))
+            return cr.error(message=f"{e.detail if e.detail else str(e)}", data=str(e))
 
     async def list_tickets_by_status(self, payload: TicketByStatusSchema):
         """

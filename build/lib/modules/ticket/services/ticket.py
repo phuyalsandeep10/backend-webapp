@@ -2,15 +2,12 @@ import secrets
 from datetime import datetime
 
 from fastapi import HTTPException, status
-from kombu import message
 from sqlalchemy.orm import selectinload
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
-from src.common.dependencies import get_user_by_token
 from src.modules.auth.models import User
 from src.modules.team.models import Team
 from src.modules.ticket.models import TicketPriority
-from src.modules.ticket.models.contact import Contact
 from src.modules.ticket.models.sla import TicketSLA
 from src.modules.ticket.models.status import TicketStatus
 from src.modules.ticket.models.ticket import Ticket
@@ -21,7 +18,6 @@ from src.utils.validations import TenantEntityValidator
 
 
 class TicketServices:
-
     async def create_ticket(self, payload: CreateTicketSchema, user):
         """
         Create ticket for the organization

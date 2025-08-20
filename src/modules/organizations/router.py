@@ -1,7 +1,6 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, logger, status
 from datetime import datetime, timedelta
-from sqlmodel import text
 from sqlalchemy.orm import selectinload
 from src.modules.organizations.models import OrganizationRole, OrganizationMemberRole
 from typing import List, Optional
@@ -10,8 +9,6 @@ import base64
 import secrets
 
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import selectinload
 
 from src.common.dependencies import (
     get_bearer_token,
@@ -37,10 +34,7 @@ from src.models.timezones import Timezone
 from src.tasks import send_invitation_email
 from src.utils.response import CustomResponse as cr
 from src.modules.staff_managemet.models import RolePermission
-from src.modules.staff_managemet.models import Permissions
-import logging
 from .schema import (
-    OrganizationInviteOutSchema,
     OrganizationSchema,
     OrganizationInviteSchema,
     AssignRoleSchema,
@@ -48,7 +42,6 @@ from .schema import (
     UpdateRoleInfoSchema,
     CreateRoleSchema,
     InvitationOut,
-    OrganizationRoleSchema,
 )
 
 logger = logging.getLogger(__name__)
@@ -141,7 +134,6 @@ async def create_organization(
         user_attributes = {}
 
     if "organization_id" not in user_attributes:
-
         user = await User.update(
             user.id, attributes={"organization_id": organization.id}
         )
@@ -508,7 +500,6 @@ async def delete_role(role_id: int, user=Depends(get_current_user)):
     Soft delete a role from the organization (tenant-aware).
     """
     try:
-
         await OrganizationRole.soft_delete(where={"id": role_id})
 
         return cr.success(data={"message": "Role deletion successful"})
@@ -525,7 +516,6 @@ async def delete_role(role_id: int, user=Depends(get_current_user)):
 
 @router.post("/invitation")
 async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_user)):
-
     record = await OrganizationInvitation.find_one(
         where={"email": body.email, "status": "pending"}
     )
@@ -584,7 +574,6 @@ async def reject_invitation(invitation_id: int, user=Depends(get_current_user)):
 
 @router.post("/invitation/{invitation_id}/accept")
 async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
-
     invitation = await OrganizationInvitation.find_one(where={"id": invitation_id})
 
     if not invitation:
@@ -633,7 +622,6 @@ async def delete_invitation(invitation_id: int, user=Depends(get_current_user)):
 
 @router.post("/roles-assign")
 async def assign_role(body: AssignRoleSchema, user=Depends(get_current_user)):
-
     organization_id = user.attributes.get("organization_id")
     member = await OrganizationMember.find_one(
         where={"organization_id": organization_id, "user_id": body.user_id}

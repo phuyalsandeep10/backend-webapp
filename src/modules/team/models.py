@@ -37,5 +37,4 @@ class TeamMember(CommonModel, table=True):
     )
 
     def to_dict(self):
-
         return {"id": self.id, "user": self.user.to_dict()}

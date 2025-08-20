@@ -8,6 +8,6 @@ def send_invitation_email(email: str):
     mail_sender.send(
         subject="Invitation",
         recipients=[email],
-        body_html=f"Invitation email. Your invitation is pending.",
+        body_html="Invitation email. Your invitation is pending.",
         body_text="This is a test email.",
     )

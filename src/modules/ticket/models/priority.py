@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, ClassVar, List
 
-from sqlmodel import Relationship, UniqueConstraint, func
+from sqlmodel import Relationship, UniqueConstraint
 
 import src.modules.ticket.services.mixins as Mixin
 from src.common.models import TenantModel

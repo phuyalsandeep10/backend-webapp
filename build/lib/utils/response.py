@@ -1,5 +1,4 @@
 from typing import Any, Generic, List, Optional, TypeVar, Union
-import json
 
 from fastapi import status
 from fastapi.responses import JSONResponse
@@ -15,16 +14,12 @@ class CustomResponseSchema(GenericModel, Generic[T]):
 
 
 class CustomResponse:
-
     @staticmethod
     def success(
         data: Any = None,
         message: str = "Successful",
         status_code: int = status.HTTP_200_OK,
     ):
-
-       
-            
         content = {"success": True, "message": message, "data": data}
         return JSONResponse(status_code=status_code, content=content)
 

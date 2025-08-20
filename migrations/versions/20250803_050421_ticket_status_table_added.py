@@ -8,7 +8,6 @@ Create Date: 2025-08-03 10:49:21.461892
 
 from typing import Sequence, Union
 
-from alembic import op
 
 from migrations.base import BaseMigration
 
@@ -19,7 +18,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class TicketStatusMigration(BaseMigration):
-
     table_name = "ticket_status"
 
     def __init__(self):

@@ -7,7 +7,6 @@ from fastapi.templating import Jinja2Templates
 from src.app import app
 from src.config.broadcast import broadcast
 from src.routers import add_routers
-from src.socket_config import socket_app
 from src.utils.exceptions import add_exceptions_handler
 
 # custom exceptions

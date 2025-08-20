@@ -1,4 +1,3 @@
-
 import cloudinary
 from .settings import settings
 

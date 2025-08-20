@@ -1,9 +1,7 @@
-from typing import Any, Dict, Type, TypeVar, Union
+from typing import Type, TypeVar
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
-from src.common.models import BaseModel, CommonModel
 
 T = TypeVar("T")
 

@@ -8,11 +8,8 @@ Create Date: 2025-08-03 10:32:30.150870
 
 from typing import Sequence, Union
 
-from alembic import op
-from sqlmodel import func
 
 from migrations.base import BaseMigration
-from src.modules.ticket.models.priority import TicketPriority
 
 revision: str = "20250803_044729"
 down_revision: Union[str, Sequence[str], None] = "20250801_091606"
@@ -21,7 +18,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class TicketPriorityMigration(BaseMigration):
-
     table_name = "ticket_priority"
 
     def __init__(self):
