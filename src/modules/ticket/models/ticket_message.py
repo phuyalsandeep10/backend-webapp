@@ -1,12 +1,15 @@
+import logging
 from typing import ClassVar, List
 
 from pydantic import EmailStr
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, event
 from sqlmodel import Field
 
 import src.modules.ticket.services.mixins as Mixin
 from src.common.models import TenantModel
 from src.modules.ticket.enums import TicketLogEntityEnum, TicketMessageDirectionEnum
+
+logger = logging.getLogger(__name__)
 
 
 class TicketMessage(TenantModel, Mixin.LoggingMixin, table=True):
@@ -18,10 +21,13 @@ class TicketMessage(TenantModel, Mixin.LoggingMixin, table=True):
     ticket_id: int = Field(
         sa_column=Column(ForeignKey("org_tickets.id", ondelete="CASCADE"))
     )
-    sender_id: int = Field(
-        sa_column=Column(ForeignKey("sys_users.id", ondelete="SET NULL"))
-    )
+    sender: EmailStr = Field(nullable=False)
     receiver: EmailStr = Field(nullable=False)
     direction: str
     content: str
     attachments: str = Field(nullable=True)
+
+
+@event.listens_for(TicketMessage, "after_insert")
+def ticket_message_created(mapper, connection, target):
+    logger.info("The ticket message has beeen created")

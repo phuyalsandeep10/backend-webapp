@@ -28,9 +28,7 @@ class TicketMessageMigration(BaseMigration):
         self.foreign(
             name="ticket_id", table="org_tickets", ondelete="CASCADE", nullable=False
         )
-        self.foreign(
-            name="sender_id", table="sys_users", ondelete="SET NULL", nullable=False
-        )
+        self.string(name="sender", nullable=False)
         self.string(name="receiver", nullable=False)
         self.string(name="direction")
         self.string(name="content")

@@ -6,4 +6,4 @@ from .message_task import (
     save_messages,
 )
 from .organization_task import send_invitation_email
-from .ticket_task import send_email
+from .ticket_task import send_ticket_task_email

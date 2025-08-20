@@ -7,7 +7,7 @@ from starlette.status import HTTP_201_CREATED
 
 from src.common.context import UserContext
 from src.factory.notification import NotificationFactory
-from src.modules.sendgrid.services import send_sendgrid_email
+from src.modules.sendgrid.services import decode_ticket, send_sendgrid_email
 from src.modules.ticket.enums import TicketLogActionEnum, TicketMessageDirectionEnum
 from src.modules.ticket.schemas import CreateTicketMessageSchema
 from src.utils.exceptions.ticket import TicketNotFound
@@ -51,6 +51,24 @@ class TicketConversationServices:
 
         except Exception as e:
             return cr.error(message=f"{e.detail if e.detail else str(e)}")
+
+    async def save_message_from_email(self, from_email, to_email, recent_reply):
+        try:
+            cipher = to_email.split("<")[1].split("@")[0]
+            print("The cipher is", cipher)
+            org_id, ticket_id = decode_ticket(cipher)
+            payload = {
+                "ticket_id": ticket_id,
+                "organization_id": org_id,
+                "sender": from_email,
+                "receiver": to_email,
+                "direction": TicketMessageDirectionEnum.INCOMING.value,
+                "content": recent_reply,
+            }
+            await TicketMessage.create(**payload)
+            logger.info("Successfully saved message from email")
+        except Exception as e:
+            logging.exception("Error while saving message from email")
 
     async def ticket_exists(self, ticket_id: int) -> Ticket | None:
         try:

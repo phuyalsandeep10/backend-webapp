@@ -43,6 +43,7 @@ app.add_middleware(
         "/openapi.json",
         # "/auth/me",
         "/tickets/confirm",
+        "/tickets/sendgrid-email-reply",
         "/organizations/countries",
         "/chat/",
     ],

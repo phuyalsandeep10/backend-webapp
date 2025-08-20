@@ -25,7 +25,6 @@ class Settings(BaseSettings):
 
     REDIS_URL: str = "redis://localhost:6379"
 
-
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int  # Token expiration time in minutes
@@ -53,6 +52,7 @@ class Settings(BaseSettings):
     ENV: str = "development"
     EMAIL_DOMAIN: str = ""
     SENDGRID_API_KEY: str = ""
+    SECRET_FERNET_KEY: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
