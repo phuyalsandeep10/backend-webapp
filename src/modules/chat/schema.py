@@ -31,7 +31,7 @@ class MessageAttachment(BaseModel):
     updated_at: str
 
 class MessageSchema(BaseModel):
-    
     content: str
     customer_id:Optional[int] = None
+    reply_id:Optional[int] = None
     attachments: Optional[list[MessageAttachment]]=[]

@@ -11,7 +11,8 @@ from src.modules.upload.router import router as upload_router
 from src.modules.staff_managemet.routers.permission_group import (
     router as permission_router,
 )
-from src.modules.chat.routers.agent import router as agent_router
+from src.modules.chat.routers.agent_chat import router as agent_router
+
 
 def add_routers(app: FastAPI):
     app.include_router(auth_router, prefix="/auth", tags=["auth"])
