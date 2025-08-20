@@ -10,7 +10,6 @@ from ..chat_namespace_constants import CUSTOMER_CHAT_NAMESPACE
 from ..channel_names import AGENT_NOTIFICATION_CHANNEL, MESSAGE_CHANNEL
 
 
-
 class CustomerChatNamespace(BaseChatNamespace):
     namespace = CUSTOMER_CHAT_NAMESPACE
     
@@ -19,7 +18,6 @@ class CustomerChatNamespace(BaseChatNamespace):
         super().__init__(self.namespace,is_customer=True)
 
  
-
     async def _notify_to_users(self, org_id: int):
         print(f"notify users in the same workspace that a customer has connected")
         await self.redis_publish(
@@ -86,6 +84,7 @@ class CustomerChatNamespace(BaseChatNamespace):
         try:
 
             # channel_name = user_notification_group(organization_id)
+
             channel_name = AGENT_NOTIFICATION_CHANNEL 
             event = self.message_notification
             # Get all sids for the conversation

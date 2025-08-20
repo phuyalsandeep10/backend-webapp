@@ -33,6 +33,7 @@ class Customer(CommonModel, table=True):
 
     is_online: bool = Field(default=False)
     tickets: List["Ticket"] = Relationship(back_populates="customer")
+    
 
 
 class CustomerVisitLogs(CommonModel, table=True):
