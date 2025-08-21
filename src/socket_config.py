@@ -11,7 +11,6 @@ mgr = AsyncRedisManager(redis_url)
 
 
 from src.app import app
-from src.modules.chat.websocket import ChatNamespace
 from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 
 # Create the Socket.IO Async server (ASGI mode)
@@ -40,12 +39,12 @@ redis_listener_task = None
 @app.on_event("startup")
 async def start_ws_redis_listener():
     import asyncio
+
     global redis_listener_task
 
     print("🚀 Starting WebSocket Redis listener...")
     # Create task with proper error handling
     redis_listener_task = asyncio.create_task(redis_listener(sio))
-    
 
     # Add error callback to catch silent failures
     def task_done_callback(task):
@@ -77,6 +76,7 @@ async def stop_ws_redis_listener():
             print("✅ Redis listener task cancelled")
         except Exception as e:
             print(f"⚠️ Error stopping Redis listener: {e}")
+
 
 alert_ns = AlertNameSpace("/alert")
 sio.register_namespace(alert_ns)

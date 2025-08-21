@@ -16,7 +16,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class RolePermissionMigration(BaseMigration):
-
     table_name = "role_permissions"
 
     def __init__(self):

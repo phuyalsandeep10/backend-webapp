@@ -1,9 +1,8 @@
 from src.config.settings import settings
-from src.models import Organization, OrganizationMember, TicketPriority, User
+from src.models import Organization, OrganizationMember, User
 
 
 async def organization_seed_dummy():
-
     user = await User.find_one(where={"email": "test@gmail.com"})
     record = await Organization.find_one(
         where={

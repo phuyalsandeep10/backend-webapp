@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -24,7 +24,6 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["*"]
 
     REDIS_URL: str = "redis://localhost:6379"
-
 
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"

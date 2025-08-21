@@ -3,8 +3,7 @@ from typing import TYPE_CHECKING, List
 from sqlalchemy import Column
 from sqlmodel import Field, ForeignKey, Relationship, UniqueConstraint
 
-from src.common.models import BaseModel, CommonModel
-from src.modules.ticket.enums import TicketStatusEnum
+from src.common.models import CommonModel
 
 if TYPE_CHECKING:
     from src.modules.organizations.models import Organization

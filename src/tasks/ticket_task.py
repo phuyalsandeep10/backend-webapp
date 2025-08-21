@@ -1,9 +1,7 @@
 import logging
-from contextvars import ContextVar
 
 from src.modules.sendgrid.services import send_sendgrid_email
 from src.modules.ticket.enums import TicketLogActionEnum, TicketLogEntityEnum
-from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.models.ticket_log import TicketLog
 
 logger = logging.getLogger(__name__)

@@ -1,8 +1,6 @@
-
-
-
 from src.config.redis.redis_listener import get_redis
 import json
+
 
 class RedisService:
     @staticmethod
@@ -18,5 +16,3 @@ class RedisService:
         except Exception as e:
             print(f"❌ Redis publish failed: {e}")
             return 0
-
-

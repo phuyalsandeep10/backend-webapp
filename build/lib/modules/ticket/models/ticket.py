@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
-from pydantic import EmailStr, ValidationError, model_validator
+from pydantic import EmailStr
 from sqlalchemy import Column, ForeignKey
-from sqlmodel import Field, PrimaryKeyConstraint, Relationship
+from sqlmodel import Field, Relationship
 
 from src.common.models import BaseModel, CommonModel
 from src.modules.chat.models.customer import Customer

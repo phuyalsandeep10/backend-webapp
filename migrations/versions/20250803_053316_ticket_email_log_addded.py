@@ -18,7 +18,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class TicketEmailLogMigration(BaseMigration):
-
     table_name = "ticket_email_log"
 
     def __init__(self):

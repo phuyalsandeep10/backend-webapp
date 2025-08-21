@@ -1,7 +1,5 @@
-from typing import List
 
 from fastapi import status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.ticket.models import Contact
 from src.modules.ticket.schemas import CreateContactSchema
@@ -9,7 +7,6 @@ from src.utils.response import CustomResponse as cr
 
 
 class ContactServices:
-
     async def create_contact(self, data: CreateContactSchema):
         try:
             # checking if contact preexists or not

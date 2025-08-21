@@ -1,6 +1,5 @@
 from fastapi import APIRouter
-from fastapi import FastAPI, Request, Header, Depends
-import httpx
+from fastapi import Request, Depends
 from src.common.dependencies import get_current_user
 from src.models import Conversation, Customer
 from src.utils.response import CustomResponse as cr
@@ -28,7 +27,6 @@ async def create_customer(organizationId: int, request: Request):
 
 @router.get("")
 async def get_customers(organizationId: int, user=Depends(get_current_user)):
-
     customers = await Customer.filter(where={"organization_id": organizationId})
 
     return cr.success(data=customers)

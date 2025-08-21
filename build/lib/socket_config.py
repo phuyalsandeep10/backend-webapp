@@ -12,5 +12,4 @@ socket_app = socketio.ASGIApp(
 )
 
 
-
 sio.register_namespace(ChatNamespace())

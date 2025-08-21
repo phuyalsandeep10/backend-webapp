@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import List, Optional
 
 import sqlalchemy as sa
 from sqlmodel import Field, Relationship
@@ -63,7 +63,7 @@ class User(BaseModel, table=True):
         back_populates="user",
         sa_relationship_kwargs={"foreign_keys": "[ConversationMember.user_id]"},
     )
-    
+
     tickets: List[Ticket] = Relationship(
         back_populates="created_by",
         sa_relationship_kwargs={"foreign_keys": "[Ticket.created_by_id]"},

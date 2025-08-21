@@ -1,4 +1,3 @@
-from arq import cron
 from arq.connections import RedisSettings
 
 from src.tasks import send_email  # the function above

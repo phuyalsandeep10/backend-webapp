@@ -17,7 +17,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class CustomerMigration(BaseMigration):
-
     table_name = "org_customers"
 
     def __init__(self):

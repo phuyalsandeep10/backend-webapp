@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from time import time
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -23,7 +22,6 @@ from src.modules.ticket.schemas import (
     PriorityOut,
     SLAOut,
 )
-from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 from src.socket_config import alert_ns, sio
 from src.utils.common import extract_subset_from_dict
 from src.utils.exceptions.ticket import TicketSLANotFound
@@ -44,7 +42,6 @@ class TicketSLAServices:
         Registers the SLA to the organization
         """
         try:
-
             # we need to validate the priority doesn't belong to other organization
             tenant = TenantEntityValidator()
             await tenant.validate(TicketPriority, payload.priority_id)
@@ -134,7 +131,6 @@ class TicketSLAServices:
         Edits the sla if exists
         """
         try:
-
             sla = await TicketSLA.find_one(where={"id": sla_id})
 
             if not sla:
@@ -358,7 +354,7 @@ class TicketSLAServices:
         try:
             tickets = await Ticket.filter(where={"priority_id": sla.priority_id})
             return tickets
-        except Exception as e:
+        except Exception:
             return None
 
 

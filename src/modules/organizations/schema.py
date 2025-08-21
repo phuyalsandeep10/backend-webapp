@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr
 from typing import List
-from typing import Optional
 from src.common.schemas import BaseModel
 from datetime import datetime
 
@@ -25,7 +24,6 @@ class OrganizationRoleSchema(BaseModel):
     description: str | None = Field(
         None, max_length=500, description="Description of the role"
     )
-
 
 
 class PermissionSchema(BaseModel):
@@ -117,4 +115,3 @@ class InvitationOut(BaseModel):
     role_ids: List[int] = []
     role_names: List[str] = []
     created_at: datetime
-

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class Message(CommonModel, table=True):
     __tablename__ = "org_messages"  # type:ignore
     conversation_id: int = Field(foreign_key="org_conversations.id", nullable=False)
-    messageId:str = Field(max_length=255, index=True)
+    messageId: str = Field(max_length=255, index=True)
     content: str = Field(max_length=255, index=True)
     customer_id: int = Field(foreign_key="org_customers.id", nullable=True)
     customer: Optional["Customer"] = Relationship(back_populates="messages")

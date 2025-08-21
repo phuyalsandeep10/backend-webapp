@@ -1,15 +1,12 @@
 import logging
-from typing import List
 
 import socketio
 
-from src.modules.auth.models import User
 
 logger = logging.getLogger(__name__)
 
 
 class AlertNameSpace(socketio.AsyncNamespace):
-
     def __init__(self, namespace):
         super().__init__(namespace)
         self.user_ids: dict = {}

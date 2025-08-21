@@ -17,7 +17,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class MessageMigration(BaseMigration):
-
     table_name = "org_messages"
 
     def __init__(self):
@@ -31,7 +30,7 @@ class MessageMigration(BaseMigration):
         self.boolean("seen", nullable=False, default=False)
         self.foreign("reply_to_id", "org_messages", nullable=True)
         self.string("messageId", nullable=True)
-        self.json('attributes', nullable=True,default={})
+        self.json("attributes", nullable=True, default={})
         # describe your schemas here
 
 

@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy.orm import foreign
 from sqlmodel import Field, Relationship
 
 from src.common.models import CommonModel

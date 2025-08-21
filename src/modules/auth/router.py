@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta
 
 import pyotp
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import RedirectResponse
-from jose import jwt
 from jose.exceptions import JWTError
 
 from src.common.dependencies import (
@@ -25,7 +24,7 @@ from src.enums import ProviderEnum
 from src.models import OrganizationInvitation
 from src.modules.organizations.models import OrganizationInvitation
 from src.tasks import send_forgot_password_email, send_verification_email
-from src.utils.common import get_location, is_production_env
+from src.utils.common import is_production_env
 from src.utils.exceptions.auth import (
     NoDataToUpdateException,
     UserNotFoundException,
@@ -71,7 +70,6 @@ async def create_token(user):
 
 @router.post("/login")
 async def user_login(schema: LoginSchema):
-
     user = await User.find_one(where={"email": schema.email})
 
     # Check if user exists
@@ -107,7 +105,6 @@ async def user_login(schema: LoginSchema):
 
 @router.post("/logout")
 async def logout(user=Depends(get_current_user_factory())):
-
     token_data = await RefreshToken.find_one(where={"user_id": user.id, "active": True})
 
     if not token_data:
@@ -183,7 +180,6 @@ async def validateEmail(body: ValidateEmailSchema):
 
 @router.post("/register")
 async def register(request: RegisterSchema):
-
     user = await User.find_one({"email": request.email})
 
     # Check if user already exists
@@ -240,7 +236,6 @@ async def get_auth_user(user=Depends(get_current_user_factory())):
 
 @router.post("/verify-email")
 async def verify_email_token(body: VerifyEmailTokenSchema):
-
     user = await User.find_one({"email": body.email})
 
     if not user:
@@ -284,7 +279,6 @@ async def verify_email_token(body: VerifyEmailTokenSchema):
 
 @router.post("/reset-password")
 async def reset_password(body: ResetPasswordSchema, user=Depends(get_current_user)):
-
     user = await User.find_one({"email": user.email})
 
     if not user:
@@ -364,7 +358,6 @@ async def resend_verification_token(body: ResendVerificationSchema, request: Req
 
 @router.post("/forgot-password-verify")
 async def forgot_password_verify(body: ForgotPasswordVerifySchema):
-
     user = await User.find_one({"email": body.email})
 
     if not user:
@@ -399,7 +392,6 @@ async def forgot_password_verify(body: ForgotPasswordVerifySchema):
 
 @router.get("/invitations")
 async def get_invitations(user=Depends(get_current_user)):
-
     data = await OrganizationInvitation.filter(where={"email": user.email})
     return cr.success(data=data)
 
@@ -459,7 +451,6 @@ async def oauth_login(request: Request, provider: str):
 
 @router.get("/oauth/{provider}/callback")
 async def oauth_callback(request: Request, provider: ProviderEnum):
-
     if provider not in ["google", "apple"]:
         return cr.error(data={"success": False}, message="Unsupported provider")
 
@@ -497,7 +488,7 @@ async def oauth_callback(request: Request, provider: ProviderEnum):
         redirect_url = f"{settings.FRONTEND_URL}/login?access_token={tokens.get('access_token')}&refresh_token={tokens.get('refresh_token')}"
 
         return RedirectResponse(redirect_url)
-    except Exception as e:
+    except Exception:
         redirect_url = f"{settings.FRONTEND_URL}/login"
         return RedirectResponse(redirect_url)
 
@@ -555,7 +546,6 @@ async def verify_two_fa(
 
 @router.post("/2fa-disabled")
 async def disable_two_fa(user=Depends(get_current_user)):
-
     await User.update(user.id, two_fa_enabled=False)
 
     return cr.success(message="2FA disabled successfully")

@@ -2,7 +2,7 @@ import redis.asyncio as redis
 
 # from src.config.broadcast import broadcast  # Replaced with direct Redis pub/sub
 from src.config.settings import settings
-from src.websocket.subscribers.chat_subscriber import chat_subscriber 
+from src.websocket.subscribers.chat_subscriber import chat_subscriber
 import json
 from src.websocket.channel_names import is_chat_channel
 
@@ -31,14 +31,14 @@ async def get_redis() -> redis.Redis:
 
 
 async def redis_listener(sio):
-    print(f"subscriber listen")
-    
+    print("subscriber listen")
+
     redis = await get_redis()
     await redis.flushall()
     await redis.flushdb()
     pattern = "ws:*"
 
-# Get all matching keys
+    # Get all matching keys
     keys = await redis.keys(pattern)
     print(f"keys {keys}")
     pubsub = redis.pubsub()
@@ -64,7 +64,6 @@ async def redis_listener(sio):
         if channel == "/0.celeryev/worker.heartbeat" or channel == "socketio":
             continue
 
-
         data = message["data"]
 
         try:
@@ -83,17 +82,10 @@ async def redis_listener(sio):
             payload = {"raw": data}
         if payload.get("raw"):
             payload = payload.get("raw")
-        
+
         if isinstance(payload, str):
             payload = json.loads(payload)
-     
-
-     
 
         if is_chat_channel(channel):
-            await chat_subscriber(sio,channel=channel,payload=payload)
+            await chat_subscriber(sio, channel=channel, payload=payload)
             continue
-
-
-
-

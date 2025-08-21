@@ -16,7 +16,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class PermissionGroupMigration(BaseMigration):
-
     table_name = "sys_permissions_groups"
 
     def __init__(self):
@@ -24,8 +23,7 @@ class PermissionGroupMigration(BaseMigration):
         self.create_whole_table = True
         self.base_columns()
         self.string("name")
-        
-        
+
         # describe your schemas here
 
 

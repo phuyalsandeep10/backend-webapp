@@ -8,7 +8,6 @@ from src.common.models import TenantModel
 from src.modules.ticket.enums import TicketLogEntityEnum
 
 if TYPE_CHECKING:
-
     from src.modules.ticket.models.priority import TicketPriority
 
 from .ticket import Ticket

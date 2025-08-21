@@ -16,13 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 class TicketPriorityService:
-
     async def list_priorities(self):
         """
         List all the priorites on the basis of the organization
         """
         try:
-
             priorities = await TicketPriority.filter()
             payload = [priority.to_json(PriorityOut) for priority in priorities]
             return cr.success(message="Successfully listed priorities", data=payload)
@@ -168,7 +166,7 @@ class TicketPriorityService:
         try:
             tickets = await Ticket.filter(where={"priority_id": priority_id})
             return tickets
-        except Exception as e:
+        except Exception:
             return None
 
 

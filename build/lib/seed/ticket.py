@@ -125,6 +125,7 @@ status2 = [
     },
 ]
 
+
 async def priority_seed():
     for i in priorities:
         record = await TicketPriority.find_one(

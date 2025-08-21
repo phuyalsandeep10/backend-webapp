@@ -1,10 +1,8 @@
 import logging
 import sys
 
-from asgiref.sync import async_to_sync
 from sqlalchemy.orm import selectinload
 
-from src.config.celery import celery_app
 from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.services.sla import sla_service
 from src.modules.ticket.services.status import ticket_status_service

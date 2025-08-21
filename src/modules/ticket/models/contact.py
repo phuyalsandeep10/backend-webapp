@@ -1,10 +1,8 @@
-from typing import List
 
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship
+from sqlmodel import Field
 
 from src.common.models import BaseModel
-from src.modules.ticket.models.ticket import Ticket
 
 
 class Contact(BaseModel, table=True):

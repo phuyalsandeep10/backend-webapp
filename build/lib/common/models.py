@@ -3,7 +3,6 @@ from typing import Any, List, Optional, Type, TypeVar, Union
 
 import sqlalchemy as sa
 from sqlalchemy import and_, inspect, or_
-from sqlalchemy.orm import Load, selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlmodel import Field, SQLModel, select
 import json
@@ -43,17 +42,12 @@ class BaseModel(SQLModel):
             return json.loads(self.model_dump_json())
         except Exception as e:
             raise e
-    
-    
-    
-        
 
     @classmethod
     async def get(cls: Type[T], id: int) -> Optional[T]:
         async with async_session() as session:
             return await session.get(cls, id)
 
-        
     @classmethod
     async def first(cls: Type[T], where: Optional[dict] = None) -> Optional[T]:
         async with async_session() as session:
@@ -248,7 +242,6 @@ def parse_where(cls, where_dict):
                 expressions.append(and_(*and_conditions))
 
         elif isinstance(value, dict):
-
             if "mode" in value:
                 if value["mode"] == "insensitive":
                     # Handle case-insensitive conditions
@@ -259,7 +252,6 @@ def parse_where(cls, where_dict):
             # Support for contains, gt, lt, etc.
 
             for op, v in value.items():
-
                 col = getattr(cls, key)
 
                 if op == "contains":

@@ -7,7 +7,12 @@ from src.modules.auth.schema import UserOutSchema
 from src.utils.response import CustomResponse as cr
 
 from .models import Team, TeamMember
-from .schema import TeamMemberSchema, TeamSchema, TeamResponseOutSchema,TeamMemberOutSchema
+from .schema import (
+    TeamMemberSchema,
+    TeamSchema,
+    TeamResponseOutSchema,
+    TeamMemberOutSchema,
+)
 from typing import List
 
 router = APIRouter()
@@ -15,7 +20,6 @@ router = APIRouter()
 
 @router.post("")
 async def create_team(body: TeamSchema, user=Depends(get_current_user)):
-
     if not TenantContext:
         raise HTTPException(403, "Not authorization")
 
@@ -34,7 +38,6 @@ async def create_team(body: TeamSchema, user=Depends(get_current_user)):
 
 @router.get("", response_model=List[TeamResponseOutSchema])
 async def get_teams(user=Depends(get_current_user)):
-
     if not TenantContext:
         raise HTTPException(403, detail="Not authorized")
 
@@ -126,7 +129,6 @@ async def assign_team_member(
 
 @router.get("/{team_id}/team-members")
 async def get_team_members(team_id: int):
-
     members = await TeamMember.filter(
         where={"team_id": team_id}, related_items=[selectinload(TeamMember.user)]
     )

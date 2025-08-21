@@ -13,7 +13,6 @@ def pascal_to_snake(name):
 
 
 def run_fastapi():
-
     print("Starting FastAPI with uvicorn")
     subprocess.run(
         [

@@ -5,7 +5,6 @@ from src.app import app
 from src.config.broadcast import broadcast
 from src.routers import add_routers
 from src.utils.exceptions import add_exceptions_handler
-from src.socket_config import socket_app
 
 # custom exceptions
 add_exceptions_handler(app)

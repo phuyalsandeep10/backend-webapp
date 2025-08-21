@@ -2,22 +2,17 @@ import json
 import time
 from typing import Optional
 
-from celery.schedules import crontab
 from confluent_kafka import Consumer, Producer
-from sqlmodel import Session
 
 from src.config.celery import celery_app
-from src.db.config import async_session
 from src.config.settings import settings
 
 # Import models from centralized location to avoid circular imports
-from src.models import Conversation, Message
+from src.models import Conversation
 
 
-#for temporary purpose only
+# for temporary purpose only
 
-
-    
 
 @celery_app.task
 async def save_messages(
@@ -100,7 +95,7 @@ def run_kafka_consumer_batch(
                 "enable.auto.commit": True,
             }
         )
-        print(f"[KAFKA CONSUMER] Kafka consumer created successfully")
+        print("[KAFKA CONSUMER] Kafka consumer created successfully")
 
         consumer.subscribe([settings.KAFKA_TOPIC])
         print(f"[KAFKA CONSUMER] Subscribed to topic: {settings.KAFKA_TOPIC}")
@@ -111,7 +106,7 @@ def run_kafka_consumer_batch(
     batch = []
     last_flush = time.time()
     start_time = time.time()
-    print(f"[KAFKA CONSUMER] Kafka batch consumer started...")
+    print("[KAFKA CONSUMER] Kafka batch consumer started...")
 
     try:
         while True:
@@ -192,10 +187,10 @@ def run_kafka_consumer_batch(
 
         try:
             consumer.close()
-            print(f"[KAFKA CONSUMER] Kafka consumer closed successfully")
+            print("[KAFKA CONSUMER] Kafka consumer closed successfully")
         except Exception as e:
             print(f"[KAFKA CONSUMER] Error closing consumer: {e}")
-        print(f"[KAFKA CONSUMER] Task completed")
+        print("[KAFKA CONSUMER] Task completed")
 
 
 # Periodic task is now configured in celery.py using beat_schedule
@@ -206,7 +201,7 @@ def check_kafka_messages():
     """
     Simple task that runs every 10 seconds to check for Kafka messages and save them to database.
     """
-    print(f"[CHECK KAFKA] Starting check_kafka_messages task...")
+    print("[CHECK KAFKA] Starting check_kafka_messages task...")
 
     try:
         # Create Kafka consumer
@@ -241,7 +236,7 @@ def check_kafka_messages():
                     #     )
                     #     session.add(message)
                     #     session.commit()
-                    print(f"[CHECK KAFKA] Saved message to database")
+                    print("[CHECK KAFKA] Saved message to database")
                     messages_found += 1
                 except Exception as e:
                     print(f"[CHECK KAFKA] Error saving message: {e}")
@@ -289,7 +284,7 @@ def consume_kafka_messages_batch(
                 "enable.auto.commit": True,
             }
         )
-        print(f"[PERIODIC TASK] Kafka consumer created successfully")
+        print("[PERIODIC TASK] Kafka consumer created successfully")
 
         consumer.subscribe([settings.KAFKA_TOPIC])
         print(f"[PERIODIC TASK] Subscribed to topic: {settings.KAFKA_TOPIC}")
@@ -299,7 +294,7 @@ def consume_kafka_messages_batch(
 
     batch = []
     try:
-        print(f"[PERIODIC TASK] Starting to poll Kafka for messages...")
+        print("[PERIODIC TASK] Starting to poll Kafka for messages...")
         for poll_count in range(max_polls):
             try:
                 msg = consumer.poll(poll_timeout)
@@ -347,11 +342,11 @@ def consume_kafka_messages_batch(
 
                 traceback.print_exc()
         else:
-            print(f"[PERIODIC TASK] No messages in batch to insert.")
+            print("[PERIODIC TASK] No messages in batch to insert.")
     finally:
         try:
             consumer.close()
-            print(f"[PERIODIC TASK] Kafka consumer closed successfully")
+            print("[PERIODIC TASK] Kafka consumer closed successfully")
         except Exception as e:
             print(f"[PERIODIC TASK] Error closing consumer: {e}")
-        print(f"[PERIODIC TASK] Task completed")
+        print("[PERIODIC TASK] Task completed")

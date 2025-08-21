@@ -20,7 +20,12 @@ from src.tasks import send_invitation_email
 from src.common.utils import random_unique_key
 from src.utils.response import CustomResponse as cr
 
-from .schema import OrganizationSchema , OrganizationInviteSchema, OrganizationRoleSchema,AssignRoleSchema
+from .schema import (
+    OrganizationSchema,
+    OrganizationInviteSchema,
+    OrganizationRoleSchema,
+    AssignRoleSchema,
+)
 
 router = APIRouter()
 
@@ -30,7 +35,7 @@ async def get_organizations(user=Depends(get_current_user)):
     """
     Get the list of organizations the user belongs to.
     """
-    records =  await Organization.get_orgs_by_user_id(user_id=user.id)
+    records = await Organization.get_orgs_by_user_id(user_id=user.id)
     data = [item.to_json() for item in records]
     return cr.success(data=data)
 
@@ -63,7 +68,7 @@ async def create_organization(
         domain=body.domain,
         purpose=body.purpose,
         identifier=f"{slug}-{random_unique_key()}",
-        owner_id=user.id
+        owner_id=user.id,
     )
 
     await OrganizationMember.create(
@@ -75,7 +80,6 @@ async def create_organization(
         user_attributes = {}
 
     if "organization_id" not in user_attributes:
-
         user = await User.update(
             user.id, attributes={"organization_id": organization.id}
         )
@@ -84,10 +88,8 @@ async def create_organization(
             raise HTTPException(404, "Not found User")
 
         update_user_cache(token, user)
-   
-    
-    return cr.success(data=organization.to_json())
 
+    return cr.success(data=organization.to_json())
 
 
 @router.get("/{organization_id}/members")
@@ -261,9 +263,8 @@ async def get_roles(user=Depends(get_current_user)):
 
     organization_id = user.attributes.get("organization_id")
 
-    roles =  await OrganizationRole.filter(where={"organization_id": organization_id})
+    roles = await OrganizationRole.filter(where={"organization_id": organization_id})
     return cr.success(data=roles)
-
 
 
 @router.delete("/{role_id}/roles")
@@ -297,7 +298,7 @@ async def invite_user(body: OrganizationInviteSchema, user=Depends(get_current_u
         raise HTTPException(400, "Already invitation exist")
 
     if user.email == body.email:
-        raise HTTPException(403, f"you can't invite your self.")
+        raise HTTPException(403, "you can't invite your self.")
 
     record = await OrganizationInvitation.create(
         email=body.email,
@@ -338,7 +339,6 @@ async def reject_invitation(invitation_id: int, user=Depends(get_current_user)):
 
 @router.post("/invitation/{invitation_id}/accept")
 async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
-
     invitation = await OrganizationInvitation.get(invitation_id)
     if not invitation:
         raise HTTPException(404, "Not Found")
@@ -368,7 +368,6 @@ async def accept_invitation(invitation_id: int, user=Depends(get_current_user)):
 
 @router.post("/roles-assign")
 async def assign_role(body: AssignRoleSchema, user=Depends(get_current_user)):
-
     organization_id = user.attributes.get("organization_id")
     member = await OrganizationMember.find_one(
         where={"organization_id": organization_id, "user_id": body.user_id}

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import List, Optional
 
 import sqlalchemy as sa
 from sqlmodel import Field, Relationship

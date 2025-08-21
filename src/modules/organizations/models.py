@@ -1,9 +1,15 @@
-from operator import index
 from typing import TYPE_CHECKING, List, Optional
 from datetime import datetime
 
 import sqlalchemy as sa
-from sqlmodel import Field, Relationship, select, Column, Integer, ForeignKey,SQLModel,Session
+from sqlmodel import (
+    Field,
+    Relationship,
+    select,
+    Column,
+    Integer,
+    ForeignKey,
+)
 from pydantic import EmailStr
 
 

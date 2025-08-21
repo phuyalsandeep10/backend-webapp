@@ -16,7 +16,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class MessageattachementsMigration(BaseMigration):
-
     table_name = "org_message_attachments"
 
     def __init__(self):

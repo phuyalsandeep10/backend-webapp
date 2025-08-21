@@ -1,7 +1,6 @@
 from fastapi import APIRouter
-from fastapi import Request, Header, Depends
+from fastapi import Request
 
-from src.common.dependencies import get_current_user
 from src.models import Conversation, Customer, CustomerVisitLogs
 from src.utils.response import CustomResponse as cr
 from src.utils.common import get_location
@@ -18,6 +17,7 @@ async def create_customer( request: Request):
     organizationId = TenantContext.get()
     
     header = request.headers.get("X-Forwarded-For")
+    organizationId = TenantContext.get()
 
     ip = header.split(",")[0].strip() if header else request.client.host
 
@@ -41,9 +41,7 @@ async def create_customer( request: Request):
         f"select count(*) from org_customers where organization_id={organizationId}"
     )
 
-    
     customer_count += 1
-
 
     customer = await Customer.create(
         name=f"guest-{customer_count}", ip_address=ip, organization_id=organizationId
@@ -56,9 +54,7 @@ async def create_customer( request: Request):
         organization_id=organizationId,
     )
 
-
     await save_log(ip, customer.id, request)
-
 
     return cr.success(
         data={"customer": customer.to_json(), "conversation": conversation.to_json()}
@@ -69,7 +65,6 @@ async def save_log(ip: str, customer_id: int, request):
     data = {}
 
     data = await get_location(ip)
-
 
     city = data.get("city")
     country = data.get("country")
@@ -82,7 +77,6 @@ async def save_log(ip: str, customer_id: int, request):
     device_type = user_agent.split(" ")[2]
     device = user_agent.split(" ")[3]
     referral_from = request.headers.get("Referer") or None
-
 
     log = await CustomerVisitLogs.create(
         customer_id=customer_id,
@@ -118,7 +112,7 @@ async def customer_visit(customer_id: int, request: Request):
 @router.get("/{conversation_id}/messages")
 async def get_conversation_messages(conversation_id: int):
     messages = await Message.filter(where={"conversation_id": conversation_id})
-    
+
     return cr.success(data={"messages": [msg.to_json() for msg in messages]})
 
 
@@ -128,11 +122,12 @@ async def get_conversation_messages(conversation_id: int):
 async def create_conversation_message(conversation_id: int, payload: MessageSchema):
     organizationId = TenantContext.get()
     userId = UserContext.get()
-    service = MessageService(organizationId,userId,payload)
+    service = MessageService(organizationId, userId, payload)
     return await service.create_conversation_message(conversation_id)
 
-#edit the message
-@router.put('/{organization_id}/messages/{message_id}')
+
+# edit the message
+@router.put("/{organization_id}/messages/{message_id}")
 async def edit_message(message_id: int, payload: EditMessageSchema):
     organizationId = TenantContext.get()
     print(f"organizationId {organizationId}")

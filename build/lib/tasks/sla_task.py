@@ -3,7 +3,6 @@ import logging
 from celery import shared_task
 from redis.asyncio import Redis
 
-from src.modules.ticket.models.ticket import Ticket
 
 logger = logging.getLogger(__name__)
 
