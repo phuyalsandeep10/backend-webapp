@@ -13,11 +13,15 @@ router = APIRouter()
 
 
 @router.post("/{organizationId}")
-async def create_customer(request: Request):
+async def create_customer( request: Request):
+    organizationId = TenantContext.get()
+    
     header = request.headers.get("X-Forwarded-For")
     organizationId = TenantContext.get()
 
     ip = header.split(",")[0].strip() if header else request.client.host
+
+    print(f"create customer api {ip}")
 
     customer = await Customer.find_one(
         where={"organization_id": organizationId, "ip_address": ip}
@@ -94,6 +98,7 @@ async def save_log(ip: str, customer_id: int, request):
 async def customer_visit(customer_id: int, request: Request):
     header = request.headers.get("X-Forwarded-For")
     ip = header.split(",")[0].strip() if header else request.client.host
+    print(f"visit api {ip}")
 
     customer = await Customer.get(customer_id)
     if not customer:
@@ -111,7 +116,9 @@ async def get_conversation_messages(conversation_id: int):
     return cr.success(data={"messages": [msg.to_json() for msg in messages]})
 
 
-@router.post("/conversations/{conversation_id}/messages")
+
+
+@router.post('/conversations/{conversation_id}/messages')
 async def create_conversation_message(conversation_id: int, payload: MessageSchema):
     organizationId = TenantContext.get()
     userId = UserContext.get()
