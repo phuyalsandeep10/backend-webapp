@@ -3,12 +3,11 @@ import logging
 from fastapi import Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-
-
 from src.app import app
 from src.config.broadcast import broadcast
 from src.routers import add_routers
 from src.utils.exceptions import add_exceptions_handler
+from src.socket_config import socket_app
 
 
 # custom exceptions
@@ -52,4 +51,3 @@ async def get(request: Request):
 def read_items():
     return "Health check OK"
 
-socket_app = app
