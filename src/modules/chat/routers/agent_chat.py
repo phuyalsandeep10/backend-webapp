@@ -5,7 +5,10 @@ from src.common.context import UserContext, TenantContext
 from ..schema import MessageSchema, EditMessageSchema
 
 from ..services.message_service import MessageService
+
 from ..models.conversation import get_conversation_list
+
+
 
 
 router = APIRouter()
@@ -60,12 +63,16 @@ async def get_conversation_messages(conversation_id: int):
         {"id": conversation_id, "organization_id": organizationId}
     )
 
+
+
     if not record:
         return cr.error(message="Conversation Not found")
+    
+    print(f"get conversation messages {conversation_id} and organizationId {organizationId}")
 
-    messages = await Message.filter({"conversation_id": conversation_id})
+    records = await MessageService(organizationId).get_messages(conversation_id)
 
-    return cr.success(data={"messages": [msg.to_json() for msg in messages]})
+    return cr.success(data=records)
 
 
 @router.post("/conversations/{conversation_id}/messages")

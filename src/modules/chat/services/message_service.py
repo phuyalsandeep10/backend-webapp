@@ -4,11 +4,12 @@ from src.utils.response import CustomResponse as cr
 from src.websocket.channel_names import MESSAGE_CHANNEL
 from ..schema import MessageSchema
 from typing import Optional
+from sqlalchemy.orm import selectinload
 
 
 class MessageService:
     def __init__(
-        self, organization_id, payload: MessageSchema, user_id: Optional[int] = None
+        self, organization_id, payload: Optional[MessageSchema] = None, user_id: Optional[int] = None
     ):
         self.organization_id = organization_id
         self.payload = payload
@@ -56,3 +57,18 @@ class MessageService:
         )
 
         return record
+    
+    async def get_messages(self,conversationId:int):
+        print(f"organization message and conversation id {conversationId} and type {type(conversationId)}")
+        messages = await Message.filter(where={"conversation_id": conversationId},options=[selectinload(Message.reply_to)])
+        records = []
+        print(f"get messages for conversation {conversationId} and messages {messages}")
+        for msg in messages:
+            data = msg.to_json()
+            reply_to = {
+                "id": msg.reply_to.id,
+                "content": msg.reply_to.content,
+                "user_id": msg.reply_to.user_id,
+            }
+            records.append({**data})
+        return records

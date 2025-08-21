@@ -33,9 +33,11 @@ class MessageAttachment(BaseModel):
 class MessageSchema(BaseModel):
     content: str
     customer_id: Optional[int] = None
-    reply_id: Optional[int] = None
+    reply_to_id: Optional[int] = None
     attachments: Optional[list[MessageAttachment]] = []
 
 
 class EditMessageSchema(BaseModel):
     content: str
+    reply_to_id: Optional[int] = None
+
