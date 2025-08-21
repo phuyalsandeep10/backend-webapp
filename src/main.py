@@ -9,6 +9,7 @@ from src.config.broadcast import broadcast
 from src.routers import add_routers
 from src.utils.exceptions import add_exceptions_handler
 
+
 # custom exceptions
 add_exceptions_handler(app)
 
@@ -49,3 +50,5 @@ async def get(request: Request):
 @app.get("/health")
 def read_items():
     return "Health check OK"
+
+socket_app = app
