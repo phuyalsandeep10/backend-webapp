@@ -69,16 +69,17 @@ services:
     networks:
       - mynetwork
 
-  arq_worker:
+  dramatiq_worker:
     build: .
-    command: arq src.config.arq.WorkerSettings
-    environment:
-      - REDIS_URL=redis://localhost:6379
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
-      - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
+    container_name: chatboq_dramatiq_worker
+    command: dramatiq src.tasks
     depends_on:
       - redis
       - db
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
+      - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
     networks:
       - mynetwork
 
@@ -86,7 +87,7 @@ services:
     build: .
     command: python -m src.config.scheduler
     environment:
-      - REDIS_URL=redis://localhost:6379
+      - REDIS_URL=redis://redis:6379
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
       - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
     depends_on:
