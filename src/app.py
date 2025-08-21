@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
 from src.common.dependencies import get_user_by_token
 from src.config.broadcast import broadcast
 from src.config.settings import settings
-from src.middleware import AuthMiddleware,CORSMiddleware
+from src.middleware import AuthMiddleware
+
 
 
 # Replace with your friend's IP or use "*" for all origins (less secure)
@@ -20,14 +22,14 @@ app = FastAPI(
 
 
 # CORS middleware
-app.add_middleware(CORSMiddleware)
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+# app.add_middleware(CORSMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Auth middleware
 app.add_middleware(
