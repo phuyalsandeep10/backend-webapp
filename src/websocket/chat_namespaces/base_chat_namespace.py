@@ -1,6 +1,6 @@
 from .base_namespace import BaseNameSpace
 from ..chat_utils import ChatUtils
-from ..channel_names import TYPING_CHANNEL, TYPING_STOP_CHANNEL, MESSAGE_SEEN_CHANNEL
+from ..channel_names import TYPING_CHANNEL, TYPING_STOP_CHANNEL, MESSAGE_SEEN_CHANNEL, AGENT_JOIN_CONVERSATION_CHANNEL
 
 
 REDIS_SID_KEY = "ws:chat:sid:"  # chat:sid:{sid} -> conversation_id
