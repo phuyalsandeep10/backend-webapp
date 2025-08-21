@@ -257,3 +257,10 @@ class CreateTicketMessageSchema(BaseModel):
                 "Content cannot be empty string",
             )
         return value
+
+
+class TicketMessageOutSchema(BaseModel):
+    id: int
+    receiver: EmailStr
+    sender: EmailStr
+    content: str
