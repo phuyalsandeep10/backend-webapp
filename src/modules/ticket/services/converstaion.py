@@ -1,19 +1,19 @@
 import logging
 import uuid
-from typing import Any
+from typing import Any, Optional
 
 from arq import create_pool
 from arq.connections import RedisSettings
 from pydantic import EmailStr
 from sqlalchemy.orm import selectinload
-from starlette.status import HTTP_201_CREATED
+from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 
 from src.common.context import UserContext
 from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
 from src.modules.sendgrid.services import decode_ticket, send_sendgrid_email
 from src.modules.ticket.enums import TicketLogActionEnum, TicketMessageDirectionEnum
-from src.modules.ticket.schemas import CreateTicketMessageSchema
+from src.modules.ticket.schemas import CreateTicketMessageSchema, TicketMessageOutSchema
 from src.tasks.ticket_task import broadcast_ticket_message
 from src.utils.exceptions.ticket import TicketNotFound
 from src.utils.get_templates import get_templates
@@ -132,6 +132,59 @@ class TicketConversationServices:
             logger.info(f"Enqueued async broadcast job for TicketMessage")
         except Exception as e:
             logger.exception(f"Failed to enqueue broadcast job for TicketMessage : {e}")
+
+    async def list_messages(self, ticket_id: int, limit: int, before: Optional[int]):
+        try:
+            ticket = await Ticket.find_one_without_tenant(where={"id": ticket_id})
+            if not ticket:
+                raise TicketNotFound()
+            if not before:
+                messages = await self.fetch_message_by_limit(
+                    ticket_id=ticket_id, limit=limit
+                )
+                return cr.success(
+                    data=[
+                        message.to_json(TicketMessageOutSchema) for message in messages
+                    ],
+                    message="Successfully listed all the messages",
+                )
+
+            messages = await self.fetch_message_by_limit_and_before(
+                ticket_id=ticket_id, limit=limit, before=before
+            )
+            return cr.success(
+                data=[message.to_json(TicketMessageOutSchema) for message in messages],
+                message="Successfully listed all the messages",
+            )
+
+        except Exception as e:
+            return cr.error(
+                message=f"{str(e)}",
+            )
+
+    async def fetch_message_by_limit(self, ticket_id: int, limit: int):
+        try:
+            messages = await TicketMessage.filter_without_tenant(
+                where={"ticket_id": ticket_id}, limit=limit
+            )
+            if not messages:
+                raise Exception("Ticket message not found")
+            return messages
+        except Exception as e:
+            raise e
+
+    async def fetch_message_by_limit_and_before(
+        self, ticket_id: int, limit: int, before: int
+    ):
+        try:
+            messages = await TicketMessage.filter_without_tenant(
+                where={"id": {"lt": before}}, limit=limit
+            )
+            if not messages:
+                raise Exception("Ticket message not found")
+            return messages
+        except Exception as e:
+            raise e
 
 
 ticket_conversation_service = TicketConversationServices()
