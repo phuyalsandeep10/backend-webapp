@@ -14,6 +14,7 @@ from src.modules.auth.models import User
 from src.modules.sendgrid.services import decode_ticket, send_sendgrid_email
 from src.modules.ticket.enums import TicketLogActionEnum, TicketMessageDirectionEnum
 from src.modules.ticket.schemas import CreateTicketMessageSchema
+from src.tasks.ticket_task import broadcast_ticket_message
 from src.utils.exceptions.ticket import TicketNotFound
 from src.utils.get_templates import get_templates
 from src.utils.response import CustomResponse as cr
@@ -51,6 +52,11 @@ class TicketConversationServices:
                 return cr.error(message="Error while creating conversation")
 
             await self._send_email(ticket, data)
+            await self.broadcast_ticket_message(
+                user_email=data["sender"],
+                message=data["content"],
+                ticket_id=data["ticket_id"],
+            )
             return cr.success(
                 message="Successfully created a conversation",
                 status_code=HTTP_201_CREATED,
@@ -74,8 +80,11 @@ class TicketConversationServices:
             }
             await TicketMessage.create(**payload)
             logger.info("Successfully saved message from email")
+
+            email = from_email.split("<")[1].split(">")[0]
+
             await self.broadcast_ticket_message(
-                user_email=from_email, message=recent_reply, ticket_id=ticket_id
+                user_email=email, message=recent_reply, ticket_id=ticket_id
             )
         except Exception as e:
             logging.exception("Error while saving message from email")
@@ -114,14 +123,12 @@ class TicketConversationServices:
     async def broadcast_ticket_message(self, user_email, message, ticket_id):
 
         try:
-            redis = await create_pool(RedisSettings())
-            await redis.enqueue_job(
-                "broadcast_ticket_message",
+            broadcast_ticket_message.send(
                 user_email=user_email,
                 message=message,
                 ticket_id=ticket_id,
-                _job_id=str(uuid.uuid4()),
             )
+
             logger.info(f"Enqueued async broadcast job for TicketMessage")
         except Exception as e:
             logger.exception(f"Failed to enqueue broadcast job for TicketMessage : {e}")

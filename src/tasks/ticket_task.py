@@ -1,5 +1,6 @@
 import logging
 
+import dramatiq
 from pydantic import EmailStr
 
 from src.modules.sendgrid.services import send_sendgrid_email
@@ -11,8 +12,8 @@ from src.socket_config import ticket_ns
 logger = logging.getLogger(__name__)
 
 
+@dramatiq.actor
 async def send_ticket_task_email(
-    ctx,
     subject: str,
     recipients: str,
     body_html: str,
@@ -32,7 +33,6 @@ async def send_ticket_task_email(
             org_id=organization_id,
         )
         # saving to the log
-        logger.info(f"Not sending {subject} email")
         log_data = {
             "ticket_id": ticket_id,
             "organization_id": organization_id,
@@ -52,9 +52,8 @@ async def send_ticket_task_email(
         await TicketLog.create(**log_data)
 
 
-async def broadcast_ticket_message(
-    ctx, user_email: EmailStr, message: str, ticket_id: int
-):
+@dramatiq.actor
+async def broadcast_ticket_message(user_email: EmailStr, message: str, ticket_id: int):
     try:
         logger.info("Broadcasting ticket message")
         await ticket_ns.broadcast_message(

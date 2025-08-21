@@ -42,9 +42,7 @@ class TicketNameSpace(BaseNameSpace):
             return
 
         room = f"ticket_{ticket_id}"
-        email = user_email.split("<")[1].split(">")[0]
-
-        payload = {"user": email, "message": message}
+        payload = {"user": user_email, "message": message}
         await self.redis_publish(channel=room, message=payload)
 
         await self.sio.emit(

@@ -1,3 +1,5 @@
+import src.config.dramatiq
+
 from .auth_task import send_forgot_password_email, send_verification_email
 from .message_task import (
     check_kafka_messages,

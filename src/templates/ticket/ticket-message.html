@@ -1,4 +1,3 @@
-<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -10,23 +9,37 @@
         padding: 0;
         box-sizing: border-box;
       }
+      .main-table {
+        /* background-color: red; */
+        text-align: center;
+      }
       body {
         font-family:
           -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%);
         min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        text-align: center;
         padding: 20px;
       }
       .chat-container {
         background: white;
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        width: 100%;
         max-width: 500px;
-        overflow: hidden;
+      }
+      .message-left-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+      }
+      .message-right-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: flex-end;
+        width: 100%;
+        background-color: red;
       }
       .header {
         padding: 20px;
@@ -101,14 +114,14 @@
         line-height: 1.5;
         word-wrap: break-word;
         white-space: pre-wrap;
-        text-align: left;
+        /* text-align: left; */
       }
-      .message.left .message-bubble {
+      .message-left .message-bubble {
         background: #8b5cf6;
         color: white;
         border-bottom-left-radius: 4px;
       }
-      .message.right .message-bubble {
+      .message-right .message-bubble {
         background: #f3f4f6;
         color: #374151;
         border-bottom-right-radius: 4px;
@@ -149,46 +162,99 @@
   <body>
     <table width="100%" height="100%">
       <tr>
-        <td align="center">
-          <div class="chat-container">
-            <div class="header">
-              <div class="header-icon"></div>
-              <div class="header-title">{{ticket.organization.name}}</div>
-              <div class="header-subtitle">
-                <span class="highlight">Chat</span> transcript
-              </div>
-            </div>
-            <div class="thanks-section">
-              <h2 class="thanks-title">Thanks for chatting with us!</h2>
-              <p class="thanks-text">
-                This is your <span class="highlight">chat</span> history with
-                {{ticket.organization.name}} - keep it for your archives.
-              </p>
-            </div>
-            <div class="chat-section">
-              {% for message in messages %} {% if message.direction ==
-              "outgoing" %}
-              <div class="message left">
+        <td align="center" heigh="100%">
+          <table
+            width="100%"
+            height="100%"
+            class="chat-container"
+            align="center"
+          >
+            <tr align="center" width="100%">
+              <td>
                 <div>
-                  <div class="message-bubble">{{message.content}}</div>
-                  <div class="message-sender">
-                    {{ticket.organization.name}} sent this
+                  <div class="header">
+                    <div class="header-icon"></div>
+                    <div class="header-title">{{ticket.organization.name}}</div>
+                    <div class="header-subtitle">
+                      <span class="highlight">Chat</span> transcript
+                    </div>
+                  </div>
+                  <div class="thanks-section">
+                    <h2 class="thanks-title">Thanks for chatting with us!</h2>
+                    <p class="thanks-text">
+                      This is your <span class="highlight">chat</span> history
+                      with {{ticket.organization.name}} - keep it for your
+                      archives.
+                    </p>
                   </div>
                 </div>
-              </div>
-              {% else %}
-              <div class="message right">
-                <div class="message-bubble">{{message.content}}</div>
-              </div>
-              {% endif %} {% endfor %}
-            </div>
-            <div class="footer">
-              <p class="footer-text">
-                Your conversation is still available online.
-              </p>
-              <button class="view-conversation-btn">view conversation</button>
-            </div>
-          </div>
+              </td>
+            </tr>
+
+            {% for message in messages[-4:] %} {% if message.direction ==
+            "outgoing" %}
+
+            <!-- Agent -->
+
+            <tr align="center" width="100%">
+              <td
+                align="left"
+                style="font-size: 14px; color: #333; padding-top: 16px"
+              >
+                <div
+                  style="
+                    background: #6c4ef5;
+                    color: #fff;
+                    display: inline-block;
+                    padding: 8px 12px;
+                    border-radius: 16px;
+                  "
+                >
+                  {{message.content}}
+                </div>
+                <div style="font-size: 12px; color: #777; margin-top: 2px">
+                  {{ticket.organization.name}} sent this
+                </div>
+              </td>
+            </tr>
+
+            {% else %}
+
+            <!-- User -->
+            <tr align="center" width="100%">
+              <td
+                align="right"
+                style="font-size: 14px; color: #333; padding-top: 16px"
+              >
+                <div
+                  style="
+                    background: #f1f1f1;
+                    display: inline-block;
+                    padding: 8px 12px;
+                    border-radius: 16px;
+                  "
+                >
+                  {{message.content}}
+                </div>
+              </td>
+            </tr>
+
+            {% endif %} {% endfor %}
+
+            <tr align="center" width="100%">
+              <td>
+                <p class="footer-text">
+                  Your conversation is still available online.
+                </p>
+
+                <p>
+                  <button class="view-conversation-btn">
+                    view conversation
+                  </button>
+                </p>
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
     </table>
