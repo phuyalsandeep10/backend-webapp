@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class TicketMessage(TenantModel, Mixin.LoggingMixin, table=True):
     """Ticket Message table"""
 
-    __tablename__ = "ticket_messages"
+    __tablename__ = "ticket_messages"  # type:ignore
     entity_type: ClassVar[TicketLogEntityEnum] = TicketLogEntityEnum.TICKET_MESSAGE
 
     ticket_id: int = Field(
