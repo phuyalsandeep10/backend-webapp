@@ -1,4 +1,7 @@
+from typing import Annotated, Optional
+
 from fastapi import APIRouter
+from typing_extensions import Doc
 
 from src.modules.ticket.schemas import CreateTicketMessageSchema
 from src.utils.response import CustomResponseSchema
@@ -16,3 +19,20 @@ async def save_message(payload: CreateTicketMessageSchema):
     Save and sends email to the customer
     """
     return await ticket_conversation_service.send_message(payload)
+
+
+@router.get(
+    "/{ticket_id:int}",
+    summary="Fetch ticket messages of the particualr converstation id",
+    response_model=CustomResponseSchema,
+)
+async def list_ticket_messages(
+    ticket_id: int,
+    limit: Annotated[int, Doc("Maximum number of data to send")],
+    before: Annotated[
+        Optional[int], Doc("Lists the messages before the provided message id")
+    ] = None,
+):
+    return await ticket_conversation_service.list_messages(
+        ticket_id=ticket_id, limit=limit, before=before
+    )
