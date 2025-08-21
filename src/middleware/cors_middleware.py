@@ -22,7 +22,7 @@ class CORSMiddleware(BaseHTTPMiddleware):
         origin = request.headers.get("origin")
         path = request.url.path
 
-        print(f"Request to: {method} {path}")  # <-- log or check endpoint
+        # print(f"Request to: {method} {path}")  # <-- log or check endpoint
         response: Response = await call_next(request)
 
         if origin and origin in ALLOWED_ORIGINS:
