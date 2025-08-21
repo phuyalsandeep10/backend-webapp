@@ -32,7 +32,7 @@ class MessageService:
 
         new_message = await Message.create(**data)
 
-        for file in self.payload.files:
+        for file in self.payload.attachments:
             await MessageAttachment.create(message_id=new_message.id, **file.dict())
 
         await RedisService.redis_publish(
