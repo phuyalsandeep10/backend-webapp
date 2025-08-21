@@ -1,7 +1,7 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from src.config.settings import settings
 from src.models import Organization
-from fastapi import Request
+from fastapi import Request, Response
 
 
 ALLOWED_ORIGINS = [
@@ -23,7 +23,7 @@ class CORSMiddleware(BaseHTTPMiddleware):
         path = request.url.path
 
         # print(f"Request to: {method} {path}")  # <-- log or check endpoint
-        response: Response = await call_next(request)
+        response = await call_next(request)
 
         if origin and origin in ALLOWED_ORIGINS:
             self.setHeaders(response, origin)
