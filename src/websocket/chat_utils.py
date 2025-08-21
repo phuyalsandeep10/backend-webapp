@@ -32,6 +32,24 @@ class ChatUtils:
         )
 
     @staticmethod
+    async def join_conversation(conversation_id: int, user_id: str):
+        print(f"join conversation in db and user_id {user_id}")
+        conversation_id = int(conversation_id)
+
+        conversation_member = await ConversationMember.find_one({
+            "conversation_id": conversation_id,
+            "user_id": user_id
+        })
+        
+
+        if not conversation_member:
+            await ConversationMember.create(
+                conversation_id=conversation_id,
+                user_id=user_id
+            )
+        
+
+    @staticmethod
     async def save_message_db(conversation_id: int, payload: dict):
         print(f"save message in db and payload {payload}")
         conversation_id = int(conversation_id)

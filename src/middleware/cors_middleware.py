@@ -28,7 +28,7 @@ class CORSMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         if origin and origin in ALLOWED_ORIGINS:
-            # self.setHeaders(response, origin)
+            self.setHeaders(response, origin)
             return response
 
         if not origin:

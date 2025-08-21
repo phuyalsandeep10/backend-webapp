@@ -56,52 +56,52 @@ class CustomerChatNamespace(BaseChatNamespace):
 
         return True
 
-    async def on_message(self, sid, data: dict):
-        print(f"on message {data} and sid {sid} and organization")
+    # async def on_message(self, sid, data: dict):
+    #     print(f"on message {data} and sid {sid} and organization")
 
-        conversation_id = await self._get_conversation_id_from_sid(sid)
-        print(f"conversation_id {conversation_id}")
-        organization_id = data.get("organization_id")
+    #     conversation_id = await self._get_conversation_id_from_sid(sid)
+    #     print(f"conversation_id {conversation_id}")
+    #     organization_id = data.get("organization_id")
 
-        if not conversation_id:
-            print(f"❌ Missing conversation_id: {conversation_id}")
-            return
+    #     if not conversation_id:
+    #         print(f"❌ Missing conversation_id: {conversation_id}")
+    #         return
 
-        try:
-            # channel_name = user_notification_group(organization_id)
+    #     try:
+    #         # channel_name = user_notification_group(organization_id)
 
-            channel_name = AGENT_NOTIFICATION_CHANNEL
-            event = self.message_notification
-            # Get all sids for the conversation
-            sids = await self.get_conversation_sids(conversationId=conversation_id)
+    #         channel_name = AGENT_NOTIFICATION_CHANNEL
+    #         event = self.message_notification
+    #         # Get all sids for the conversation
+    #         sids = await self.get_conversation_sids(conversationId=conversation_id)
 
-            print(f"sids {sids}")
-            if len(sids) > 1:
-                event = self.receive_message
-                channel_name = MESSAGE_CHANNEL
-            payload = {
-                "event": event,
-                "sid": sid,
-                "message": data.get("message"),
-                "message_id": data.get("message_id"),
-                "status": data.get("status", "SENT"),  # delivered, SENT and seen
-                "user_id": data.get("user_id"),
-                "files": data.get("files", []),
-                "organization_id": organization_id,
-                "mode": "message",
-                "conversation_id": conversation_id,
-                "is_customer": True,
-                "customer_id": data.get("customer_id"),
-            }
+    #         print(f"sids {sids}")
+    #         if len(sids) > 1:
+    #             event = self.receive_message
+    #             channel_name = MESSAGE_CHANNEL
+    #         payload = {
+    #             "event": event,
+    #             "sid": sid,
+    #             "message": data.get("message"),
+    #             "message_id": data.get("message_id"),
+    #             "status": data.get("status", "SENT"),  # delivered, SENT and seen
+    #             "user_id": data.get("user_id"),
+    #             "files": data.get("files", []),
+    #             "organization_id": organization_id,
+    #             "mode": "message",
+    #             "conversation_id": conversation_id,
+    #             "is_customer": True,
+    #             "customer_id": data.get("customer_id"),
+    #         }
 
-            await self.redis_publish(channel=channel_name, message=payload)
-            await self.save_message_db(conversation_id, payload)
+    #         await self.redis_publish(channel=channel_name, message=payload)
+    #         await self.save_message_db(conversation_id, payload)
 
-            return True
-        except Exception as e:
-            print(f"Error publishing message to Redis: {e}")
-            return False
+    #         return True
+    #     except Exception as e:
+    #         print(f"Error publishing message to Redis: {e}")
+    #         return False
 
-        # await save_message_db(
-        #     conversation_id=int(conversation_id), data=data, user_id=data.get("user_id")
-        # )
+    #     # await save_message_db(
+    #     #     conversation_id=int(conversation_id), data=data, user_id=data.get("user_id")
+    #     # )

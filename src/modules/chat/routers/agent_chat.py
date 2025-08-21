@@ -19,6 +19,20 @@ async def get_conversations():
 
     return cr.success(data=records)
 
+@router.put("/conversations/{conversation_id}/joined")
+async def joined_conversation(conversation_id: int):
+    organizationId = TenantContext.get()
+
+    record = await Conversation.find_one(
+        {"id": conversation_id, "organization_id": organizationId}
+    )
+
+    if not record:
+        return cr.error(message="Conversation Not found")
+    record = await Conversation.update(conversation_id, is_joined=True)
+    return cr.success(data=record.to_json())
+
+
 
 @router.get("/conversations/{conversation_id}")
 async def conversation_detail(conversation_id: int):

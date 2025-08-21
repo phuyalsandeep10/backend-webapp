@@ -13,6 +13,7 @@ class BaseChatNamespace(BaseNameSpace):
     stop_typing = "stop-typing"
     message_seen = "message_seen"
     chat_online = "chat_online"
+    join_conversation = 'join_conversation'
     customer_land = "customer_land"
     message_notification = "message-notification"
     is_customer: bool = False
@@ -55,6 +56,7 @@ class BaseChatNamespace(BaseNameSpace):
 
     async def join_conversation(self, conversationId, sid):
         redis = await self.get_redis()
+        
 
         await self.enter_room(
             sid=sid,
@@ -62,11 +64,22 @@ class BaseChatNamespace(BaseNameSpace):
             namespace=self.namespace,
         )
 
+        await self.redis_publish(
+            channel=AGENT_JOIN_CONVERSATION_CHANNEL,
+            message={
+                "event": self.join_conversation,
+                "mode": "online",
+                "conversation_id": conversationId,
+                "user_id": sid,
+            },
+        )
+
         await redis.sadd(self._conversation_add_sid(conversationId), sid)
         await redis.set(self._conversation_from_sid(sid), conversationId)
 
     async def leave_conversation(self, conversationId: int, sid: int):
         redis = await self.get_redis()
+        
 
         await self.leave_room(
             sid=sid,

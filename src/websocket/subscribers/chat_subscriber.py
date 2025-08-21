@@ -7,6 +7,7 @@ from ..channel_names import (
     TYPING_CHANNEL,
     TYPING_STOP_CHANNEL,
     MESSAGE_SEEN_CHANNEL,
+    AGENT_JOIN_CONVERSATION_CHANNEL
 )
 
 
@@ -51,9 +52,11 @@ class ChatSubscriber:
         await self.emit(room_name)
 
     async def agent_message_broadcast(self):
+        
         room_name = ChatUtils.conversation_group(
             conversation_id=self.payload.get("conversation_id")
         )
+
         await self.emit(
             room_name, namespace=self.agent_namespace, sid=self.payload.get("sid")
         )
@@ -71,6 +74,9 @@ class ChatSubscriber:
 
         await self.customer_message_broadcast()
         await self.agent_message_broadcast()
+    
+    async def agent_join_conversation(self):
+        await self.agent_message_broadcast()
 
     async def message(self):
         await self.broadcast_conversation()
@@ -85,7 +91,6 @@ class ChatSubscriber:
         room_name = ChatUtils.conversation_group(
             conversation_id=self.payload.get("conversation_id")
         )
-
         await self.emit(room_name)
 
 
@@ -95,6 +100,9 @@ async def chat_subscriber(sio: socketio.AsyncServer, channel: str, payload: dict
     # handle chat events
     if channel == AGENT_NOTIFICATION_CHANNEL:
         await subscriber.agent_notification()
+
+    elif channel == AGENT_JOIN_CONVERSATION_CHANNEL:
+        await subscriber.agent_join_conversation()
 
     elif channel == MESSAGE_CHANNEL:
         await subscriber.message()

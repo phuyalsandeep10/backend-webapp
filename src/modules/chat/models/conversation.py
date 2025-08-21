@@ -61,6 +61,8 @@ async def get_conversation_list(organization_id: int):
             "members": [],
             "created_at": conversation.created_at.isoformat(),
             "updated_at": conversation.updated_at.isoformat(),
+            "is_resolved": conversation.is_resolved,
+            "attributes": conversation.attributes
         }
         members = []
         for member in conversation.members:
