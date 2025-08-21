@@ -19,6 +19,9 @@ class MessageService:
             {"id": conversation_id, "organization_id": self.organization_id}
         )
 
+
+
+
         if not record:
             return cr.error(message="Conversation Not found")
         data = {
@@ -33,7 +36,7 @@ class MessageService:
             await MessageAttachment.create(message_id=new_message.id, **file.dict())
 
         await RedisService.redis_publish(
-            channel=MESSAGE_CHANNEL, message={"event": "receive-message", **data}
+            channel=MESSAGE_CHANNEL, message={"event": "receive-mesjsage", **data}
         )
 
         return new_message

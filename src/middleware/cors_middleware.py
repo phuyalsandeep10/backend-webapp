@@ -4,7 +4,11 @@ from src.models import Organization
 from fastapi import Request
 
 
-ALLOWED_ORIGINS = settings.CORS_ORIGINS
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://api.chatboq.com",
+]
 
 
 class CORSMiddleware(BaseHTTPMiddleware):
