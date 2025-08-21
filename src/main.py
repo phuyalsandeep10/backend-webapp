@@ -4,6 +4,7 @@ from fastapi import Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+
 from src.app import app
 from src.config.broadcast import broadcast
 from src.routers import add_routers
