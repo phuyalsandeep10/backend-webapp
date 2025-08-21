@@ -69,9 +69,8 @@ class AgentChatNamespace(BaseChatNamespace):
         print(f"conversation_id {conversation_id}")
         if not conversation_id:
             return False
+    
         
-        user_id = int(data.get("user_id"))
-        await ChatUtils.join_conversation(conversation_id, user_id)
         await self.join_conversation(conversation_id, sid)
         
 

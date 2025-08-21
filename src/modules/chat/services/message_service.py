@@ -59,16 +59,18 @@ class MessageService:
         return record
     
     async def get_messages(self,conversationId:int):
-        print(f"organization message and conversation id {conversationId} and type {type(conversationId)}")
+   
         messages = await Message.filter(where={"conversation_id": conversationId},options=[selectinload(Message.reply_to)])
         records = []
-        print(f"get messages for conversation {conversationId} and messages {messages}")
+       
         for msg in messages:
             data = msg.to_json()
-            reply_to = {
-                "id": msg.reply_to.id,
-                "content": msg.reply_to.content,
-                "user_id": msg.reply_to.user_id,
-            }
-            records.append({**data})
+            reply_to = {}
+            if msg.reply_to:
+                reply_to = {
+                    "id": msg.reply_to.id,
+                    "content": msg.reply_to.content,
+                    "user_id": msg.reply_to.user_id,
+                }
+            records.append({**data, "reply_to": reply_to})
         return records
