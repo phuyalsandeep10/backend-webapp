@@ -1,4 +1,5 @@
 import logging
+import uuid
 from typing import Any
 
 from arq import create_pool
@@ -9,6 +10,7 @@ from starlette.status import HTTP_201_CREATED
 
 from src.common.context import UserContext
 from src.factory.notification import NotificationFactory
+from src.modules.auth.models import User
 from src.modules.sendgrid.services import decode_ticket, send_sendgrid_email
 from src.modules.ticket.enums import TicketLogActionEnum, TicketMessageDirectionEnum
 from src.modules.ticket.schemas import CreateTicketMessageSchema
@@ -38,7 +40,10 @@ class TicketConversationServices:
                 raise TicketNotFound()
 
             user_id = UserContext.get()
-            data["sender_id"] = user_id
+            user = await User.find_one(where={"id": user_id})
+            if not user:
+                return
+            data["sender"] = user.email
             data["direction"] = TicketMessageDirectionEnum.OUTGOING.value
 
             conversation = await TicketMessage.create(**data)
@@ -115,6 +120,7 @@ class TicketConversationServices:
                 user_email=user_email,
                 message=message,
                 ticket_id=ticket_id,
+                _job_id=str(uuid.uuid4()),
             )
             logger.info(f"Enqueued async broadcast job for TicketMessage")
         except Exception as e:

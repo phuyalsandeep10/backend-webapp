@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from arq import create_pool
 from arq.connections import RedisSettings
@@ -34,6 +35,7 @@ class EmailNotification(NotificationInterface):
                 ticket_id=ticket.id,
                 organization_id=ticket.organization_id,
                 mail_type=mail_type,
+                _job_id=str(uuid.uuid4()),
             )
             pass
         except Exception as e:

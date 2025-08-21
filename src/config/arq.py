@@ -6,4 +6,5 @@ from src.tasks.ticket_task import broadcast_ticket_message, send_ticket_task_ema
 
 class WorkerSettings:
     functions = [send_ticket_task_email, broadcast_ticket_message]
+    concurrency = 5
     redis_settings = RedisSettings(host="localhost", port=6379, database=0)
