@@ -3,6 +3,12 @@ import json
 
 
 class RedisService:
+
+    @staticmethod
+    async def get_redis(channel: str):
+        redis = await get_redis()
+        return redis
+
     @staticmethod
     async def redis_publish(channel: str, message: dict):
         """Direct Redis pub/sub publish - more reliable than broadcaster library"""
@@ -16,3 +22,5 @@ class RedisService:
         except Exception as e:
             print(f"❌ Redis publish failed: {e}")
             return 0
+    
+
