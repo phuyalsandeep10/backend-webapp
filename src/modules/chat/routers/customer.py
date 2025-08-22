@@ -36,6 +36,8 @@ async def create_customer( request: Request):
                 "conversation": conversation.to_json(),
             }
         )
+    
+
 
     customer_count = await Customer.sql(
         f"select count(*) from org_customers where organization_id={organizationId}"
@@ -53,6 +55,7 @@ async def create_customer( request: Request):
         ip_address=ip,
         organization_id=organizationId,
     )
+
 
     await save_log(ip, customer.id, request)
 
@@ -142,6 +145,9 @@ async def edit_message(message_id: int, payload: EditMessageSchema):
 @router.get("/{conversation_id}/messages")
 async def get_conversation_messages(conversation_id: int):
     organizationId = TenantContext.get()
+    if not organizationId:
+        organizationId = 1
+        
 
     record = await Conversation.find_one(
         {"id": conversation_id, "organization_id": organizationId}
