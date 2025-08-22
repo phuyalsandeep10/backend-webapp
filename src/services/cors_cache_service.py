@@ -1,35 +1,40 @@
 from .redis_service import RedisService
+from src.models import Organization
+
+
+import json
+
 CACHE_TTL = 600  # 10 minutes
 
 
 class CORSCacheService:
 
     @staticmethod
-    async def get_org_domain(org_id: str):
+    async def get_org(org_id: str):
         redis = await RedisService.get_redis()
         if not org_id:
             return None
 
-        cache_key = f"org_domain:{org_id}"
+        cache_key = f"org:{org_id}"
         
         # Try to get from Redis
-        domain = await redis.get(cache_key)
-        if domain:
-            return domain
+        org = (await redis.get(cache_key)).decode('utf-8') if await redis.get(cache_key) else None
+
+        if org:
+            return json.loads(org)
 
         # Fetch from DB if not in cache
-        org = await Organization.find_one({"id": org_id})
+        org = await Organization.find_one({"identifier": org_id})
+
         if org:
-            domain = org.domain
             # Store in Redis with TTL
-            await redis.set(cache_key, domain, ex=CACHE_TTL)
-            return domain
+            await redis.set(cache_key, json.dumps(org.to_json()), ex=CACHE_TTL)
+            return org.to_json()
 
         return None
     
     @staticmethod
-    async def update_org_domain(org_id:str,domain:str):
+    async def update_org_domain(org_id:str,org:dict):
 
         redis = await RedisService.get_redis()
-        await redis.set(f"org_domain:{org_id}", domain, ex=CACHE_TTL)
-    
+        await redis.set(f"org:{org_id}", json.dumps(org), ex=CACHE_TTL)

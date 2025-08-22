@@ -112,11 +112,6 @@ async def customer_visit(customer_id: int, request: Request):
     return cr.success(data=log.to_json())
 
 
-@router.get("/{conversation_id}/messages")
-async def get_conversation_messages(conversation_id: int):
-    messages = await Message.filter(where={"conversation_id": conversation_id})
-
-    return cr.success(data={"messages": [msg.to_json() for msg in messages]})
 
 
 
@@ -145,9 +140,10 @@ async def edit_message(message_id: int, payload: EditMessageSchema):
 @router.get("/{conversation_id}/messages")
 async def get_conversation_messages(conversation_id: int):
     organizationId = TenantContext.get()
-    if not organizationId:
-        organizationId = 1
-        
+    print(f"organizationId {organizationId}")
+    print(f"conversation_id {conversation_id}")
+
+   
 
     record = await Conversation.find_one(
         {"id": conversation_id, "organization_id": organizationId}

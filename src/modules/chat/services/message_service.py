@@ -29,6 +29,7 @@ class MessageService:
         payload = record.to_json()
         
 
+
         if record.user:
             payload["user"] = {
                 "id": record.user.id,
@@ -54,9 +55,10 @@ class MessageService:
         record = await Message.find_one({
             "id": messageId,
         }, options=[selectinload(Message.reply_to), selectinload(Message.user)])
+        
         userSid = await self.get_user_sid(self.user_id)
 
-        payload =  self.make_msg_payload(record)
+        payload = self.make_msg_payload(record)
         print(f"payload {payload}")
         payload["sid"] = userSid
         payload["event"] = "receive-message"
@@ -123,4 +125,5 @@ class MessageService:
         for msg in messages:
             payload = self.make_msg_payload(msg)
             records.append(payload)
+        
         return records
