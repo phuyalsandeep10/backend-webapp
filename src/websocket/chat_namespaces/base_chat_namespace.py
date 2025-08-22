@@ -39,6 +39,9 @@ class BaseChatNamespace(BaseNameSpace):
     def _conversation_from_sid(self, sid: int):
         # on connect
         return f"{REDIS_SID_KEY}:{sid}"
+    
+    
+
 
     async def _get_conversation_id_from_sid(self, sid: int):
         redis = await self.get_redis()

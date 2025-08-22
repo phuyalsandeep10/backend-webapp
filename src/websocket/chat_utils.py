@@ -9,6 +9,10 @@ class ChatUtils:
     @staticmethod
     def user_notification_group(org_id: int):
         return f"org-{org_id}-users"
+    
+    @staticmethod
+    def _user_add_sid(userId:int):
+        return f"ws:user:sid:{userId}"
 
     @staticmethod
     def conversation_group(conversation_id: int):

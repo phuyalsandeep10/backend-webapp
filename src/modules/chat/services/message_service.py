@@ -5,6 +5,8 @@ from src.websocket.channel_names import MESSAGE_CHANNEL
 from ..schema import MessageSchema
 from typing import Optional
 from sqlalchemy.orm import selectinload
+from src.services.redis_service import RedisService
+from src.websocket.chat_utils import ChatUtils
 
 
 class MessageService:
@@ -14,6 +16,15 @@ class MessageService:
         self.organization_id = organization_id
         self.payload = payload
         self.user_id = user_id
+        
+    
+
+
+    async def get_user_sid(self, userId: int):
+        redis = await RedisService.get_redis()
+        result =  await redis.get(ChatUtils._user_add_sid(userId))
+        return result.decode('utf-8')
+
 
     async def create(self, conversation_id: int):
         record = await Conversation.find_one(
@@ -21,23 +32,32 @@ class MessageService:
         )
 
 
-
-
         if not record:
             return cr.error(message="Conversation Not found")
+        
+        
         data = {
             **self.payload.dict(),
             "user_id": self.user_id,
             "conversation_id": conversation_id,
         }
+        
+        
+    
+
 
         new_message = await Message.create(**data)
+
 
         for file in self.payload.attachments:
             await MessageAttachment.create(message_id=new_message.id, **file.dict())
 
+
+        userSid = await self.get_user_sid(self.user_id)
+        print(f"User SID for {self.user_id}: {userSid}")
+
         await RedisService.redis_publish(
-            channel=MESSAGE_CHANNEL, message={"event": "receive-message", **data}
+            channel=MESSAGE_CHANNEL, message={"event": "receive-message","sid": userSid, **data}
         )
 
         return new_message

@@ -5,7 +5,7 @@ import json
 class RedisService:
 
     @staticmethod
-    async def get_redis(channel: str):
+    async def get_redis():
         redis = await get_redis()
         return redis
 

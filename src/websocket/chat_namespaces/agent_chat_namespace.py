@@ -4,6 +4,7 @@ from src.common.dependencies import get_user_by_token
 from src.websocket.channel_names import (
     CUSTOMER_NOTIFICATION_CHANNEL,
     MESSAGE_CHANNEL,
+
 )
 from ..chat_utils import ChatUtils
 from .base_chat_namespace import BaseChatNamespace
@@ -19,8 +20,19 @@ from ..chat_namespace_constants import AGENT_CHAT_NAMESPACE
 class AgentChatNamespace(BaseChatNamespace):
     namespace = AGENT_CHAT_NAMESPACE
 
+
     def __init__(self):
         super().__init__(self.namespace)
+
+    
+    
+
+ 
+
+    async def set_user_sid(self, userId: int, sid: int):
+        redis = await self.get_redis()
+        await redis.set(ChatUtils._user_add_sid(userId), sid)
+
 
     async def _notify_to_customers(self, org_id: int):
         await self.redis_publish(
@@ -54,6 +66,8 @@ class AgentChatNamespace(BaseChatNamespace):
         if not organization_id:
             print("User has no organization_id")
             return False
+        
+        await self.set_user_sid(user.id, sid)
 
         await self._join_org_user_group(organization_id, sid)
         await self._notify_to_customers(organization_id)

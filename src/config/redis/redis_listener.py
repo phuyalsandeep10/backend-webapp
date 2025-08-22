@@ -53,6 +53,7 @@ async def redis_listener(sio):
         if message["type"] != "pmessage":
             print(f"Received on {message['channel']}: {message['data']}")
         channel = message["channel"]
+        
 
         if isinstance(channel, bytes):
             try:
@@ -65,6 +66,7 @@ async def redis_listener(sio):
             continue
 
         data = message["data"]
+
 
         try:
             if isinstance(data, (dict, list)):
@@ -82,6 +84,7 @@ async def redis_listener(sio):
             payload = {"raw": data}
         if payload.get("raw"):
             payload = payload.get("raw")
+
 
         if isinstance(payload, str):
             payload = json.loads(payload)

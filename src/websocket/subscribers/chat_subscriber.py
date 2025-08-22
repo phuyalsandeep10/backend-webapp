@@ -14,6 +14,7 @@ from ..channel_names import (
 class ChatSubscriber:
     agent_namespace = AGENT_CHAT_NAMESPACE
     customer_namespace = CUSTOMER_CHAT_NAMESPACE
+    
 
     def __init__(
         self, sio: socketio.AsyncServer, namespace: str = None, payload: dict = {}
@@ -29,6 +30,7 @@ class ChatSubscriber:
         print(f"emit to room {room} ")
         print(f"emit to namespace {namespace}")
         print(f"emit to event {self.event}")
+        
         # print(f"emit to payload {self.payload}")
 
         return await self.sio.emit(
