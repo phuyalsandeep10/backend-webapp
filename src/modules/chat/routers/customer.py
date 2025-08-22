@@ -12,7 +12,7 @@ from src.models import Message
 router = APIRouter()
 
 
-@router.post("/{organizationId}")
+@router.post("")
 async def create_customer( request: Request):
     organizationId = TenantContext.get()
     
@@ -138,3 +138,19 @@ async def edit_message(message_id: int, payload: EditMessageSchema):
     record = await service.edit(message_id)
 
     return cr.success(data=record.to_json())
+
+@router.get("/{conversation_id}/messages")
+async def get_conversation_messages(conversation_id: int):
+    organizationId = TenantContext.get()
+
+    record = await Conversation.find_one(
+        {"id": conversation_id, "organization_id": organizationId}
+    )
+
+    if not record:
+        return cr.error(message="Conversation Not found")
+    
+    
+    records = await MessageService(organizationId).get_messages(conversation_id)
+
+    return cr.success(data=records)
