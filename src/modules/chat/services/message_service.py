@@ -37,7 +37,7 @@ class MessageService:
             await MessageAttachment.create(message_id=new_message.id, **file.dict())
 
         await RedisService.redis_publish(
-            channel=MESSAGE_CHANNEL, message={"event": "receive-mesjsage", **data}
+            channel=MESSAGE_CHANNEL, message={"event": "receive-message", **data}
         )
 
         return new_message

@@ -8,6 +8,7 @@ from src.config.broadcast import broadcast
 from src.routers import add_routers
 from src.utils.exceptions import add_exceptions_handler
 from src.socket_config import socket_app
+from src.events import *
 
 
 # custom exceptions
