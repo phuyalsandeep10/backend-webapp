@@ -22,6 +22,8 @@ class MessageService:
     async def get_user_sid(self, userId: int):
         redis = await RedisService.get_redis()
         result = await redis.get(ChatUtils._user_add_sid(userId))
+        if not result:
+            return ''
         return result.decode('utf-8')
 
     def make_msg_payload(self,record):
