@@ -36,6 +36,8 @@ async def create_customer( request: Request):
                 "conversation": conversation.to_json(),
             }
         )
+
+    
     
 
 
@@ -43,7 +45,9 @@ async def create_customer( request: Request):
         f"select count(*) from org_customers where organization_id={organizationId}"
     )
 
-    customer_count += 1
+    print(f"customer_count {customer_count}")
+
+    customer_count = customer_count[0].get('count')+1
 
     customer = await Customer.create(
         name=f"guest-{customer_count}", ip_address=ip, organization_id=organizationId

@@ -1,2 +1,3 @@
-from .cors_middleware import CORSMiddleware
+ 
 from .auth_middleware import AuthMiddleware
+from .domain_middleware import DomainMiddleware
