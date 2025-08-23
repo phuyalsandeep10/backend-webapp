@@ -125,7 +125,7 @@ async def create_conversation_message(conversation_id: int, payload: MessageSche
     organizationId = TenantContext.get()
     userId = UserContext.get()
     service = MessageService(organizationId, userId, payload)
-    return await service.create_conversation_message(conversation_id)
+    return await service.create(conversation_id)
 
 
 # edit the message
