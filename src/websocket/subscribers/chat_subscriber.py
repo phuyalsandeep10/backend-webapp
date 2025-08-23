@@ -93,7 +93,11 @@ class ChatSubscriber:
         room_name = ChatUtils.conversation_group(
             conversation_id=self.payload.get("conversation_id")
         )
-        await self.emit(room_name)
+        if self.payload.get("is_customer"):
+            await self.emit(room=room_name, namespace=self.customer_namespace,sid=self.payload.get("sid"))
+        else:
+            await self.emit(room=room_name, namespace=self.agent_namespace,sid=self.payload.get("sid"))
+        
 
 
 async def chat_subscriber(sio: socketio.AsyncServer, channel: str, payload: dict):

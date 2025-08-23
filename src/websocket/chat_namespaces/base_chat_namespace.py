@@ -130,19 +130,17 @@ class BaseChatNamespace(BaseNameSpace):
 
     async def on_message_seen(self, sid, data: dict):
         conversation_id = await self._get_conversation_id_from_sid(sid)
+        
         messageId = data.get("message_id")
 
-        if not conversation_id or not messageId:
-            return False
-
+        
+        message = await ChatUtils.save_message_seen(int(conversation_id), messageId)
         await self.redis_publish(
             channel=MESSAGE_SEEN_CHANNEL,
             message={
-                "event": self.message_seen,
-                "sid": sid,
-                "message_id": messageId,
+                "event": "message_seen",
                 "conversation_id": conversation_id,
+                "message_id": messageId,
+                "is_customer":not message.user_id
             },
         )
-
-        await ChatUtils.save_message_seen(int(conversation_id), messageId)
