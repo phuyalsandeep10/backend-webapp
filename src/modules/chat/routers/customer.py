@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from fastapi import Request
 
 from src.models import Conversation, Customer, CustomerVisitLogs
+from src.seed import organization
 from src.utils.response import CustomResponse as cr
 from src.utils.common import get_location
 from ..services.message_service import MessageService
@@ -124,7 +125,7 @@ async def customer_visit(customer_id: int, request: Request):
 async def create_conversation_message(conversation_id: int, payload: MessageSchema):
     organizationId = TenantContext.get()
     userId = UserContext.get()
-    service = MessageService(organizationId, userId, payload)
+    service = MessageService(organization_id=organizationId, payload=payload,user_id=userId)
     return await service.create(conversation_id)
 
 
