@@ -27,6 +27,8 @@ class DomainMiddleware(BaseHTTPMiddleware):
         if not origin:
             return await call_next(request)
 
+        print(f"Request origin: {origin}")
+
         # check if path is /customers then check if org_id is present in header
         if path.startswith('/customers'):
             org_id = request.headers.get("x-org-id")

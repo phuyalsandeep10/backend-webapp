@@ -73,8 +73,6 @@ class MessageService:
             {"id": conversation_id, "organization_id": self.organization_id}
         )
 
-
-
         if not record:
             return cr.error(message="Conversation Not found")
         
@@ -93,9 +91,11 @@ class MessageService:
 
         payload = await self.get_message_payload(new_message.id)
 
+
         await RedisService.redis_publish(
             channel=MESSAGE_CHANNEL, message=payload
         )
+        
 
         return payload
 
