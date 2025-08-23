@@ -15,6 +15,7 @@ class TenantContext:
         """
         Sets the context with the organization_id
         """
+        print(f"setting organization id {organization_id}")
         if not organization_id:
             organization_id_ctx.set(None)
 
