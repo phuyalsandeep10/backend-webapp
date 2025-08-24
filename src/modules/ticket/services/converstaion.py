@@ -20,7 +20,7 @@ from src.utils.get_templates import get_templates
 from src.utils.response import CustomResponse as cr
 
 from ..models.ticket import Ticket
-from ..models.ticket_message import TicketMessage
+from ..models.ticket_message import TicketMessage, TicketMessageVersions
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +47,20 @@ class TicketConversationServices:
             data["sender"] = user.email
             data["direction"] = TicketMessageDirectionEnum.OUTGOING.value
 
-            conversation = await TicketMessage.create(**data)
-            if not conversation:
+            message = await TicketMessage.create(**data)
+            if not message:
                 return cr.error(message="Error while creating conversation")
+
+            # saving in versions
+            version = await self.check_previous_version(message_id=message.id)
+            if not version:
+                await self.save_in_versions(
+                    message_id=message.id, versions=1, content=data["content"]
+                )
+            else:
+                await self.save_in_versions(
+                    message_id=message.id, versions=1, content=data["content"]
+                )
 
             await self._send_email(ticket, data)
             await self.broadcast_ticket_message(
@@ -183,7 +194,34 @@ class TicketConversationServices:
                 raise Exception("Ticket message not found")
             return messages
         except Exception as e:
+
             raise e
+
+    async def save_in_versions(self, message_id: int, versions: int, content: str):
+        try:
+            payload = dict(message_id=message_id, versions=versions, content=content)
+            message_version = await TicketMessageVersions.create(**payload)
+            if not message_version:
+                raise
+        except Exception as e:
+            logger.error(f"Error while saving in ticket message versions {str(e)}")
+
+    async def check_previous_version(self, message_id: int) -> int | None:
+        """
+        Returns None if message_id doesnt exists in relation else returns the latest version
+        """
+        try:
+            messages = await TicketMessageVersions.filter(
+                where={"message_id": message_id}
+            )
+            if not messages:
+                return None
+            # finding the largest version id
+            msg = max(messages, key=lambda message: message.versions)
+            return msg.versions
+
+        except Exception as e:
+            return None
 
 
 ticket_conversation_service = TicketConversationServices()
