@@ -1,9 +1,12 @@
 import socketio
-from src.websocket.chat_namespaces.customer_chat_namespace import CustomerChatNamespace
-from src.websocket.chat_namespaces.agent_chat_namespace import AgentChatNamespace
-from src.config.redis.redis_listener import redis_listener
-from src.config.settings import settings
 from socketio import AsyncRedisManager
+from socketio.redis_manager import redis
+
+from src.config.redis.redis_listener import get_redis, redis_listener
+from src.config.settings import settings
+from src.websocket.chat_namespaces.agent_chat_namespace import AgentChatNamespace
+from src.websocket.chat_namespaces.customer_chat_namespace import CustomerChatNamespace
+from src.websocket.namespace.ticket.ticket_namespace import TicketNameSpace
 
 # ✅ Correct: Initialize once
 redis_url = settings.REDIS_URL
@@ -11,6 +14,7 @@ mgr = AsyncRedisManager(redis_url)
 
 
 from src.app import app
+from src.modules.chat.websocket import ChatNamespace
 from src.modules.ticket.websocket.sla_websocket import AlertNameSpace
 
 # Create the Socket.IO Async server (ASGI mode)
@@ -79,4 +83,6 @@ async def stop_ws_redis_listener():
 
 
 alert_ns = AlertNameSpace("/alert")
+ticket_ns = TicketNameSpace("/tickets", sio)
 sio.register_namespace(alert_ns)
+sio.register_namespace(ticket_ns)

@@ -19,6 +19,7 @@ class LoggingMixin:
         self,
         action: TicketLogActionEnum,
         description: Optional[str] = None,
+        ticket_id: Optional[int] = None,
         previous_value: Optional[dict] = None,
         new_value: Optional[dict] = None,
     ):
@@ -26,8 +27,7 @@ class LoggingMixin:
             if not self.entity_type:
                 raise ValueError(f"{self.__class__.__name__} must define entity_type")
 
-            ticket_id = None
-            if self.entity_type == TicketLogEntityEnum.TICKET:
+            if self.entity_type == TicketLogEntityEnum.TICKET and ticket_id is None:
                 ticket_id = self.id
 
             organization_id = None
