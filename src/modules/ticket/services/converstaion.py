@@ -13,9 +13,13 @@ from src.factory.notification import NotificationFactory
 from src.modules.auth.models import User
 from src.modules.sendgrid.services import decode_ticket, send_sendgrid_email
 from src.modules.ticket.enums import TicketLogActionEnum, TicketMessageDirectionEnum
-from src.modules.ticket.schemas import CreateTicketMessageSchema, TicketMessageOutSchema
+from src.modules.ticket.schemas import (
+    CreateTicketMessageSchema,
+    EditTicketMessageSchema,
+    TicketMessageOutSchema,
+)
 from src.tasks.ticket_task import broadcast_ticket_message
-from src.utils.exceptions.ticket import TicketNotFound
+from src.utils.exceptions.ticket import TicketMessageNotFound, TicketNotFound
 from src.utils.get_templates import get_templates
 from src.utils.response import CustomResponse as cr
 
@@ -75,6 +79,28 @@ class TicketConversationServices:
 
         except Exception as e:
             return cr.error(message=f"{e.detail if e.detail else str(e)}")
+
+    async def edit_message(self, message_id: int, payload: EditTicketMessageSchema):
+        try:
+            message = await TicketMessage.find_one(where={"id": message_id})
+            if not message:
+                raise TicketMessageNotFound()
+            await message.update(id=message.id, **payload.model_dump())
+            version = await self.check_previous_version(message_id=message.id)
+            print("The version", version)
+            if not version:
+                await self.save_in_versions(
+                    message_id=message.id, versions=1, content=payload.content
+                )
+            else:
+                await self.save_in_versions(
+                    message_id=message.id, versions=version + 1, content=payload.content
+                )
+            return cr.success("Successfully updated message")
+
+        except Exception as e:
+            logger.exception(e)
+            return cr.error(message=f"{str(e)}")
 
     async def save_message_from_email(self, from_email, to_email, recent_reply):
         try:

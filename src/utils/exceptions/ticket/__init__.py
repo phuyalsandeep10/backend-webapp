@@ -29,6 +29,15 @@ class TicketSLANotFound(HTTPException):
         super().__init__(status_code=HTTP_404_NOT_FOUND, detail=detail)
 
 
+class TicketMessageNotFound(HTTPException):
+    """
+    Custom Ticket Message Exception for ticket message not found
+    """
+
+    def __init__(self, detail="Ticket Message not found"):
+        super().__init__(status_code=HTTP_404_NOT_FOUND, detail=detail)
+
+
 class TicketPriorityNotFound(HTTPException):
     """
     Custom Ticket Priority Exception for ticket not found
