@@ -259,6 +259,20 @@ class CreateTicketMessageSchema(BaseModel):
         return value
 
 
+class EditTicketMessageSchema(BaseModel):
+
+    content: str
+
+    @field_validator("content")
+    def content_cannot_be_empty_string(cls, value):
+        if value.strip() == "":
+            raise PydanticCustomError(
+                "invalid content",
+                "Content cannot be empty string",
+            )
+        return value
+
+
 class TicketMessageOutSchema(BaseModel):
     id: int
     receiver: EmailStr
