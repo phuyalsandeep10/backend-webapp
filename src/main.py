@@ -51,17 +51,3 @@ async def get(request: Request):
 @app.get("/health")
 def read_items():
     return "Health check OK"
-
-
-class DemoSchema(BaseModel):
-    message: str
-    email: EmailStr
-    ticket_id: int
-
-
-@app.post("/demo")
-async def demo(payload: DemoSchema):
-    await ticket_ns.broadcast_message(
-        message=payload.message, ticket_id=payload.ticket_id, user_email=payload.email
-    )
-    return f"S>uccess"
