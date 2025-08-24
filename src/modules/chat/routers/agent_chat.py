@@ -16,6 +16,7 @@ router = APIRouter()
 
 @router.get("/conversations")
 async def get_conversations():
+    print("get conversations")
     organizationId = TenantContext.get()
 
     records = await get_conversation_list(organizationId)

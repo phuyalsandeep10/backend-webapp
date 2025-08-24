@@ -13,7 +13,7 @@ class BaseChatNamespace(BaseNameSpace):
     stop_typing = "stop-typing"
     message_seen = "message_seen"
     chat_online = "chat_online"
-    join_conversation = 'join_conversation'
+    _join_conversation = 'join_conversation'
     customer_land = "customer_land"
     message_notification = "message-notification"
     is_customer: bool = False
@@ -57,20 +57,25 @@ class BaseChatNamespace(BaseNameSpace):
         sids = await redis.smembers(self._conversation_add_sid(conversationId))
         return [sid.decode("utf-8") for sid in sids] if sids else []
 
-    async def join_conversation(self, conversationId, sid):
-        redis = await self.get_redis()
-        
-
+    async def join_group(self, conversation_id, sid):
         await self.enter_room(
             sid=sid,
-            room=ChatUtils.conversation_group(conversationId),
+            room=ChatUtils.conversation_group(conversation_id),
             namespace=self.namespace,
         )
+
+    async def join_conversation(self, conversationId, sid,user_id:int):
+        redis = await self.get_redis()
+
+
+        await self.join_group(conversationId, sid)
+
+        await ChatUtils.join_conversation(conversationId, user_id)
 
         await self.redis_publish(
             channel=AGENT_JOIN_CONVERSATION_CHANNEL,
             message={
-                "event": self.join_conversation,
+                "event": self._join_conversation,
                 "mode": "online",
                 "conversation_id": conversationId,
                 "user_id": sid,

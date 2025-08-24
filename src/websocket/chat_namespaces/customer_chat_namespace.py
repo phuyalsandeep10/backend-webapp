@@ -4,7 +4,8 @@ import json
 
 from .base_chat_namespace import BaseChatNamespace
 from ..chat_namespace_constants import CUSTOMER_CHAT_NAMESPACE
-from ..channel_names import AGENT_NOTIFICATION_CHANNEL, MESSAGE_CHANNEL
+from ..channel_names import AGENT_NOTIFICATION_CHANNEL
+
 
 
 class CustomerChatNamespace(BaseChatNamespace):
@@ -26,6 +27,9 @@ class CustomerChatNamespace(BaseChatNamespace):
             ),
         )
 
+    
+       
+
     async def on_connect(self, sid, environ, auth: dict):
         print(f"🔌Customer Socket connection attempt: {sid}")
         # print(f"🔑 Auth data: {auth}")
@@ -45,7 +49,7 @@ class CustomerChatNamespace(BaseChatNamespace):
             )
             return False
 
-        await self.join_conversation(conversation_id, sid)
+        await self.join_group(conversation_id, sid)
 
         # notify users in the same workspace that a customer has connected
         await self._notify_to_users(organization_id)

@@ -80,12 +80,13 @@ class AgentChatNamespace(BaseChatNamespace):
     async def on_join_conversation(self, sid, data: dict):
         print(f"agent join conversation with {sid} and data {data}")
         conversation_id = int(data.get("conversation_id"))
+        user_id = data.get("user_id")
         print(f"conversation_id {conversation_id}")
         if not conversation_id:
             return False
     
         
-        await self.join_conversation(conversation_id, sid)
+        await self.join_conversation(conversation_id, sid,user_id)
         
 
 

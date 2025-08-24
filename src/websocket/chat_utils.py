@@ -1,4 +1,4 @@
-from src.models import Message, MessageAttachment, Conversation
+from src.models import Message, MessageAttachment, Conversation, ConversationMember
 
 
 class ChatUtils:
