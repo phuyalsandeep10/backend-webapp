@@ -111,8 +111,9 @@ class BaseChatNamespace(BaseNameSpace):
             },
         )
 
-    async def on_stop_typing(self, sid):
-        conversation_id = await self._get_conversation_id_from_sid(sid)
+    async def on_stop_typing(self, sid,data:dict):
+        conversation_id =  data.get('conversation_id')
+        print(f"conversation id {conversation_id}")
 
         if not conversation_id:
             return False
