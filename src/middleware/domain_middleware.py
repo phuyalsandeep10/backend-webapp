@@ -6,12 +6,14 @@ from src.common.context import TenantContext
 class DomainMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, allowed_domains=None):
         super().__init__(app)
+
         self.allowed_domains = allowed_domains or [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "http://127.0.0.1:8000",
             "http://localhost:8000",
             "https://api.chatboq.com",
+            "https://www.portal.chatboq.com"
         ]
 
     async def dispatch(self, request: Request, call_next):
@@ -46,7 +48,8 @@ class DomainMiddleware(BaseHTTPMiddleware):
             
             return Response("Forbidden: Domain not allowed", status_code=403)
 
-    
+
+        print(f"allowed domains: {self.allowed_domains}")
         # Check if origin is in allowed domains
         if origin in self.allowed_domains:
             return await call_next(request)
