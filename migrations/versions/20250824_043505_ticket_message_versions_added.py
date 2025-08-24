@@ -11,7 +11,7 @@ from typing import Sequence, Union
 from migrations.base import BaseMigration
 
 revision: str = "20250824_043505"
-down_revision: Union[str, Sequence[str], None] = "20250819_051645"
+down_revision: Union[str, Sequence[str], None] = "20250819_072251"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

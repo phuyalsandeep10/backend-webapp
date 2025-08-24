@@ -11,7 +11,7 @@ from typing import Sequence, Union
 from migrations.base import BaseMigration
 
 revision: str = "20250819_051645"
-down_revision: Union[str, Sequence[str], None] = "20250814_033142"
+down_revision: Union[str, Sequence[str], None] = "20250814_095326"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -21,7 +21,7 @@ class TicketMessageMigration(BaseMigration):
     table_name = "ticket_messages"
 
     def __init__(self):
-        super().__init__(revision="20250819_051645", down_revision="20250814_033142")
+        super().__init__(revision="20250819_051645", down_revision="20250814_095326")
         self.create_whole_table = True
         # describe your schemas here
         self.tenant_columns()
