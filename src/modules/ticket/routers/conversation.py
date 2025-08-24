@@ -3,7 +3,10 @@ from typing import Annotated, Optional
 from fastapi import APIRouter
 from typing_extensions import Doc
 
-from src.modules.ticket.schemas import CreateTicketMessageSchema
+from src.modules.ticket.schemas import (
+    CreateTicketMessageSchema,
+    EditTicketMessageSchema,
+)
 from src.utils.response import CustomResponseSchema
 
 from ..services.converstaion import ticket_conversation_service
@@ -35,4 +38,15 @@ async def list_ticket_messages(
 ):
     return await ticket_conversation_service.list_messages(
         ticket_id=ticket_id, limit=limit, before=before
+    )
+
+
+@router.patch(
+    "/{message_id:int}",
+    summary="Edit message_id content",
+    response_model=CustomResponseSchema,
+)
+async def edit_ticket_messages(message_id: int, payload: EditTicketMessageSchema):
+    return await ticket_conversation_service.edit_message(
+        message_id=message_id, payload=payload
     )
