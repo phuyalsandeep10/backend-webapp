@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from fastapi import Request
 
 from src.models import Conversation, Customer, CustomerVisitLogs
+from src.seed import organization
 from src.utils.response import CustomResponse as cr
 from src.utils.common import get_location
 from ..services.message_service import MessageService
@@ -12,7 +13,7 @@ from src.models import Message
 router = APIRouter()
 
 
-@router.post("/{organizationId}")
+@router.post("")
 async def create_customer( request: Request):
     organizationId = TenantContext.get()
     
@@ -23,25 +24,31 @@ async def create_customer( request: Request):
 
     print(f"create customer api {ip}")
 
-    customer = await Customer.find_one(
-        where={"organization_id": organizationId, "ip_address": ip}
-    )
-    if customer:
-        await save_log(ip, customer.id, request)
-        conversation = await Conversation.find_one(where={"customer_id": customer.id})
+    # customer = await Customer.find_one(
+    #     where={"organization_id": organizationId, "ip_address": ip}
+    # )
+    # if customer:
+    #     await save_log(ip, customer.id, request)
+    #     conversation = await Conversation.find_one(where={"customer_id": customer.id})
 
-        return cr.success(
-            data={
-                "customer": customer.to_json(),
-                "conversation": conversation.to_json(),
-            }
-        )
+    #     return cr.success(
+    #         data={
+    #             "customer": customer.to_json(),
+    #             "conversation": conversation.to_json(),
+    #         }
+    #     )
+
+    
+    
+
 
     customer_count = await Customer.sql(
         f"select count(*) from org_customers where organization_id={organizationId}"
     )
 
-    customer_count += 1
+    print(f"customer_count {customer_count}")
+
+    customer_count = customer_count[0].get('count')+1
 
     customer = await Customer.create(
         name=f"guest-{customer_count}", ip_address=ip, organization_id=organizationId
@@ -53,6 +60,7 @@ async def create_customer( request: Request):
         ip_address=ip,
         organization_id=organizationId,
     )
+
 
     await save_log(ip, customer.id, request)
 
@@ -109,11 +117,6 @@ async def customer_visit(customer_id: int, request: Request):
     return cr.success(data=log.to_json())
 
 
-@router.get("/{conversation_id}/messages")
-async def get_conversation_messages(conversation_id: int):
-    messages = await Message.filter(where={"conversation_id": conversation_id})
-
-    return cr.success(data={"messages": [msg.to_json() for msg in messages]})
 
 
 
@@ -122,8 +125,9 @@ async def get_conversation_messages(conversation_id: int):
 async def create_conversation_message(conversation_id: int, payload: MessageSchema):
     organizationId = TenantContext.get()
     userId = UserContext.get()
-    service = MessageService(organizationId, userId, payload)
-    return await service.create_conversation_message(conversation_id)
+    service = MessageService(organization_id=organizationId, payload=payload,user_id=userId)
+    response = await service.create(conversation_id)
+    return cr.success(data=response)
 
 
 # edit the message
@@ -138,3 +142,23 @@ async def edit_message(message_id: int, payload: EditMessageSchema):
     record = await service.edit(message_id)
 
     return cr.success(data=record.to_json())
+
+@router.get("/{conversation_id}/messages")
+async def get_conversation_messages(conversation_id: int):
+    organizationId = TenantContext.get()
+    print(f"organizationId {organizationId}")
+    print(f"conversation_id {conversation_id}")
+
+   
+
+    record = await Conversation.find_one(
+        {"id": conversation_id, "organization_id": organizationId}
+    )
+
+    if not record:
+        return cr.error(message="Conversation Not found")
+    
+    
+    records = await MessageService(organizationId).get_messages(conversation_id)
+
+    return cr.success(data=records)

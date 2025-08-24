@@ -13,7 +13,7 @@ class BaseChatNamespace(BaseNameSpace):
     stop_typing = "stop-typing"
     message_seen = "message_seen"
     chat_online = "chat_online"
-    join_conversation = 'join_conversation'
+    _join_conversation = 'join_conversation'
     customer_land = "customer_land"
     message_notification = "message-notification"
     is_customer: bool = False
@@ -57,23 +57,25 @@ class BaseChatNamespace(BaseNameSpace):
         sids = await redis.smembers(self._conversation_add_sid(conversationId))
         return [sid.decode("utf-8") for sid in sids] if sids else []
 
-    async def join_conversation(self, conversationId, sid):
-        redis = await self.get_redis()
-        
-
+    async def join_group(self, conversation_id, sid):
         await self.enter_room(
             sid=sid,
-            room=ChatUtils.conversation_group(conversationId),
+            room=ChatUtils.conversation_group(conversation_id),
             namespace=self.namespace,
         )
+
+    async def join_conversation(self, conversationId, sid):
+        redis = await self.get_redis()
+
+        await self.join_group(conversationId, sid)
 
         await self.redis_publish(
             channel=AGENT_JOIN_CONVERSATION_CHANNEL,
             message={
-                "event": self.join_conversation,
+                "event": self._join_conversation,
                 "mode": "online",
                 "conversation_id": conversationId,
-                "user_id": sid,
+                "sid": sid,
             },
         )
 
@@ -94,9 +96,7 @@ class BaseChatNamespace(BaseNameSpace):
         await redis.delete(self._conversation_from_sid(sid))
 
     async def on_typing(self, sid, data: dict):
-        conversation_id = await self._get_conversation_id_from_sid(sid)
-        if not conversation_id:
-            return False
+     
 
         await self.redis_publish(
             channel=TYPING_CHANNEL,
@@ -105,14 +105,15 @@ class BaseChatNamespace(BaseNameSpace):
                 "sid": sid,
                 "message": data.get("message", ""),
                 "mode": data.get("mode", "typing"),
-                "conversation_id": conversation_id,
+                "conversation_id": data.get('conversation_id'),
                 "organization_id": data.get("organization_id"),
                 "is_customer": self.is_customer,
             },
         )
 
-    async def on_stop_typing(self, sid):
-        conversation_id = await self._get_conversation_id_from_sid(sid)
+    async def on_stop_typing(self, sid,data:dict):
+        conversation_id =  data.get('conversation_id')
+        print(f"conversation id {conversation_id}")
 
         if not conversation_id:
             return False
@@ -129,20 +130,17 @@ class BaseChatNamespace(BaseNameSpace):
         )
 
     async def on_message_seen(self, sid, data: dict):
-        conversation_id = await self._get_conversation_id_from_sid(sid)
+        
         messageId = data.get("message_id")
 
-        if not conversation_id or not messageId:
-            return False
-
+        
+        message = await ChatUtils.save_message_seen( messageId)
         await self.redis_publish(
             channel=MESSAGE_SEEN_CHANNEL,
             message={
-                "event": self.message_seen,
-                "sid": sid,
+                "event": "message_seen",
+                "conversation_id": message.conversation_id,
                 "message_id": messageId,
-                "conversation_id": conversation_id,
+                "is_customer":not message.user_id
             },
         )
-
-        await ChatUtils.save_message_seen(int(conversation_id), messageId)

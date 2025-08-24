@@ -30,6 +30,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         if request.method == "OPTIONS":
             return await call_next(request)
+        
+        print(f"Exempt paths: {self.extemp_paths}")
 
         # skip protected or extempted paths
         if self.extemp_paths and any(
@@ -64,6 +66,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 organization_id = user.attributes.get("organization_id")
                 if organization_id:
                     TenantContext.set(organization_id)
+                    # Set X-Org-Id header for downstream middleware
+                    request.scope['headers'].append((b'x-org-id', str(organization_id).encode()))
                 else:
                     TenantContext.set(None)
 

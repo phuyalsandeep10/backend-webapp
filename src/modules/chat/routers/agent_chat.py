@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from src.utils.response import CustomResponse as cr
-from src.models import Conversation, Customer, Message
+from src.models import Conversation, Customer, Message, ConversationMember
 from src.common.context import UserContext, TenantContext
 from ..schema import MessageSchema, EditMessageSchema
 
@@ -16,6 +16,7 @@ router = APIRouter()
 
 @router.get("/conversations")
 async def get_conversations():
+   
     organizationId = TenantContext.get()
 
     records = await get_conversation_list(organizationId)
@@ -25,14 +26,22 @@ async def get_conversations():
 @router.put("/conversations/{conversation_id}/joined")
 async def joined_conversation(conversation_id: int):
     organizationId = TenantContext.get()
+    userId = UserContext.get()
 
-    record = await Conversation.find_one(
-        {"id": conversation_id, "organization_id": organizationId}
+    record = await ConversationMember.find_one(
+        {"conversation_id": conversation_id, "user_id": userId}
+    )
+
+    if record:
+        return cr.success()
+        
+    record = await ConversationMember.create(
+        conversation_id=conversation_id, user_id=userId
     )
 
     if not record:
-        return cr.error(message="Conversation Not found")
-    record = await Conversation.update(conversation_id, is_joined=True)
+        return cr.error(message="Failed to join conversation")
+
     return cr.success(data=record.to_json())
 
 
@@ -85,7 +94,7 @@ async def create_conversation_message(conversation_id: int, payload: MessageSche
     service = MessageService(organizationId, payload, userId)
     record = await service.create(conversation_id)
 
-    return cr.success(data=record.to_json())
+    return cr.success(data=record)
 
 
 # edit the message
@@ -99,7 +108,7 @@ async def edit_message(message_id: int, payload: EditMessageSchema):
     service = MessageService(organizationId, payload, userId)
     record = await service.edit(message_id)
 
-    return cr.success(data=record.to_json())
+    return cr.success(data=record)
 
 
 # resolved conversations

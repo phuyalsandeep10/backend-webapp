@@ -23,6 +23,7 @@ async def conversation_detail(conversation_id: int, user=Depends(get_current_use
         )
 
     customer = await Customer.get(record.customer_id)
+    
 
     return {"conversation": record, "customer": customer}
 

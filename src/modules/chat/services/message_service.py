@@ -17,20 +17,61 @@ class MessageService:
         self.payload = payload
         self.user_id = user_id
         
-    
 
 
     async def get_user_sid(self, userId: int):
         redis = await RedisService.get_redis()
-        result =  await redis.get(ChatUtils._user_add_sid(userId))
+        result = await redis.get(ChatUtils._user_add_sid(userId))
+        if not result:
+            return ''
         return result.decode('utf-8')
 
+    def make_msg_payload(self,record):
+        
+        payload = record.to_json()
+        
 
+
+        if record.user:
+            payload["user"] = {
+                "id": record.user.id,
+                "name": record.user.name,
+                "email": record.user.email,
+                "image": record.user.image
+            }
+        if record.reply_to:
+            payload["reply_to"] = {
+                "id": record.reply_to.id,
+                "content": record.reply_to.content,
+                "user_id": record.reply_to.user_id,
+            }
+        
+        
+        return payload
+    
+
+    
+
+    async def get_message_payload(self, messageId:int):
+
+        record = await Message.find_one({
+            "id": messageId,
+        }, options=[selectinload(Message.reply_to), selectinload(Message.user)])
+        
+        userSid = await self.get_user_sid(self.user_id)
+
+        payload = self.make_msg_payload(record)
+        print(f"payload {payload}")
+        payload["sid"] = userSid
+        payload["event"] = "receive-message"
+        
+        return payload
+
+    
     async def create(self, conversation_id: int):
         record = await Conversation.find_one(
             {"id": conversation_id, "organization_id": self.organization_id}
         )
-
 
         if not record:
             return cr.error(message="Conversation Not found")
@@ -42,25 +83,21 @@ class MessageService:
             "conversation_id": conversation_id,
         }
         
-        
-    
-
-
         new_message = await Message.create(**data)
-
 
         for file in self.payload.attachments:
             await MessageAttachment.create(message_id=new_message.id, **file.dict())
+        
 
+        payload = await self.get_message_payload(new_message.id)
 
-        userSid = await self.get_user_sid(self.user_id)
-        print(f"User SID for {self.user_id}: {userSid}")
 
         await RedisService.redis_publish(
-            channel=MESSAGE_CHANNEL, message={"event": "receive-message","sid": userSid, **data}
+            channel=MESSAGE_CHANNEL, message=payload
         )
+        
 
-        return new_message
+        return payload
 
     # edit message service
     async def edit(self, message_id: int):
@@ -72,25 +109,23 @@ class MessageService:
         updated_data = {**self.payload.dict()}
         await Message.update(message_id, **updated_data)
 
+        payload = await self.get_message_payload(message_id)
+
         await RedisService.redis_publish(
-            channel=MESSAGE_CHANNEL, message={"event": "edit-message", **updated_data}
+            channel=MESSAGE_CHANNEL, message={"event": "edit-message", **payload}
         )
+
+
 
         return record
     
+
     async def get_messages(self,conversationId:int):
    
-        messages = await Message.filter(where={"conversation_id": conversationId},options=[selectinload(Message.reply_to)])
+        messages = await Message.filter(where={"conversation_id": conversationId},options=[selectinload(Message.reply_to), selectinload(Message.user)])
         records = []
-       
         for msg in messages:
-            data = msg.to_json()
-            reply_to = {}
-            if msg.reply_to:
-                reply_to = {
-                    "id": msg.reply_to.id,
-                    "content": msg.reply_to.content,
-                    "user_id": msg.reply_to.user_id,
-                }
-            records.append({**data, "reply_to": reply_to})
+            payload = self.make_msg_payload(msg)
+            records.append(payload)
+        
         return records

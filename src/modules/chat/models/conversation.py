@@ -48,34 +48,41 @@ class Conversation(CommonModel, table=True):
 
 
 async def get_conversation_list(organization_id: int):
-    conversations = await Conversation.get_list(organization_id)
-    new_list = []
-    # new_conversations = [conv.to_json() for conv in conversations]
-    for conversation in conversations:
-        data = {
-            "id": conversation.id,
-            "name": conversation.name,
-            "customer_id": conversation.customer_id,
-            "customer": conversation.customer.to_json(),
-            "organization_id": conversation.organization_id,
-            "members": [],
-            "created_at": conversation.created_at.isoformat(),
-            "updated_at": conversation.updated_at.isoformat(),
-            "is_resolved": conversation.is_resolved,
-            "attributes": conversation.attributes
-        }
-        members = []
-        for member in conversation.members:
-            record = {
-                "id": member.id,
-                "conversation_id": member.conversation_id,
-                "user_id": member.user_id,
-                "user": member.user.to_json(),
+    try:
+        conversations = await Conversation.get_list(organization_id)
+        new_list = []
+    
+        for conversation in conversations:
+            data = {
+                "id": conversation.id,
+                "name": conversation.name,
+                "customer_id": conversation.customer_id,
+                "customer": conversation.customer.to_json(),
+                "organization_id": conversation.organization_id,
+                "members": [],
+                "created_at": conversation.created_at.isoformat(),
+                "updated_at": conversation.updated_at.isoformat(),
+                "is_resolved": conversation.is_resolved,
+                "attributes": conversation.attributes
             }
-            members.append(record)
-        data["members"] = members
-        new_list.append(data)
-    return new_list
+            members = []
+            for member in conversation.members:
+       
+                record = {
+                    "id": member.id,
+                    "conversation_id": member.conversation_id,
+                    "user_id": member.user_id,
+               
+                }
+                if(member.user):
+                    record["user"] = member.user.to_json()
+                members.append(record)
+            data["members"] = members
+            new_list.append(data)
+        return new_list
+    except Exception as e:
+        print(f"Error getting conversation list: {e}")
+        return []
 
 
 class ConversationMember(CommonModel, table=True):
