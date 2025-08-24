@@ -7,6 +7,10 @@ celery:
 arq:
 		@echo "Starting arq"
 		arq src.config.arq.WorkerSettings
+
+dramatiq:
+		@echo "Starting dramatiq"
+		dramatiq src.tasks
 test:
 	@echo "Starting testing"
 	pytest -v

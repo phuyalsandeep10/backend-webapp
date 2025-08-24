@@ -33,6 +33,8 @@ def case_insensitive(attributes):
                 return result.scalars().all()
 
         return wrapper
+    
+    
 
     return decorator
 
@@ -257,7 +259,7 @@ class BaseModel(SQLModel):
         async with async_session() as session:
             result = await session.execute(sa.text(query))
             rows = result.mappings().all() if result else []
-
+            
             serialized = []
             for row in rows:
                 r = dict(row)

@@ -19,7 +19,7 @@ class OrgTimezoneMigration(BaseMigration):
     table_name = "sys_organizations"
 
     def __init__(self):
-        super().__init__(revision="20250814_033142", down_revision="20250810_070640")
+        super().__init__(revision="20250819_072251", down_revision="20250819_071842")
         self.create_whole_table = False
         self.add_column(self.foreign("country_id", "sys_countries"))
         self.add_column(self.foreign("timezone_id", "sys_timezones"))

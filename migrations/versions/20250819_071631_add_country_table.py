@@ -10,7 +10,7 @@ from migrations.base import BaseMigration
 from typing import Sequence, Union
 
 revision: str = "20250819_071631"
-down_revision: Union[str, Sequence[str], None] = "20250814_095326"
+down_revision: Union[str, Sequence[str], None] = "20250819_051645"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -19,7 +19,7 @@ class CountryMigration(BaseMigration):
     table_name = "sys_countries"
 
     def __init__(self):
-        super().__init__(revision="20250810_070453", down_revision="20250803_053316")
+        super().__init__(revision="20250810_070453", down_revision="20250819_051645")
         self.create_whole_table = True
         # describe your schemas here
         self.base_columns()

@@ -53,6 +53,7 @@ class TicketLogActionEnum(str, Enum):
     CONFIRMATION_EMAIL_SENT_FAILED = "confirmation_email_sent_failed"
     SLA_BREACH_EMAIL_SENT = "ticket_sla_breach_email_sent"
     EMAIL_SENT_FAILED = "ticket_email_sent_failed"
+    TICKET_MESSAGE_EMAIL_SENT = "ticket_message_email_sent"
 
 
 class TicketLogEntityEnum(str, Enum):
@@ -60,3 +61,9 @@ class TicketLogEntityEnum(str, Enum):
     TICKET_SLA = "ticket_sla"
     TICKET_STATUS = "ticket_status"
     TICKET_PRIORITY = "ticket_priority"
+    TICKET_MESSAGE = "ticket_message"
+
+
+class TicketMessageDirectionEnum(str, Enum):
+    INCOMING = "incoming"
+    OUTGOING = "outgoing"

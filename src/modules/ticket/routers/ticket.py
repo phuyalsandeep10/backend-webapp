@@ -78,11 +78,11 @@ async def edit_ticket(
 @router.delete(
     "/{ticket_id:int}", summary="Delete a ticket", response_model=CustomResponseSchema
 )
-async def delete_ticket(ticket_id: int, user=Depends(get_current_user)):
+async def delete_ticket(ticket_id: int):
     """
     Delete ticket of the organiation by id
     """
-    return await ticket_services.delete_ticket(ticket_id, user)
+    return await ticket_services.delete_ticket(ticket_id)
 
 
 @router.get(

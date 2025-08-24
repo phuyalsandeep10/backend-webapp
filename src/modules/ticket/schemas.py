@@ -1,7 +1,11 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, model_validator
+from fastapi import status
+from fastapi.exceptions import HTTPException
+from pydantic import BaseModel, EmailStr, Field, ValidationError, model_validator
+from pydantic.functional_validators import field_validator
+
 from pydantic_core import PydanticCustomError
 
 from src.modules.ticket.enums import (
@@ -235,3 +239,40 @@ class TicketLogSchema(BaseModel):
     description: Optional[str] = None
     previous_value: Optional[dict] = None
     new_value: Optional[dict] = None
+
+
+class CreateTicketMessageSchema(BaseModel):
+
+    ticket_id: int
+    receiver: EmailStr
+    content: str
+
+    @field_validator("content")
+    def content_cannot_be_empty_string(cls, value):
+        if value.strip() == "":
+            raise PydanticCustomError(
+                "invalid content",
+                "Content cannot be empty string",
+            )
+        return value
+
+
+class EditTicketMessageSchema(BaseModel):
+
+    content: str
+
+    @field_validator("content")
+    def content_cannot_be_empty_string(cls, value):
+        if value.strip() == "":
+            raise PydanticCustomError(
+                "invalid content",
+                "Content cannot be empty string",
+            )
+        return value
+
+
+class TicketMessageOutSchema(BaseModel):
+    id: int
+    receiver: EmailStr
+    sender: EmailStr
+    content: str

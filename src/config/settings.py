@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     ENV: str = "development"
     EMAIL_DOMAIN: str = ""
     SENDGRID_API_KEY: str = ""
+    SECRET_FERNET_KEY: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
