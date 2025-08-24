@@ -68,7 +68,6 @@ class TicketConversationServices:
     async def save_message_from_email(self, from_email, to_email, recent_reply):
         try:
             cipher = to_email.split("<")[1].split("@")[0]
-            print("The cipher is", cipher)
             org_id, ticket_id = decode_ticket(cipher)
             payload = {
                 "ticket_id": ticket_id,
