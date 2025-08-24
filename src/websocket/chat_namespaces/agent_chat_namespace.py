@@ -86,7 +86,7 @@ class AgentChatNamespace(BaseChatNamespace):
             return False
     
         
-        await self.join_conversation(conversation_id, sid,user_id)
+        await self.join_conversation(conversation_id, sid)
         
 
 
