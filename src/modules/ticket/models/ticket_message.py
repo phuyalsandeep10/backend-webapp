@@ -27,3 +27,17 @@ class TicketMessage(TenantModel, Mixin.LoggingMixin, table=True):
     direction: str
     content: str
     attachments: str = Field(nullable=True)
+
+
+class TicketMessageVersions(TenantModel, table=True):
+    """
+    Ticket Message Versions for audit and transparency
+    """
+
+    __tablename__ = "ticket_messages_versions"  # type:ignore
+
+    message_id: int = Field(
+        sa_column=Column(ForeignKey("ticket_messages.id", ondelete="CASCADE"))
+    )
+    versions: int = Field(nullable=False)
+    content: str = Field(nullable=False)
