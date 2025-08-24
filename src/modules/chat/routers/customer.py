@@ -24,19 +24,19 @@ async def create_customer( request: Request):
 
     print(f"create customer api {ip}")
 
-    customer = await Customer.find_one(
-        where={"organization_id": organizationId, "ip_address": ip}
-    )
-    if customer:
-        await save_log(ip, customer.id, request)
-        conversation = await Conversation.find_one(where={"customer_id": customer.id})
+    # customer = await Customer.find_one(
+    #     where={"organization_id": organizationId, "ip_address": ip}
+    # )
+    # if customer:
+    #     await save_log(ip, customer.id, request)
+    #     conversation = await Conversation.find_one(where={"customer_id": customer.id})
 
-        return cr.success(
-            data={
-                "customer": customer.to_json(),
-                "conversation": conversation.to_json(),
-            }
-        )
+    #     return cr.success(
+    #         data={
+    #             "customer": customer.to_json(),
+    #             "conversation": conversation.to_json(),
+    #         }
+    #     )
 
     
     

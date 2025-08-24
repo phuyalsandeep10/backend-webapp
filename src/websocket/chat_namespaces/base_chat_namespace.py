@@ -94,9 +94,7 @@ class BaseChatNamespace(BaseNameSpace):
         await redis.delete(self._conversation_from_sid(sid))
 
     async def on_typing(self, sid, data: dict):
-        conversation_id = await self._get_conversation_id_from_sid(sid)
-        if not conversation_id:
-            return False
+     
 
         await self.redis_publish(
             channel=TYPING_CHANNEL,
@@ -105,7 +103,7 @@ class BaseChatNamespace(BaseNameSpace):
                 "sid": sid,
                 "message": data.get("message", ""),
                 "mode": data.get("mode", "typing"),
-                "conversation_id": conversation_id,
+                "conversation_id": data.get('conversation_id'),
                 "organization_id": data.get("organization_id"),
                 "is_customer": self.is_customer,
             },
@@ -129,17 +127,16 @@ class BaseChatNamespace(BaseNameSpace):
         )
 
     async def on_message_seen(self, sid, data: dict):
-        conversation_id = await self._get_conversation_id_from_sid(sid)
         
         messageId = data.get("message_id")
 
         
-        message = await ChatUtils.save_message_seen(int(conversation_id), messageId)
+        message = await ChatUtils.save_message_seen( messageId)
         await self.redis_publish(
             channel=MESSAGE_SEEN_CHANNEL,
             message={
                 "event": "message_seen",
-                "conversation_id": conversation_id,
+                "conversation_id": message.conversation_id,
                 "message_id": messageId,
                 "is_customer":not message.user_id
             },

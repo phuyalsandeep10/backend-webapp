@@ -27,13 +27,13 @@ class ChatUtils:
         return f"conversation-{conversation_id}"
 
     @staticmethod
-    async def save_message_seen(conversation_id: int, message_id: id):
+    async def save_message_seen( message_id: id):
         message = await Message.update(id=message_id, seen=True)
 
         if not message:
             return False
         await Conversation.update(
-            id=conversation_id, attributes={"last_message": message.to_json()}
+            id=message.conversation_id, attributes={"last_message": message.to_json()}
         )
         
         return message
