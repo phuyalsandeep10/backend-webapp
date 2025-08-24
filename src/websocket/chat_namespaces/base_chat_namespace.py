@@ -64,13 +64,10 @@ class BaseChatNamespace(BaseNameSpace):
             namespace=self.namespace,
         )
 
-    async def join_conversation(self, conversationId, sid,user_id:int):
+    async def join_conversation(self, conversationId, sid):
         redis = await self.get_redis()
 
-
         await self.join_group(conversationId, sid)
-
-        await ChatUtils.join_conversation(conversationId, user_id)
 
         await self.redis_publish(
             channel=AGENT_JOIN_CONVERSATION_CHANNEL,
@@ -78,7 +75,7 @@ class BaseChatNamespace(BaseNameSpace):
                 "event": self._join_conversation,
                 "mode": "online",
                 "conversation_id": conversationId,
-                "user_id": sid,
+                "sid": sid,
             },
         )
 
