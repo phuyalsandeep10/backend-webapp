@@ -51,7 +51,7 @@ async def get_conversation_list(organization_id: int):
     try:
         conversations = await Conversation.get_list(organization_id)
         new_list = []
-        # new_conversations = [conv.to_json() for conv in conversations]
+    
         for conversation in conversations:
             data = {
                 "id": conversation.id,
@@ -67,13 +67,15 @@ async def get_conversation_list(organization_id: int):
             }
             members = []
             for member in conversation.members:
-                print(f"member {member.user}")
+       
                 record = {
                     "id": member.id,
                     "conversation_id": member.conversation_id,
                     "user_id": member.user_id,
-                    # "user": member.user.to_json(),
+               
                 }
+                if(member.user):
+                    record["user"] = member.user.to_json()
                 members.append(record)
             data["members"] = members
             new_list.append(data)
