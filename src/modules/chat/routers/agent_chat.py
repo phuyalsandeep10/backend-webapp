@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.get("/conversations")
 async def get_conversations():
-    
+   
     organizationId = TenantContext.get()
 
     records = await get_conversation_list(organizationId)
@@ -34,9 +34,9 @@ async def joined_conversation(conversation_id: int):
 
     if record:
         return cr.success()
-
+        
     record = await ConversationMember.create(
-        {"conversation_id": conversation_id, "user_id": userId}
+        conversation_id=conversation_id, user_id=userId
     )
 
     if not record:
