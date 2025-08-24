@@ -139,19 +139,14 @@ class TicketConversationServices:
     async def _send_email(self, ticket: Ticket, data: dict[str, Any]):
         try:
             # getting the history messages of that ticket_id
-            messages = await TicketMessage.filter(where={"ticket_id": ticket.id})
             email = NotificationFactory.create("email")
-            html_content = {"messages": messages, "ticket": ticket}
-            template = await get_templates(
-                name="ticket/ticket-message.html", content=html_content
-            )
-            await email.send_ticket_email(
+            await email.send_ticket_message_email(
                 subject="Ticket Conversation Response",
                 recipients=data["receiver"],
-                body_html=template,
                 from_email=(ticket.sender_domain, ticket.organization.name),
                 ticket=ticket,
                 mail_type=TicketLogActionEnum.CONFIRMATION_EMAIL_SENT,
+                delay=10,
             )
         except Exception as e:
             logger.exception(e)
