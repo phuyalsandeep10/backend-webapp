@@ -3,7 +3,6 @@ from typing import List
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.exc import OperationalError
-from sqlmodel import ForeignKey
 
 
 class BaseMigration:

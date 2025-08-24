@@ -1,8 +1,7 @@
-from datetime import datetime
-from typing import Any, List
-
-from src.common.utils import hash_password
 from src.models import User
+from src.common.utils import hash_password
+from datetime import datetime
+
 
 user_data = [
     {
@@ -27,11 +26,9 @@ user_data = [
 async def user_seed_dummy():
     # checking if test user exists or not
     for user in user_data:
-
         user_exist = await User.find_one(where={"email": user["email"]})
 
         if not user_exist:
-
             usr = await User.create(
                 email=user["email"],
                 name=user["name"],

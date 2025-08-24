@@ -16,16 +16,15 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class OrganizationinvitationMigration(BaseMigration):
-
     table_name = "org_invitations"
 
     def __init__(self):
         super().__init__(revision="20250801_083808", down_revision="20250801_080309")
-        self.common_columns()
-        self.foreign("organization_id", "sys_organizations")
+        self.tenant_columns()
         self.string("email", nullable=False)
+        self.string("name", nullable=False)
         self.string("status", nullable=False)
-        self.foreign("invited_by_id", "sys_users")
+        self.foreign("invited_by_id", "sys_users", ondelete="CASCADE")
         self.date_time("expires_at", nullable=False)
         self.date_time("activity_at", nullable=True)
         self.json("role_ids", nullable=False, default=[])

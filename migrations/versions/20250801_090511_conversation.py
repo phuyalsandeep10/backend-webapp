@@ -16,7 +16,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class ConversationMigration(BaseMigration):
-
     table_name = "org_conversations"
 
     def __init__(self):
@@ -26,6 +25,8 @@ class ConversationMigration(BaseMigration):
         self.foreign("customer_id", "org_customers")
         self.string("name", nullable=True)
         self.foreign("assigned_user_id", "sys_users")
+        self.json("attributes", nullable=True, default={})
+        self.boolean("is_resolved", nullable=False, default=True)
 
 
 def upgrade() -> None:

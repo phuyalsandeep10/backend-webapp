@@ -8,6 +8,10 @@ from src.modules.organizations.router import router as organization_router
 from src.modules.team.router import router as team_router
 from src.modules.ticket.routers import router as ticket_router
 from src.modules.upload.router import router as upload_router
+from src.modules.staff_managemet.routers.permission_group import (
+    router as permission_router,
+)
+from src.modules.chat.routers.agent_chat import router as agent_router
 
 
 def add_routers(app: FastAPI):
@@ -22,4 +26,8 @@ def add_routers(app: FastAPI):
     app.include_router(
         conversation_router, prefix="/conversations", tags=["conversations"]
     )
+    app.include_router(agent_router, prefix="/agent-chat", tags=["agents"])
     app.include_router(ticket_router, tags=["ticket"])
+    app.include_router(
+        permission_router, prefix="/staff-management", tags=["staff-management"]
+    )

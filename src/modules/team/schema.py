@@ -1,6 +1,8 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
+
 
 from src.modules.auth.schema import UserOutSchema
+
 
 
 class TeamSchema(BaseModel):
@@ -10,6 +12,12 @@ class TeamSchema(BaseModel):
 
 class TeamMemberSchema(BaseModel):
     user_ids: list[int] = Field([])
+
+
+class TeamResponseOutSchema(BaseModel):
+    id: int
+    name: str
+    description: str | None
 
 
 class TeamMemberOutSchema(BaseModel):

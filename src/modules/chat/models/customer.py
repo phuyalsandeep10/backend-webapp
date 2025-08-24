@@ -1,10 +1,8 @@
 from typing import TYPE_CHECKING, List, Optional
 
 from sqlmodel import Field, Relationship
-from typing import Optional, TYPE_CHECKING, List
 from datetime import datetime
 from src.common.models import CommonModel
-from typing import Optional, TYPE_CHECKING, List
 from sqlalchemy import Column, JSON
 
 

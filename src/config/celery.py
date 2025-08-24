@@ -1,9 +1,8 @@
-import os
 
 from celery.app import Celery
-from celery.schedules import crontab
 
 from src.config.settings import settings
+
 
 redis_url = settings.CELEREY_BROKER_URL
 

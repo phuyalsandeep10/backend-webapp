@@ -1,8 +1,6 @@
-import json
-
 import socketio
-
 from src.config.redis.redis_listener import get_redis
+from src.services.redis_service import RedisService
 
 
 class BaseNameSpace(socketio.AsyncNamespace):
@@ -18,12 +16,4 @@ class BaseNameSpace(socketio.AsyncNamespace):
     async def redis_publish(self, channel: str, message: dict):
         """Direct Redis pub/sub publish - more reliable than broadcaster library"""
 
-        redis_client = await self.get_redis()
-
-        try:
-            result = await redis_client.publish(channel, json.dumps(message))
-            print(f"📡 Published to Redis channel '{channel}': {result} subscribers")
-            return result
-        except Exception as e:
-            print(f"❌ Redis publish failed: {e}")
-            return 0
+        await RedisService.redis_publish(channel=channel, message=message)

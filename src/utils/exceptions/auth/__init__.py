@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 
+
 # Profile update specific exceptions
 class UserNotFoundException(HTTPException):
     """Exception raised when user is not found"""

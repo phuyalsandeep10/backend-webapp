@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 from fastapi import HTTPException
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
+from starlette.status import HTTP_403_FORBIDDEN
 
 from src.modules.ticket.enums import TicketLogActionEnum
 from src.modules.ticket.models import TicketStatus
@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 class TicketStatusService:
-
     async def list_ticket_status(self):
         """
         List all the ticket status on the basis of the organization
@@ -174,7 +173,7 @@ class TicketStatusService:
         try:
             tickets = await Ticket.filter(where={"status_id": status_id})
             return tickets
-        except Exception as e:
+        except Exception:
             return None
 
 

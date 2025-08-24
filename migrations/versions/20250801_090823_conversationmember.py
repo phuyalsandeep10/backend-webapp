@@ -16,7 +16,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class ConversationmemberMigration(BaseMigration):
-
     table_name = "org_conversation_members"
 
     def __init__(self):

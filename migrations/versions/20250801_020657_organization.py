@@ -17,7 +17,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 class OrganizationMigration(BaseMigration):
-
     table_name = "sys_organizations"
 
     def __init__(self):
@@ -28,12 +27,12 @@ class OrganizationMigration(BaseMigration):
         self.string("description", nullable=True, default=None)
         self.string("slug", nullable=False, unique=True, index=True)
         self.string("logo", nullable=True, default=None)
-        self.string("domain", nullable=False, index=True)
+        self.string("domain", nullable=False, index=True, default=None)
         self.string("contact_email", nullable=True, default=None)
         self.string("contact_dial_code")
         self.string("contact_phone", nullable=True, default=None)
-        self.string("address")
-        self.string("purpose")
+        self.string("address", nullable=True, default=None)
+        self.string("purpose", nullable=True, default=None)
         self.string("identifier", unique=True, nullable=False, index=True)
         self.string("time_zone")
 

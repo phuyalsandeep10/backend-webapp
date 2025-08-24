@@ -13,7 +13,6 @@ async def department_team_seed_dummy():
     )
 
     if not record:
-
         await Team.create(
             name="test",
             description="THis is test team",
@@ -24,7 +23,6 @@ async def department_team_seed_dummy():
         print("Test team 1 already exists")
 
     if not record2:
-
         await Team.create(
             name="test2",
             description="THis is test team2",

@@ -1,7 +1,7 @@
 import httpx
 
+
 class IPService:
-    
     @staticmethod
     def get_ip_info(ip_address: str) -> dict:
         """Get geolocation and ISP info for IP address"""

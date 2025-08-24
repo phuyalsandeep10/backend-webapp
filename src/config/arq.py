@@ -1,4 +1,3 @@
-from arq import cron
 from arq.connections import RedisSettings
 
 from src.tasks.ticket_task import broadcast_ticket_message, send_ticket_task_email

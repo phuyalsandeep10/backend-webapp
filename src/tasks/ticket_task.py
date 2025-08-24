@@ -8,7 +8,6 @@ from sqlalchemy.orm import selectinload
 from src.factory.notification import NotificationFactory
 from src.modules.sendgrid.services import send_sendgrid_email
 from src.modules.ticket.enums import TicketLogActionEnum, TicketLogEntityEnum
-from src.modules.ticket.models.ticket import Ticket
 from src.modules.ticket.models.ticket_log import TicketLog
 from src.modules.ticket.models.ticket_message import TicketMessage
 from src.socket_config import ticket_ns
