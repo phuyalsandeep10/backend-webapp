@@ -22,6 +22,5 @@ jobs:
           script: |
             cd /var/www/chatboq_portal/chatboq-service
             git pull origin main
-            docker-compose down
             docker-compose up -d --build
             docker exec chatboq_backend python manage.py migrate
