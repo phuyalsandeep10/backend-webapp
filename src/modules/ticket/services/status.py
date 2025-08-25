@@ -142,9 +142,7 @@ class TicketStatusService:
         """
         Returns the default close category ticket status
         """
-        ticket_status = await TicketStatus.find_one_without_tenant(
-            where={"status_category": name}
-        )
+        ticket_status = await TicketStatus.find_one(where={"status_category": name})
         if not ticket_status:
             raise TicketStatusNotFound(
                 f"No default ticket status has been set with {name} status category"
