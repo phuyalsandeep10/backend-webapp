@@ -13,7 +13,6 @@ from starlette.status import HTTP_404_NOT_FOUND
 from src.common.context import TenantContext, UserContext
 from src.db.config import async_session
 
-
 T = TypeVar("T")
 
 
@@ -33,8 +32,6 @@ def case_insensitive(attributes):
                 return result.scalars().all()
 
         return wrapper
-    
-    
 
     return decorator
 
@@ -259,7 +256,7 @@ class BaseModel(SQLModel):
         async with async_session() as session:
             result = await session.execute(sa.text(query))
             rows = result.mappings().all() if result else []
-            
+
             serialized = []
             for row in rows:
                 r = dict(row)
@@ -484,5 +481,4 @@ class TenantModel(CommonModel):
         user_id = UserContext.get()
         if "organization_id" not in where:  # to prevent overriding
             where["organization_id"] = organization_id
-            where["updated_by_id"] = user_id
         return await super().soft_delete(where)
