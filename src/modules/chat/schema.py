@@ -41,3 +41,8 @@ class EditMessageSchema(BaseModel):
     content: str
     reply_to_id: Optional[int] = None
 
+class CustomerUpdateSchema(BaseModel):
+    email: str
+    name: Optional[str] = None
+    phone: Optional[str] = None
+

@@ -6,7 +6,7 @@ from src.seed import organization
 from src.utils.response import CustomResponse as cr
 from src.utils.common import get_location
 from ..services.message_service import MessageService
-from ..schema import MessageSchema, EditMessageSchema
+from ..schema import MessageSchema, EditMessageSchema, CustomerUpdateSchema
 from src.common.context import UserContext, TenantContext
 from src.models import Message
 
@@ -117,6 +117,13 @@ async def customer_visit(customer_id: int, request: Request):
     return cr.success(data=log.to_json())
 
 
+@router.put("/{customer_id}/update")
+async def update_customer(customer_id: int, payload: CustomerUpdateSchema):
+    customer = await Customer.get(customer_id)
+    if not customer:
+        return cr.error(message="Customer Not found")
+    customer = await Customer.update(customer_id,**payload.dict(exclude_unset=True))
+    return cr.success(data=customer.to_json())
 
 
 
