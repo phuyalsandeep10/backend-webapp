@@ -129,6 +129,7 @@ class ChatSubscriber:
     async def message(self):
         print(f"📨 Processing message event: {self.event}")
         print(f"📨 Message payload: {self.payload}")
+        print(f"📨 Is customer message: {self.payload.get('is_customer')}")
         
         # Check if this is a customer message and check agent availability
         if self.payload.get("is_customer"):
@@ -144,22 +145,20 @@ class ChatSubscriber:
                 return
                 
             # Get the agent namespace instance to check availability
-            from ..chat_namespaces.agent_chat_namespace import AgentChatNamespace
-            
+            room_name = ChatUtils.conversation_group(conversation_id)
+            room_members = self.sio.manager.rooms.get(self.agent_namespace, {}).get(room_name, set())
+            print(f"Members in agent room {room_name}: {room_members}")
             # Create a temporary instance to check availability
-            agent_ns = AgentChatNamespace("/agent-chat")
             
-            # Check if any agents are in this conversation
-            agent_sids = await agent_ns.get_conversation_sids(conversation_id)
             
-            if not agent_sids:
+            if not room_members:
                 # No agents available, send immediate notification
                 await self._send_agent_unavailable_notification(conversation_id)
                 # Also notify all agents about the new customer message
                 await self._notify_agents_about_customer_message(conversation_id)
             else:
-                print(f"✅ {len(agent_sids)} agent(s) available in conversation {conversation_id}")
-                
+                print(f"✅ {len(room_members)} agent(s) available in conversation {conversation_id}")
+
         except Exception as e:
             print(f"⚠️ Error checking agent availability for message: {e}")
 
