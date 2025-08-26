@@ -11,6 +11,7 @@ from ..channel_names import (
 )
 
 
+
 class ChatSubscriber:
     agent_namespace = AGENT_CHAT_NAMESPACE
     customer_namespace = CUSTOMER_CHAT_NAMESPACE
@@ -30,6 +31,8 @@ class ChatSubscriber:
         print(f"emit to room {room} ")
         print(f"emit to namespace {namespace}")
         print(f"emit to event {self.event}")
+        print(f"skip to sid {sid}")
+        
         
         # print(f"emit to payload {self.payload}")
 
@@ -64,9 +67,15 @@ class ChatSubscriber:
         )
 
     async def customer_message_broadcast(self):
+        print("customer message broadcast")
+   
+    
         room_name = ChatUtils.conversation_group(
             conversation_id=self.payload.get("conversation_id")
         )
+        sids = self.sio.manager.rooms.get(self.customer_namespace, {}).get(room_name, set())
+        print(f"sids {sids}")
+     
         await self.emit(room_name, namespace=self.customer_namespace)
 
     async def broadcast_conversation(self):

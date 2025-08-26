@@ -26,12 +26,9 @@ class MessageService:
             return ''
         return result.decode('utf-8')
 
-    def make_msg_payload(self,record):
-        
+    def make_msg_payload(self,record): 
         payload = record.to_json()
         
-
-
         if record.user:
             payload["user"] = {
                 "id": record.user.id,
@@ -90,6 +87,7 @@ class MessageService:
         
 
         payload = await self.get_message_payload(new_message.id)
+        payload['customer_id'] = record.customer_id
 
 
         await RedisService.redis_publish(

@@ -1,6 +1,4 @@
 from src.models import Message, MessageAttachment, Conversation, ConversationMember
-
-
 class ChatUtils:
     @staticmethod
     def customer_notification_group(org_id: int):
@@ -25,6 +23,9 @@ class ChatUtils:
     @staticmethod
     def get_room_channel(conversation_id: int) -> str:
         return f"conversation-{conversation_id}"
+
+
+
 
     @staticmethod
     async def save_message_seen( message_id: id):
@@ -54,6 +55,8 @@ class ChatUtils:
                 conversation_id=conversation_id,
                 user_id=user_id
             )
+
+
         
 
     @staticmethod

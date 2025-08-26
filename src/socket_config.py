@@ -2,7 +2,7 @@ import socketio
 from socketio import AsyncRedisManager
 from socketio.redis_manager import redis
 
-from src.config.redis.redis_listener import get_redis, redis_listener
+from src.config.redis.redis_listener import  redis_listener
 from src.config.settings import settings
 from src.websocket.chat_namespaces.agent_chat_namespace import AgentChatNamespace
 from src.websocket.chat_namespaces.customer_chat_namespace import CustomerChatNamespace

@@ -1,3 +1,4 @@
+from src.services.redis_service import RedisService
 from .base_namespace import BaseNameSpace
 from ..chat_utils import ChatUtils
 from ..channel_names import TYPING_CHANNEL, TYPING_STOP_CHANNEL, MESSAGE_SEEN_CHANNEL, AGENT_JOIN_CONVERSATION_CHANNEL
@@ -5,6 +6,8 @@ from ..channel_names import TYPING_CHANNEL, TYPING_STOP_CHANNEL, MESSAGE_SEEN_CH
 
 REDIS_SID_KEY = "ws:chat:sid:"  # chat:sid:{sid} -> conversation_id
 REDIS_ROOM_KEY = "ws:chat:room:"  # chat:room:{conversation_id} -> set of sids
+
+
 
 
 class BaseChatNamespace(BaseNameSpace):
@@ -84,8 +87,7 @@ class BaseChatNamespace(BaseNameSpace):
 
     async def leave_conversation(self, conversationId: int, sid: int):
         redis = await self.get_redis()
-        
-
+    
         await self.leave_room(
             sid=sid,
             room=ChatUtils.conversation_group(conversationId),

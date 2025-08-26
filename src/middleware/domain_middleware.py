@@ -49,7 +49,7 @@ class DomainMiddleware(BaseHTTPMiddleware):
             return Response("Forbidden: Domain not allowed", status_code=403)
 
 
-        print(f"allowed domains: {self.allowed_domains}")
+    
         # Check if origin is in allowed domains
         if origin in self.allowed_domains:
             return await call_next(request)
