@@ -17,7 +17,8 @@ async def start_listener():
     await pubsub.subscribe("sla_channel")
 
     async for msg in pubsub.listen():
-        await broadcast(msg["data"])
+        print(f"Received SLA message: {msg['data']}")
+        # TODO: Implement SLA message handling
 
 
 redis_client = None
@@ -34,21 +35,22 @@ async def redis_listener(sio):
     print("subscriber listen")
 
     redis = await get_redis()
-    await redis.flushall()
-    await redis.flushdb()
+    # Don't clear Redis data on startup - this was causing issues
+    # await redis.flushall()
+    # await redis.flushdb()
     pattern = "ws:*"
 
     # Get all matching keys
     keys = await redis.keys(pattern)
     print(f"keys {keys}")
     pubsub = redis.pubsub()
-    # Subscribe to ALL channels
-    await pubsub.psubscribe("*")  # Wildcard for all channels
+    # Subscribe to chat channels only to avoid noise
+    await pubsub.psubscribe("chat-*")  # Only chat channels
 
     # await pubsub.subscribe("notifications", "chat:room1")
 
     async for message in pubsub.listen():
-        # print(f"Received on {message['channel']}: {message['data']} and message type {message['type']}")
+        print(f"Received message type: {message['type']} on channel: {message['channel']}")
 
         if message["type"] != "pmessage":
             print(f"Received on {message['channel']}: {message['data']}")
@@ -61,11 +63,17 @@ async def redis_listener(sio):
             except UnicodeDecodeError:
                 print(f"⚠ Non-UTF8 channel name: {channel!r}")
                 continue
+        elif not isinstance(channel, str):
+            print(f"⚠ Unexpected channel type: {type(channel)}")
+            continue
 
         if channel == "/0.celeryev/worker.heartbeat" or channel == "socketio":
             continue
 
-        data = message["data"]
+        data = message.get("data")
+        if data is None:
+            print("⚠ No data in message")
+            continue
 
 
         try:
@@ -74,21 +82,35 @@ async def redis_listener(sio):
             elif isinstance(data, (int, float)):
                 payload = {"value": data}
             elif isinstance(data, str):
-                payload = json.loads(data)
-
+                try:
+                    payload = json.loads(data)
+                except json.JSONDecodeError:
+                    payload = {"raw": data}
             else:
-                payload = {"raw": json.loads(data.decode("utf-8"))}
+                try:
+                    payload = {"raw": json.loads(data.decode("utf-8"))}
+                except (json.JSONDecodeError, AttributeError):
+                    payload = {"raw": str(data)}
 
-        except json.JSONDecodeError:
-            print("json decorder error")
-            payload = {"raw": data}
+        except Exception as e:
+            print(f"Error parsing payload: {e}")
+            payload = {"raw": str(data)}
+            
         if payload.get("raw"):
             payload = payload.get("raw")
 
-
         if isinstance(payload, str):
-            payload = json.loads(payload)
+            try:
+                payload = json.loads(payload)
+            except json.JSONDecodeError:
+                payload = {"raw": payload}
 
         if is_chat_channel(channel):
-            await chat_subscriber(sio, channel=channel, payload=payload)
+            try:
+                print(f"🔔 Processing chat channel: {channel}")
+                await chat_subscriber(sio, channel=channel, payload=payload)
+            except Exception as e:
+                print(f"❌ Error processing chat channel {channel}: {e}")
+                import traceback
+                traceback.print_exc()
             continue

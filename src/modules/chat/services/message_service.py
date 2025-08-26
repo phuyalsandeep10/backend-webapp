@@ -20,10 +20,13 @@ class MessageService:
 
 
     async def get_user_sid(self, userId: int):
+        if not userId:
+            return None
+            
         redis = await RedisService.get_redis()
         result = await redis.get(ChatUtils._user_add_sid(userId))
         if not result:
-            return ''
+            return None
         return result.decode('utf-8')
 
     def make_msg_payload(self,record): 
@@ -55,7 +58,10 @@ class MessageService:
             "id": messageId,
         }, options=[selectinload(Message.reply_to), selectinload(Message.user)])
         
-        userSid = await self.get_user_sid(self.user_id)
+        # Only get user SID if user_id is present (agent messages)
+        userSid = None
+        if self.user_id:
+            userSid = await self.get_user_sid(self.user_id)
 
         payload = self.make_msg_payload(record)
         print(f"payload {payload}")
@@ -88,6 +94,10 @@ class MessageService:
 
         payload = await self.get_message_payload(new_message.id)
         payload['customer_id'] = record.customer_id
+        
+        # Set is_customer flag based on whether user_id is present
+        # If user_id is None, it's a customer message
+        payload['is_customer'] = self.user_id is None
 
 
         await RedisService.redis_publish(
@@ -108,6 +118,9 @@ class MessageService:
         await Message.update(message_id, **updated_data)
 
         payload = await self.get_message_payload(message_id)
+        
+        # Set is_customer flag based on whether user_id is present
+        payload['is_customer'] = self.user_id is None
 
         await RedisService.redis_publish(
             channel=MESSAGE_CHANNEL, message={"event": "edit-message", **payload}

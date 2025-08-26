@@ -89,7 +89,6 @@ async def customer_visit(customer_id: int, request: Request):
     header = request.headers.get("X-Forwarded-For")
     ip = header.split(",")[0].strip() if header else request.client.host
     print(f"visit api {ip}")
-
     customer = await Customer.get(customer_id)
     if not customer:
         return cr.error(message="Customer Not found")
@@ -128,13 +127,13 @@ async def initialize_conversation(customer_id: int,payload:MessageSchema):
         customer_id=customer_id,
         organization_id=organizationId,
     )
-    sid = await ConversationService.get_customer_sid(customer_id)
     
-    await ConversationService.join_customer_room(sid,record.id)
+    # Note: Customer will automatically join the room when they connect to WebSocket
+    # via the _join_existing_conversations method in CustomerChatNamespace
+    print(f"✅ Created conversation {record.id} for customer {customer_id}")
     
     service = MessageService(organization_id=organizationId, payload=payload)
     message = await service.create(record.id)
-    
     
     return cr.success(data={
         "conversation": record.to_json(),

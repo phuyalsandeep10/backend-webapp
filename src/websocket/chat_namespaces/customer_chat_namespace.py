@@ -50,16 +50,34 @@ class CustomerChatNamespace(BaseChatNamespace):
             return False
         redis = await self.get_redis()
 
-        await redis.set(f"customer_id:{customer_id}",sid)
- 
+        await redis.set(f"customer_id:{customer_id}", sid)
         
-
+        # Check if customer has any active conversations and join them
+        await self._join_existing_conversations(customer_id, sid)
+ 
         # notify users in the same workspace that a customer has connected
         await self._notify_to_users(organization_id)
 
         # notify users with a specific customer landing event
-
         print("✅ Published customer_land event to ")
+        print(f"✅ Customer {customer_id} connected with SID {sid}")
 
         return True
+
+    async def _join_existing_conversations(self, customer_id: int, sid: str):
+        """Join any existing conversations for this customer"""
+        try:
+            from src.modules.chat.models.conversation import Conversation
+            from src.services.conversation_service import ConversationService
+            
+            # Get active conversations for this customer
+            conversations = await Conversation.filter(where={"customer_id": customer_id, "is_resolved": False})
+            
+            for conversation in conversations:
+                room_name = f"conversation-{conversation.id}"
+                await self.enter_room(sid=sid, room=room_name, namespace=self.namespace)
+                print(f"✅ Customer {customer_id} joined existing conversation room: {room_name}")
+                
+        except Exception as e:
+            print(f"⚠️ Error joining existing conversations: {e}")
 

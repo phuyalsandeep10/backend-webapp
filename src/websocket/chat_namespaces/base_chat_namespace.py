@@ -98,7 +98,11 @@ class BaseChatNamespace(BaseNameSpace):
         await redis.delete(self._conversation_from_sid(sid))
 
     async def on_typing(self, sid, data: dict):
-     
+        conversation_id = data.get('conversation_id')
+        organization_id = data.get("organization_id")
+        
+        if not conversation_id or not organization_id:
+            return False
 
         await self.redis_publish(
             channel=TYPING_CHANNEL,
@@ -107,14 +111,14 @@ class BaseChatNamespace(BaseNameSpace):
                 "sid": sid,
                 "message": data.get("message", ""),
                 "mode": data.get("mode", "typing"),
-                "conversation_id": data.get('conversation_id'),
-                "organization_id": data.get("organization_id"),
+                "conversation_id": conversation_id,
+                "organization_id": organization_id,
                 "is_customer": self.is_customer,
             },
         )
 
-    async def on_stop_typing(self, sid,data:dict):
-        conversation_id =  data.get('conversation_id')
+    async def on_stop_typing(self, sid, data: dict):
+        conversation_id = data.get('conversation_id')
         print(f"conversation id {conversation_id}")
 
         if not conversation_id:
@@ -132,17 +136,21 @@ class BaseChatNamespace(BaseNameSpace):
         )
 
     async def on_message_seen(self, sid, data: dict):
-        
         messageId = data.get("message_id")
-
         
-        message = await ChatUtils.save_message_seen( messageId)
+        if not messageId:
+            return False
+        
+        message = await ChatUtils.save_message_seen(messageId)
+        if not message:
+            return False
+            
         await self.redis_publish(
             channel=MESSAGE_SEEN_CHANNEL,
             message={
                 "event": "message_seen",
                 "conversation_id": message.conversation_id,
                 "message_id": messageId,
-                "is_customer":not message.user_id
+                "is_customer": not message.user_id  # If no user_id, it's a customer message
             },
         )

@@ -17,11 +17,18 @@ class ConversationService:
 
     @staticmethod
     async def join_customer_room(sid,conversation_id):
+        if not sid:
+            print(f"❌ Cannot join room: SID is None for conversation {conversation_id}")
+            return False
+            
         try:
             print(f"join customer room {sid} {conversation_id}")
             await sio.enter_room(sid=sid, room=ChatUtils.conversation_group(conversation_id), namespace=CUSTOMER_CHAT_NAMESPACE)
+            print(f"✅ Customer {sid} successfully joined room {ChatUtils.conversation_group(conversation_id)}")
+            return True
         except Exception as e:
             print(f"❌ Join customer room failed: {e}")
+            return False
 
     @staticmethod
     async def leave_customer_room(sid,conversation_id):

@@ -114,9 +114,12 @@ async def send_ticket_task_message_email(
 async def broadcast_ticket_message(user_email: EmailStr, message: str, ticket_id: int):
     try:
         logger.info("Broadcasting ticket message")
-        await ticket_ns.broadcast_message(
-            user_email=user_email, message=message, ticket_id=ticket_id
-        )
+        if ticket_ns:
+            await ticket_ns.broadcast_message(
+                user_email=user_email, message=message, ticket_id=ticket_id
+            )
+        else:
+            logger.warning("Ticket namespace not available, skipping broadcast")
     except Exception as e:
         logger.error(e)
         logger.error("Error while broadcasting ticket message")
