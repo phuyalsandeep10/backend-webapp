@@ -142,6 +142,7 @@ class BaseChatNamespace(BaseNameSpace):
         )
 
     async def on_message_seen(self, sid, data: dict):
+        print(f"message seen {sid}")
         messageId = data.get("message_id")
         
         if not messageId:
@@ -157,7 +158,8 @@ class BaseChatNamespace(BaseNameSpace):
                 "event": "message_seen",
                 "conversation_id": message.conversation_id,
                 "message_id": messageId,
-                "is_customer": not message.user_id  # If no user_id, it's a customer message
+                "is_customer": not message.user_id , # If no user_id, it's a customer message,
+                "sid": sid
             },
         )
 

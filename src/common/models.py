@@ -42,8 +42,14 @@ class BaseModel(SQLModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
     def serialize_for_json(self, value: Any) -> Any:
+        from datetime import timezone
         if isinstance(value, datetime):
-            return value.isoformat()
+            # Ensure datetime is in UTC and ISO 8601 with 'Z' suffix
+            if value.tzinfo is None:
+                value = value.replace(tzinfo=timezone.utc)
+            else:
+                value = value.astimezone(timezone.utc)
+            return value.isoformat().replace('+00:00', 'Z')
         if isinstance(value, list):
             return [self.serialize_for_json(item) for item in value]
         if isinstance(value, dict):
