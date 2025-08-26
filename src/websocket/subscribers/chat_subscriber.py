@@ -318,6 +318,9 @@ async def chat_subscriber(sio: socketio.AsyncServer, channel: str, payload: dict
     elif channel == MESSAGE_SEEN_CHANNEL:
         print("👁️ Processing message seen")
         await subscriber.message_seen()
+    elif channel == CONVERSATION_UNRESOLVED_CHANNEL:
+        print("🔄 Processing conversation unresolved")
+        await subscriber.conversation_unresolved()
     
     else:
         print(f"⚠️ Unknown channel: {channel}")
