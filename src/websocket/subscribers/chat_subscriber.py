@@ -8,7 +8,8 @@ from ..channel_names import (
     TYPING_STOP_CHANNEL,
     MESSAGE_SEEN_CHANNEL,
     AGENT_JOIN_CONVERSATION_CHANNEL,
-    AGENT_AVAILABILITY_CHANNEL
+    AGENT_AVAILABILITY_CHANNEL,
+    CONVERSATION_UNRESOLVED_CHANNEL
 )
 
 
@@ -274,7 +275,13 @@ class ChatSubscriber:
             await self.emit(room_name, namespace=self.customer_namespace, sid=self.payload.get("sid"))
         else:
             await self.emit(room_name, namespace=self.agent_namespace, sid=self.payload.get("sid"))
+
+    async def conversation_unresolved(self):
+        print("🔄 Processing conversation unresolved event"
+        )
+        await self.agent_notification()
         
+
 
 
 async def chat_subscriber(sio: socketio.AsyncServer, channel: str, payload: dict):

@@ -116,6 +116,9 @@ async def create_conversation_message(conversation_id: int, payload: MessageSche
     userId = UserContext.get()
     service = MessageService(organization_id=organizationId, payload=payload,user_id=userId)
     response = await service.create(conversation_id)
+
+    
+
     return cr.success(data=response)
 
 
@@ -134,6 +137,7 @@ async def initialize_conversation(customer_id: int,payload:MessageSchema):
     
     service = MessageService(organization_id=organizationId, payload=payload)
     message = await service.create(record.id)
+
     
     return cr.success(data={
         "conversation": record.to_json(),
