@@ -1,12 +1,13 @@
 from src.services.redis_service import RedisService
 from src.models import Conversation, Message, MessageAttachment
 from src.utils.response import CustomResponse as cr
-from src.websocket.channel_names import MESSAGE_CHANNEL
+from src.websocket.channel_names import MESSAGE_CHANNEL,CONVERSATION_UNRESOLVED_CHANNEL
 from ..schema import MessageSchema
 from typing import Optional
 from sqlalchemy.orm import selectinload
 from src.services.redis_service import RedisService
 from src.websocket.chat_utils import ChatUtils
+
 
 
 class MessageService:
@@ -20,18 +21,18 @@ class MessageService:
 
 
     async def get_user_sid(self, userId: int):
+        if not userId:
+            return None
+            
         redis = await RedisService.get_redis()
         result = await redis.get(ChatUtils._user_add_sid(userId))
         if not result:
-            return ''
+            return None
         return result.decode('utf-8')
 
-    def make_msg_payload(self,record):
-        
+    def make_msg_payload(self,record): 
         payload = record.to_json()
         
-
-
         if record.user:
             payload["user"] = {
                 "id": record.user.id,
@@ -58,10 +59,12 @@ class MessageService:
             "id": messageId,
         }, options=[selectinload(Message.reply_to), selectinload(Message.user)])
         
-        userSid = await self.get_user_sid(self.user_id)
-
+        # Only get user SID if user_id is present (agent messages)
+        userSid = None
+        if self.user_id:
+            userSid = await self.get_user_sid(self.user_id)
+        
         payload = self.make_msg_payload(record)
-        print(f"payload {payload}")
         payload["sid"] = userSid
         payload["event"] = "receive-message"
         
@@ -90,7 +93,18 @@ class MessageService:
         
 
         payload = await self.get_message_payload(new_message.id)
+        payload['customer_id'] = record.customer_id
+        payload['organization_id'] = self.organization_id
+        
+        # Set is_customer flag based on whether user_id is present
+        # If user_id is None, it's a customer message
+        payload['is_customer'] = self.user_id is None
 
+        if payload['is_customer'] and record.is_resolved:
+            conversation = await Conversation.update(conversation_id, is_resolved=False)
+            await RedisService.redis_publish(
+                channel=CONVERSATION_UNRESOLVED_CHANNEL, message={"conversation_id": conversation_id,"event":"resolved-conversation",**conversation.to_json()}
+            )
 
         await RedisService.redis_publish(
             channel=MESSAGE_CHANNEL, message=payload
@@ -107,9 +121,12 @@ class MessageService:
             return cr.error(message="Message Not found")
 
         updated_data = {**self.payload.dict()}
-        await Message.update(message_id, **updated_data)
+        await Message.update(message_id, **updated_data, edited_content=record.content)
 
         payload = await self.get_message_payload(message_id)
+        
+        # Set is_customer flag based on whether user_id is present
+        payload['is_customer'] = self.user_id is None
 
         await RedisService.redis_publish(
             channel=MESSAGE_CHANNEL, message={"event": "edit-message", **payload}

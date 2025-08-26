@@ -31,7 +31,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
         
-        print(f"Exempt paths: {self.extemp_paths}")
 
         # skip protected or extempted paths
         if self.extemp_paths and any(

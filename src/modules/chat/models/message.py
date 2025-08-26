@@ -20,6 +20,7 @@ class Message(CommonModel, table=True):
         back_populates="messages",
         sa_relationship_kwargs={"foreign_keys": "[Message.user_id]"},
     )
+    edited_content:Optional[str] = Field(max_length=255, nullable=True)
 
     seen: bool = Field(default=False)
 

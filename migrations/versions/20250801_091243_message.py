@@ -26,6 +26,7 @@ class MessageMigration(BaseMigration):
         self.foreign("user_id", "sys_users")
         self.string("content", nullable=False)
         self.foreign("customer_id", "org_customers")
+        self.string('edited_content')
         self.string("feedback", nullable=True)
         self.boolean("seen", nullable=False, default=False)
         self.foreign("reply_to_id", "org_messages", nullable=True)

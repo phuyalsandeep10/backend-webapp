@@ -305,6 +305,12 @@ class TicketSLAServices:
         Responsible for sending alert message to all the broadcast via a socket
         """
         logger.info("Sending the broadcast")
+        
+        # Check if alert namespace is available
+        if not alert_ns:
+            logger.warning("Alert namespace not available, skipping broadcast")
+            return
+            
         sc_user_ids = (
             alert_ns.user_ids
         )  # list of user_ids connected to the alertnamespace socket

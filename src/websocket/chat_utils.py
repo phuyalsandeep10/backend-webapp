@@ -1,6 +1,4 @@
 from src.models import Message, MessageAttachment, Conversation, ConversationMember
-
-
 class ChatUtils:
     @staticmethod
     def customer_notification_group(org_id: int):
@@ -26,8 +24,11 @@ class ChatUtils:
     def get_room_channel(conversation_id: int) -> str:
         return f"conversation-{conversation_id}"
 
+
+
+
     @staticmethod
-    async def save_message_seen( message_id: id):
+    async def save_message_seen(message_id: int):
         message = await Message.update(id=message_id, seen=True)
 
         if not message:
@@ -39,7 +40,7 @@ class ChatUtils:
         return message
 
     @staticmethod
-    async def join_conversation(conversation_id: int, user_id: str):
+    async def join_conversation(conversation_id: int, user_id: int):
         print(f"join conversation in db and user_id {user_id}")
         conversation_id = int(conversation_id)
 
@@ -48,13 +49,11 @@ class ChatUtils:
             "user_id": user_id
         })
         
-
         if not conversation_member:
             await ConversationMember.create(
                 conversation_id=conversation_id,
                 user_id=user_id
             )
-        
 
     @staticmethod
     async def save_message_db(conversation_id: int, payload: dict):
@@ -85,6 +84,20 @@ class ChatUtils:
                 file_type=file.get("file_type"),
                 file_size=file.get("file_size"),
             )
-        await ChatUtils.save_last_message(conversation_id, payload.get("message_id"))
+        await ChatUtils.save_last_message(conversation_id, msg.id)
 
         return msg
+
+    @staticmethod
+    async def save_last_message(conversation_id: int, message_id: int):
+        """Update the last_message attribute of a conversation"""
+        try:
+            message = await Message.find_one({"id": message_id})
+            if message:
+                await Conversation.update(
+                    id=conversation_id, 
+                    attributes={"last_message": message.to_json()}
+                )
+                print(f"✅ Updated last_message for conversation {conversation_id}")
+        except Exception as e:
+            print(f"⚠️ Error updating last_message: {e}")

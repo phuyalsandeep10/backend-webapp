@@ -8,6 +8,7 @@ from ..services.message_service import MessageService
 
 from ..models.conversation import get_conversation_list
 
+from src.services.conversation_service import ConversationService
 
 
 
@@ -128,3 +129,21 @@ async def resolved_conversation(conversation_id: int):
     record = await Conversation.update(conversation_id, is_resolved=True)
 
     return cr.success(data=record.to_json())
+
+
+@router.post('/{customer_id}/initialize-conversation')
+async def initialize_conversation(customer_id: int,payload:MessageSchema):
+    organizationId = TenantContext.get()
+    payload.customer_id = customer_id
+    record = await Conversation.create(
+        customer_id=customer_id,
+        organization_id=organizationId,
+    )
+    sid = await ConversationService.get_customer_sid(customer_id)
+    
+    await ConversationService.join_customer_room(sid,record.id)
+    service = MessageService(organization_id=organizationId, payload=payload)
+    await service.create(record.id)
+    
+    
+    return cr.success(data=record)

@@ -1,14 +1,16 @@
+
 from fastapi import APIRouter
 from fastapi import Request
 
 from src.models import Conversation, Customer, CustomerVisitLogs
-from src.seed import organization
+
 from src.utils.response import CustomResponse as cr
 from src.utils.common import get_location
 from ..services.message_service import MessageService
 from ..schema import MessageSchema, EditMessageSchema, CustomerUpdateSchema
 from src.common.context import UserContext, TenantContext
-from src.models import Message
+
+from src.services.conversation_service import ConversationService
 
 router = APIRouter()
 
@@ -24,19 +26,6 @@ async def create_customer( request: Request):
 
     print(f"create customer api {ip}")
 
-    # customer = await Customer.find_one(
-    #     where={"organization_id": organizationId, "ip_address": ip}
-    # )
-    # if customer:
-    #     await save_log(ip, customer.id, request)
-    #     conversation = await Conversation.find_one(where={"customer_id": customer.id})
-
-    #     return cr.success(
-    #         data={
-    #             "customer": customer.to_json(),
-    #             "conversation": conversation.to_json(),
-    #         }
-    #     )
 
     
     
@@ -54,18 +43,11 @@ async def create_customer( request: Request):
         name=f"guest-{customer_count}", ip_address=ip, organization_id=organizationId
     )
 
-    conversation = await Conversation.create(
-        name=f"guest-{customer_count}",
-        customer_id=customer.id,
-        ip_address=ip,
-        organization_id=organizationId,
-    )
-
 
     await save_log(ip, customer.id, request)
 
     return cr.success(
-        data={"customer": customer.to_json(), "conversation": conversation.to_json()}
+        data={"customer": customer.to_json()}
     )
 
 
@@ -107,7 +89,6 @@ async def customer_visit(customer_id: int, request: Request):
     header = request.headers.get("X-Forwarded-For")
     ip = header.split(",")[0].strip() if header else request.client.host
     print(f"visit api {ip}")
-
     customer = await Customer.get(customer_id)
     if not customer:
         return cr.error(message="Customer Not found")
@@ -115,6 +96,7 @@ async def customer_visit(customer_id: int, request: Request):
     log = await save_log(ip, customer_id, request)
 
     return cr.success(data=log.to_json())
+
 
 
 @router.put("/{customer_id}/update")
@@ -134,8 +116,33 @@ async def create_conversation_message(conversation_id: int, payload: MessageSche
     userId = UserContext.get()
     service = MessageService(organization_id=organizationId, payload=payload,user_id=userId)
     response = await service.create(conversation_id)
+
+    
+
     return cr.success(data=response)
 
+
+@router.post('/{customer_id}/initialize-conversation')
+async def initialize_conversation(customer_id: int,payload:MessageSchema):
+    organizationId = TenantContext.get()
+    payload.customer_id = customer_id
+    record = await Conversation.create(
+        customer_id=customer_id,
+        organization_id=organizationId,
+    )
+    
+    # Note: Customer will automatically join the room when they connect to WebSocket
+    # via the _join_existing_conversations method in CustomerChatNamespace
+    print(f"✅ Created conversation {record.id} for customer {customer_id}")
+    
+    service = MessageService(organization_id=organizationId, payload=payload)
+    message = await service.create(record.id)
+
+    
+    return cr.success(data={
+        "conversation": record.to_json(),
+        "message": message
+    })
 
 # edit the message
 @router.put("/{organization_id}/messages/{message_id}")
