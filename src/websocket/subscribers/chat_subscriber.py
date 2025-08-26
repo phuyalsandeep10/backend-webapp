@@ -184,7 +184,8 @@ class ChatSubscriber:
                 "message": message,
                 "workload_info": workload_info,
                 "timestamp": datetime.utcnow().isoformat(),
-                "urgent": True
+                "urgent": True,
+                "payload": self.payload
             }
             
             # Send notification to the customer in the conversation room
