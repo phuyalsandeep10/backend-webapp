@@ -62,6 +62,8 @@ class MessageService:
         userSid = None
         if self.user_id:
             userSid = await self.get_user_sid(self.user_id)
+        
+        print(f"user sid {userSid}")
 
         payload = self.make_msg_payload(record)
         print(f"payload {payload}")
@@ -94,6 +96,7 @@ class MessageService:
 
         payload = await self.get_message_payload(new_message.id)
         payload['customer_id'] = record.customer_id
+        payload['organization_id'] = self.organization_id
         
         # Set is_customer flag based on whether user_id is present
         # If user_id is None, it's a customer message
