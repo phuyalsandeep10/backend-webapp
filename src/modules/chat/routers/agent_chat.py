@@ -109,7 +109,7 @@ async def edit_message(message_id: int, payload: EditMessageSchema):
     service = MessageService(organizationId, payload, userId)
     record = await service.edit(message_id)
 
-    return cr.success(data=record)
+    return cr.success(data=record.to_json())
 
 
 # resolved conversations
@@ -127,6 +127,7 @@ async def resolved_conversation(conversation_id: int):
 
     # update the conversation
     record = await Conversation.update(conversation_id, is_resolved=True)
+    
 
     return cr.success(data=record.to_json())
 
