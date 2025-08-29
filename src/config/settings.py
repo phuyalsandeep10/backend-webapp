@@ -11,19 +11,19 @@ class Settings(BaseSettings):
     # def __init__(self):
     #     super()
 
-    celery_broker_url: str = "redis://localhost:6379"
+    celery_broker_url: str = "redis://redis:6379"
     PROJECT_NAME: str = "Chatboq Service"
     PROJECT_VERSION: str = "1.0.0"
     PROJECT_DESCRIPTION: str = "Chatboq Service API"
     DATABASE_URL: str = ""
     ASYNC_DATABASE_URL: str = ""
     API_PREFIX: str = "/api/v1"
-    CELEREY_BROKER_URL: str = "redis://localhost:6379"
+    CELEREY_BROKER_URL: str = "redis://redis:6379"
 
     SOCKETIO_PATH: str = "/ws/socket.io"
     CORS_ORIGINS: List[str] = ["*"]
 
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: str = "redis://redis:6379"
 
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     APPLE_CLIENT_SECRET: str = "your-apple-client-secret"
 
     FRONTEND_URL: str = ""
-    CELEREY_BROKER_URL: str = "redis://localhost:6379"
+    CELEREY_BROKER_URL: str = "redis://redis:6379"
 
     CLOUDINARY_CLOUD_NAME: str = ""
     CLOUDINARY_API_KEY: str = ""

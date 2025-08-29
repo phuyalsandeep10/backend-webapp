@@ -59,7 +59,7 @@ services:
     build: .
     command: celery -A src.config.celery worker --loglevel=info
     environment:
-      - REDIS_URL=redis://localhost:6379
+      - REDIS_URL=redis://redis:6379
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
       - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
@@ -100,7 +100,7 @@ services:
     build: .
     command: celery -A src.config.celery beat --loglevel=info
     environment:
-      - REDIS_URL=redis://localhost:6379
+      - REDIS_URL=redis://redis:6379
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatboq_db
       - ASYNC_DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/chatboq_db
     depends_on:

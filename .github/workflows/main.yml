@@ -1,26 +1,72 @@
-name: Chatboq total CI/CD
+name: Build, publish, and deploy Frontend Docker image to EC2
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Deploy to server
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:  ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Docker image
+        run: |
+          docker build -t chat-backend .
+      
+      - name: Tag Docker image
+        run: |
+          docker tag chat-backend:latest 550487074506.dkr.ecr.us-east-1.amazonaws.com/chat-backend:latest
+      
+      - name: Push Docker image to Amazon ECR
+        run: |
+          docker push 550487074506.dkr.ecr.us-east-1.amazonaws.com/chat-backend:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build  # This ensures the deploy job runs after the build jobs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Deploy code to EC2
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT}}
           script: |
-            cd /var/www/chatboq_portal/chatboq-service
-            git pull origin main
-            docker-compose up -d --build
-            docker exec chatboq_backend python manage.py migrate
+            # Log in to AWS ECR on the EC2 instance
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 550487074506.dkr.ecr.us-east-1.amazonaws.com
+            
+            # Pull latest images
+            docker pull 550487074506.dkr.ecr.us-east-1.amazonaws.com/chat-backend:latest
+
+            # Go to the project directory where docker-compose.yml exists
+            cd /home/ubuntu/chatboq-service
+
+            # Pull the latest code from Git
+             git pull origin main
+
+            
+            # Restart services using the .env file explicitly
+            docker-compose --env-file .env down
+            docker-compose --env-file .env up -d
+
+            # Run Django migrations
+            docker-compose --env-file .env exec -T backend python manage.py migrate

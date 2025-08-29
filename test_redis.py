@@ -8,7 +8,7 @@ async def test_redis_pubsub():
 
     # Test basic Redis connection
     try:
-        client = redis.from_url("redis://localhost:6379", decode_responses=True)
+        client = redis.from_url("redis://redis:6379", decode_responses=True)
         pong = await client.ping()
         print(f"✅ Redis ping: {pong}")
         await client.close()
@@ -22,7 +22,7 @@ async def test_redis_pubsub():
 
     try:
         # Create subscriber
-        subscriber = redis.from_url("redis://localhost:6379", decode_responses=True)
+        subscriber = redis.from_url("redis://redis:6379", decode_responses=True)
         pubsub = subscriber.pubsub()
 
         # Subscribe to pattern
@@ -30,7 +30,7 @@ async def test_redis_pubsub():
         print("✅ Subscribed to pattern test_*")
 
         # Create publisher
-        publisher = redis.from_url("redis://localhost:6379", decode_responses=True)
+        publisher = redis.from_url("redis://redis:6379", decode_responses=True)
 
         # Give subscription time to register
         await asyncio.sleep(0.1)
